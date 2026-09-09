@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// Ferrer Clothing Rental - security rules for the `ferrer-db` database.
+// Roles are stored on the user document (users/{uid}.role == 'admin').
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ------------------------------------------------------------------
+    // users
+    // ------------------------------------------------------------------
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      // The admin dashboard watches the whole collection to count users.
+      allow list: if isAdmin();
+
+      // Sign-up writes the caller's own profile; the role is forced to
+      // customer so nobody can self-promote to admin. fullName may be
+      // absent/empty (users without a display name complete it later).
+      allow create: if isOwner(uid)
+        && request.resource.data.role == 'customer'
+        && (!('fullName' in request.resource.data)
+            || request.resource.data.fullName is string);
+
+      // Admins may edit anyone; users may edit their own profile but can
+      // never touch their own role.
+      allow update: if isAdmin()
+        || (isOwner(uid)
+            && !request.resource.data.diff(resource.data)
+                  .affectedKeys().hasAny(['role']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // items (rental catalog)
+    // ------------------------------------------------------------------
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+
+      allow create, delete: if isAdmin();
+
+      // Admin edits freely. Customers may only flip the `status` field
+      // (available <-> rented) as part of checkout / cancel / return flows.
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(['status']));
+    }
+
+    // Full-size item photos (data URIs) kept out of the items stream so
+    // catalog lists stay light. Customers only ever read these.
+    match /itemPhotos/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // rentals
+    // ------------------------------------------------------------------
+    match /rentals/{rentalId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      // Admins manage every rental (confirm/decline requests, returns,
+      // cancellations, edits). Customers may only cancel their own pending
+      // or active rental.
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && resource.data.status in ['pending', 'active']
+            && request.resource.data.status == 'cancelled'
+            && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(['status']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // appointments
+    // ------------------------------------------------------------------
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'scheduled';
+
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && request.resource.data.status == 'cancelled'
+            && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(['status']));
+
+      allow delete: if isAdmin();
+    }
+  }
+}

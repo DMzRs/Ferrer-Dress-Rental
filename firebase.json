@@ -1,0 +1,27 @@
+{
+  "firestore": {
+    "database": "ferrer-db",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ferrer-rental-shop",
+          "appId": "1:1088977668935:android:d3050369082d42fb715a62",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ferrer-rental-shop",
+          "configurations": {
+            "android": "1:1088977668935:android:d3050369082d42fb715a62",
+            "ios": "1:1088977668935:ios:a9a55deccaf8ac8f715a62"
+          }
+        }
+      }
+    }
+  }
+}
