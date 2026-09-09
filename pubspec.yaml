@@ -1,0 +1,27 @@
+name: ferrer_rental_shop
+description: "Ferrer Clothing Rental - premium dress & kiddie costume rental app."
+publish_to: 'none'
+version: 0.2.0+2
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  firebase_core: ^4.0.0
+  cloud_firestore: ^6.0.0
+  firebase_auth: ^6.0.0
+  image_picker: ^1.1.2
+  image: ^4.5.2
+  provider: ^6.1.5
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
