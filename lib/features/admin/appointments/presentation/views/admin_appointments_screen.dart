@@ -273,9 +273,14 @@ class _AppointmentTile extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _ReviewSheet(
-        appointment: appointment,
-        vm: context.read<AppointmentsViewModel>(),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: _ReviewSheet(
+          appointment: appointment,
+          vm: context.read<AppointmentsViewModel>(),
+        ),
       ),
     );
   }
@@ -340,14 +345,15 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   Widget build(BuildContext context) {
     final a = widget.appointment;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.adminCard,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
+    return SingleChildScrollView(
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.adminCard,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -462,6 +468,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
           ],
         ],
       ),
+    ),
     );
   }
 

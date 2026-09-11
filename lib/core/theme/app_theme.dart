@@ -87,6 +87,9 @@ class AppTheme {
         backgroundColor: AppColors.ink,
         contentTextStyle: const TextStyle(color: AppColors.white, fontSize: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Float above the bottom nav bar / keyboard instead of hugging the edge.
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        elevation: 6,
       ),
       dividerTheme: DividerThemeData(color: AppColors.champagne, thickness: 1),
       bottomSheetTheme: const BottomSheetThemeData(

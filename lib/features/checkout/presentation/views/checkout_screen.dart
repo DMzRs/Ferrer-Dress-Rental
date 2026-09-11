@@ -96,15 +96,36 @@ class _BodyState extends State<_Body> {
       );
       return;
     }
-    // Remember the address for the next rental; the rental doc already
-    // carries its own copy, so a failed save must not block the flow.
-    if (address != user.address) {
+    // Remember the address for the next rental without overwriting the
+    // profile default: first-ever address becomes the default, later one-off
+    // venue addresses are appended to savedPlaces for one-tap reuse.
+    // The rental doc already carries its own copy, so a failed save must
+    // not block the flow.
+    if (user.address.trim().isEmpty && address != user.address) {
       unawaited(auth.updateProfile(address: address));
+    } else if (address != user.address &&
+        !user.savedPlaces
+            .map((p) => p.trim())
+            .contains(address)) {
+      unawaited(
+        auth.updateProfile(
+          savedPlaces: [...user.savedPlaces, address],
+        ),
+      );
     }
+    // Dismiss the keyboard (address field) before showing the result sheet,
+    // otherwise the open keyboard covers the modal on small screens.
+    FocusScope.of(context).unfocus();
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _SuccessSheet(),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: const _SuccessSheet(),
+      ),
     );
     if (mounted) {
       Navigator.of(context)
@@ -128,15 +149,23 @@ class _BodyState extends State<_Body> {
             children: [
               _OrderSummaryCard(item: vm.item),
               const SizedBox(height: 18),
-              Text('Rental Period', style: Theme.of(context).textTheme.titleLarge),
+              Text('Rental Period (fixed 5 days)',
+                  style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              const Text(
+                'Step 1 — tap the start date to choose when your 5-day rental begins.',
+                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: _DateField(
-                      label: 'START DATE',
+                      label: 'START DATE — TAP TO SELECT',
                       dateText: Formatters.date(vm.startDate),
                       icon: Icons.event_outlined,
+                      hint: 'Tap to choose date',
+                      emphasized: true,
                       onTap: () => _pickDate(isStart: true),
                     ),
                   ),
@@ -147,10 +176,18 @@ class _BodyState extends State<_Body> {
                   ),
                   Expanded(
                     child: _DateField(
-                      label: 'END DATE',
+                      label: 'RETURN DATE (AUTO)',
                       dateText: Formatters.date(vm.endDate),
                       icon: Icons.event_available_outlined,
-                      onTap: () => _pickDate(isStart: false),
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Rental period is fixed to 5 days.'),
+                            backgroundColor: AppColors.roseDark,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -352,54 +389,89 @@ class _DateField extends StatelessWidget {
   final String dateText;
   final IconData icon;
   final VoidCallback onTap;
+  final String? hint;
+  final bool emphasized;
 
   const _DateField({
     required this.label,
     required this.dateText,
     required this.icon,
     required this.onTap,
+    this.hint,
+    this.emphasized = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.goldSoft),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 13, color: AppColors.rose),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    letterSpacing: 1.1,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.inkSoft.withValues(alpha: .8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              dateText,
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: AppColors.blushSoft,
+        highlightColor: AppColors.blushSoft.withValues(alpha: .5),
+        child: Tooltip(
+          message: 'Tap to choose date',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            constraints: const BoxConstraints(minHeight: 44),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color:
+                    emphasized ? AppColors.rose : AppColors.goldSoft,
+                width: emphasized ? 1.6 : 1,
               ),
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, size: 14, color: AppColors.rose),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          letterSpacing: 1.1,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.inkSoft.withValues(alpha: .8),
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.calendar_month_rounded,
+                      size: 18,
+                      color: AppColors.roseDark,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  dateText,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+                if (hint != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    hint!,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.roseDark,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

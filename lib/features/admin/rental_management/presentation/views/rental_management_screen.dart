@@ -315,51 +315,184 @@ class _RentalRow extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _ReturnConfirmationSheet(rental: rental, vm: vm),
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: _ReturnConfirmationSheet(rental: rental, vm: vm),
+        ),
+      ),
     );
   }
 
   Future<void> _showDecisionModal(BuildContext context,
       {required bool decline}) async {
     final vm = context.read<RentalManagementViewModel>();
-    final decision = decline ? 'Decline' : 'Confirm';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('$decision this rental?'),
-        content: Text(
-          decline
-              ? '${rental.userName} requested "${rental.itemName}" '
-                  '(${Formatters.shortDate(rental.startDate)} → ${Formatters.shortDate(rental.endDate)}). '
-                  'Declining will notify the customer and refund their full payment.'
-              : '${rental.userName} will be notified that "${rental.itemName}" '
-                  '(${Formatters.shortDate(rental.startDate)} → ${Formatters.shortDate(rental.endDate)}) '
-                  'is confirmed for their rental dates.',
+    if (!decline) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Confirm this rental?'),
+          content: Text(
+            '${rental.userName} will be notified that "${rental.itemName}" '
+            '(${Formatters.shortDate(rental.startDate)} → ${Formatters.shortDate(rental.endDate)}) '
+            'is confirmed for their rental dates.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Go Back'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Confirm',
+                  style: TextStyle(
+                      color: AppColors.adminPrimary,
+                      fontWeight: FontWeight.w800)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Go Back'),
+      );
+      if (confirmed != true) return;
+      final error = await vm.confirmRental(rental);
+      if (error == null) return;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.adminRed),
+        );
+      }
+      return;
+    }
+
+    // Decline requires a reason (mirrors the appointment flow) so the
+    // customer sees WHY in My Rentals. Keyboard-aware bottom sheet.
+    final reasonController = TextEditingController();
+    var busy = false;
+    String? fieldError;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.adminCard,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Decline this rental?',
+                      style: TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.adminInk)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${rental.userName} requested "${rental.itemName}" '
+                    '(${Formatters.shortDate(rental.startDate)} → ${Formatters.shortDate(rental.endDate)}). '
+                    'They will see your reason and get a full refund.',
+                    style: TextStyle(
+                        fontSize: 12.5, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reasonController,
+                    maxLines: 3,
+                    minLines: 1,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText:
+                          'Tell the customer why this request is declined...',
+                      errorText: fieldError,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.adminMuted,
+                            side: const BorderSide(
+                                color: AppColors.adminBorder),
+                            minimumSize: const Size(0, 46),
+                          ),
+                          onPressed: busy
+                              ? null
+                              : () => Navigator.pop(sheetContext),
+                          child: const Text('Go Back'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.adminRed,
+                            minimumSize: const Size(0, 46),
+                          ),
+                          onPressed: busy
+                              ? null
+                              : () async {
+                                  final reason =
+                                      reasonController.text.trim();
+                                  if (reason.isEmpty) {
+                                    setSheetState(() => fieldError =
+                                        'Please write the reason for declining.');
+                                    return;
+                                  }
+                                  setSheetState(() => busy = true);
+                                  final error = await vm.declineRental(
+                                    rental,
+                                    reason,
+                                  );
+                                  if (!sheetContext.mounted) return;
+                                  Navigator.pop(sheetContext);
+                                  if (error != null &&
+                                      context.mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(error),
+                                        backgroundColor:
+                                            AppColors.adminRed,
+                                      ),
+                                    );
+                                  }
+                                },
+                          icon: busy
+                              ? const SizedBox(
+                                  width: 17,
+                                  height: 17,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white))
+                              : const Icon(Icons.send_rounded, size: 18),
+                          label: const Text('Decline & Notify'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(decision,
-                style: TextStyle(
-                    color: decline ? AppColors.adminRed : AppColors.adminPrimary,
-                    fontWeight: FontWeight.w800)),
-          ),
-        ],
+        ),
       ),
     );
-    if (confirmed != true) return;
-
-    final error = decline ? await vm.declineRental(rental) : await vm.confirmRental(rental);
-    if (error == null) return;
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: AppColors.adminRed),
-      );
-    }
+    reasonController.dispose();
   }
 }
 

@@ -45,6 +45,45 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
               ),
             ),
             const SizedBox(height: 10),
+            if (!vm.isLoading &&
+                vm.rentals.any((r) => r.isDueSoon || r.isOverdue)) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.goldSoft),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.notifications_active_rounded,
+                        size: 18,
+                        color: AppColors.roseDark,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          vm.rentals.any((r) => r.isOverdue)
+                              ? 'Some items are overdue — please return them ASAP.'
+                              : 'Reminder: ${vm.rentals.where((r) => r.isDueSoon).length} item(s) due within 2 days.',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             SizedBox(
               height: 40,
               child: ListView(
