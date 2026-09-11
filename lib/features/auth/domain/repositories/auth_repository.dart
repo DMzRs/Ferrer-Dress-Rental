@@ -15,6 +15,10 @@ abstract class AuthRepository {
 
   Future<Result<void>> sendPasswordReset(String email);
 
+  Future<Result<void>> requestEmailOtp(String email);
+
+  Future<Result<void>> verifyEmailOtp({required String email, required String code});
+
   Future<void> signOut();
 
   /// Updates the signed-in user's profile. Only provided fields change.

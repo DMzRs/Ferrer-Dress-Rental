@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ferrer_rental_shop/core/services/app_firestore.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:ferrer_rental_shop/core/constants/firestore_collections.dart';
@@ -88,6 +89,28 @@ class FirebaseAuthDataSource implements AuthDataSource {
   @override
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim());
+
+  @override
+  Future<void> requestEmailOtp(String email) async {
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('requestEmailOtp')
+          .call({'email': email.trim()});
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? 'Could not send the code.');
+    }
+  }
+
+  @override
+  Future<void> verifyEmailOtp({required String email, required String code}) async {
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('verifyEmailOtp')
+          .call({'email': email.trim(), 'code': code.trim()});
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? 'Could not verify the code.');
+    }
+  }
 
   @override
   Future<void> signOut() => _auth.signOut();

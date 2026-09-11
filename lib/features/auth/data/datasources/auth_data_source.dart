@@ -14,6 +14,10 @@ abstract class AuthDataSource {
 
   Future<void> sendPasswordReset(String email);
 
+  Future<void> requestEmailOtp(String email);
+
+  Future<void> verifyEmailOtp({required String email, required String code});
+
   Future<void> signOut();
 
   /// Updates the signed-in user's profile doc. Only provided fields change.

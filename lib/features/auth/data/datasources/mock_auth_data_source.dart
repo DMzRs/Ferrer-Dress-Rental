@@ -99,6 +99,19 @@ class MockAuthDataSource implements AuthDataSource {
   }
 
   @override
+  Future<void> requestEmailOtp(String email) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  @override
+  Future<void> verifyEmailOtp({required String email, required String code}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (code.trim() != '123456') {
+      throw Exception('Incorrect code. Try 123456 in demo mode.');
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     _setSession(null);
   }
