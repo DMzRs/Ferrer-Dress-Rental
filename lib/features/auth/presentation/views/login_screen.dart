@@ -120,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
     _vm.resetOtp();
     _clearOtpBoxes();
+    _clearOtpSnapshot();
     setState(() {
       _mode = mode;
       _otpStep = false;
@@ -136,6 +137,13 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       _settingOtpProgrammatically = false;
     }
+  }
+
+  void _clearOtpSnapshot() {
+    _otpName = '';
+    _otpEmail = '';
+    _otpPhone = '';
+    _otpPassword = '';
   }
 
   bool get _otpComplete =>
@@ -232,6 +240,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _resendOtp() async {
+    // Guard against double-taps while a send is in flight.
+    if (_vm.otpState == OtpState.sending) return;
     final sent = await _vm.sendOtp(_otpEmail);
     if (!mounted || sent) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -270,6 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       _vm.resetOtp();
       _clearOtpBoxes();
+      _clearOtpSnapshot();
       setState(() => _otpStep = false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

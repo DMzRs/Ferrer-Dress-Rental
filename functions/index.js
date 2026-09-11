@@ -51,6 +51,14 @@ exports.requestEmailOtp = onCall(async (request) => {
       text: 'Your Ferrer verification code is ' + code + '. It expires in 5 minutes.',
     });
   } catch (_) {
+    // Don't leave a valid-looking doc behind when no mail went out —
+    // otherwise the user hits cooldown/attempt walls for a code they
+    // never received. Best-effort cleanup, then report the failure.
+    try {
+      await ref.delete();
+    } catch (_) {
+      // ignore cleanup errors
+    }
     throw new HttpsError('internal', 'Could not send the code. Try again.');
   }
   return { sent: true };
@@ -70,6 +78,7 @@ exports.verifyEmailOtp = onCall(async (request) => {
   const snap = await ref.get();
   if (!snap.exists) throw new HttpsError('not-found', 'Code expired. Send a new one.');
   const data = snap.data();
+  if (data.verified === true) return { verified: true };
   const expiresAt = data.expiresAt && data.expiresAt.toMillis ? data.expiresAt.toMillis() : 0;
   if (otp.isExpired(expiresAt, now)) {
     await ref.delete();
@@ -89,6 +98,10 @@ exports.verifyEmailOtp = onCall(async (request) => {
     await ref.update({ attempts });
     throw new HttpsError('unauthenticated', 'Incorrect code. ' + otp.attemptsLeft(attempts) + ' attempt(s) left.');
   }
+  // v1 tradeoff (documented): OTP is client-gated — the app only calls
+  // signUp after verify succeeds, but nothing server-side binds the two.
+  // v2 follow-up: enforce via a beforeCreate blocking function that checks
+  // emailOtps/{email}.verified.
   await ref.set({ verified: true, codeHash: admin.firestore.FieldValue.delete(), salt: admin.firestore.FieldValue.delete() }, { merge: true });
   return { verified: true };
 });

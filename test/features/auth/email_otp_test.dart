@@ -7,4 +7,13 @@ void main() {
     await ds.requestEmailOtp('j@x.com');
     await ds.verifyEmailOtp(email: 'j@x.com', code: '123456');
   });
+
+  test('verifyEmailOtp rejects wrong codes in mock mode', () async {
+    final ds = MockAuthDataSource();
+    await ds.requestEmailOtp('j@x.com');
+    expect(
+      () => ds.verifyEmailOtp(email: 'j@x.com', code: '000000'),
+      throwsA(isA<Exception>()),
+    );
+  });
 }
