@@ -46,7 +46,9 @@ the Admin SDK and bypass rules. Add the deny block to `firestore.rules`.
 - `requestEmailOtp({email})`
   1. Validate email format; normalize lowercase/trim.
   2. Read existing doc: if `resendAvailableAt > now`, return throttled error
-     with `retryAfterSeconds` (no code sent).
+     with `retryAfterSeconds` (no code sent). Accepted tradeoff for school
+     scope: the cooldown message confirms a recent request for that email,
+     but enables the 60s resend countdown UX; signup emails are not secret.
   3. Generate 6 digits via `crypto.randomInt(100000, 999999)`.
   4. Salt + SHA-256 hash; write doc with 5-min expiry, attempts reset,
      `verified: false`, new `resendAvailableAt`.
