@@ -11,6 +11,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
@@ -101,7 +102,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'scheduled';
+        && request.resource.data.status in ['pending', 'scheduled'];
 
       allow update: if isAdmin()
         || (isSignedIn()
