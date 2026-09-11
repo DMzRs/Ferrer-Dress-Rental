@@ -11,12 +11,20 @@ class DeclineRentalUseCase {
   final RentalRepository _rentalRepository;
   final InventoryRepository _inventoryRepository;
 
-  Future<void> execute(Rental rental) async {
+  Future<void> execute(Rental rental, {String? reason}) async {
     if (!rental.isPending) {
       throw const FormatException('Only pending rentals can be declined.');
     }
+    final trimmed = reason?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      throw const FormatException('Please write the reason for declining.');
+    }
     try {
-      await _rentalRepository.updateRentalStatus(rental.id, 'declined');
+      await _rentalRepository.updateRentalStatus(
+        rental.id,
+        'declined',
+        declineReason: trimmed,
+      );
       await _inventoryRepository.updateStatus(rental.itemId, 'available');
     } catch (e) {
       throw NetworkFailure('Could not decline this rental. Please try again.');

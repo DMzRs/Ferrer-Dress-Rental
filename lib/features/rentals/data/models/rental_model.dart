@@ -19,6 +19,7 @@ class RentalModel extends Rental {
     super.deliveryAddress,
     required super.createdAt,
     super.returnedAt,
+    super.declineReason,
   });
 
   factory RentalModel.fromMap(String id, Map<String, dynamic> map) {
@@ -38,6 +39,7 @@ class RentalModel extends Rental {
       deliveryAddress: (map['deliveryAddress'] ?? '') as String,
       createdAt: _toDate(map['createdAt']),
       returnedAt: map['returnedAt'] == null ? null : _toDate(map['returnedAt']),
+      declineReason: (map['declineReason'] ?? '') as String,
     );
   }
 
@@ -58,6 +60,7 @@ class RentalModel extends Rental {
       deliveryAddress: r.deliveryAddress,
       createdAt: r.createdAt,
       returnedAt: r.returnedAt,
+      declineReason: r.declineReason,
     );
   }
 
@@ -78,6 +81,7 @@ class RentalModel extends Rental {
     DateTime? createdAt,
     DateTime? returnedAt,
     bool clearReturnedAt = false,
+    String? declineReason,
   }) {
     return RentalModel(
       id: id ?? this.id,
@@ -95,6 +99,7 @@ class RentalModel extends Rental {
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       createdAt: createdAt ?? this.createdAt,
       returnedAt: clearReturnedAt ? null : (returnedAt ?? this.returnedAt),
+      declineReason: declineReason ?? this.declineReason,
     );
   }
 
@@ -113,7 +118,7 @@ class RentalModel extends Rental {
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime date) =>
         forFirestore ? Timestamp.fromDate(date) : date.toIso8601String();
-    return {
+    final map = <String, dynamic>{
       'userId': userId,
       'userName': userName,
       'itemId': itemId,
@@ -129,6 +134,10 @@ class RentalModel extends Rental {
       'createdAt': encode(createdAt),
       if (returnedAt != null) 'returnedAt': encode(returnedAt!),
     };
+    if (declineReason.isNotEmpty) {
+      map['declineReason'] = declineReason;
+    }
+    return map;
   }
 }
 

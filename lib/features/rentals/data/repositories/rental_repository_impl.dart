@@ -37,7 +37,15 @@ class RentalRepositoryImpl implements RentalRepository {
   Future<void> cancelRental(String rentalId) => _dataSource.cancelRental(rentalId);
 
   @override
-  Future<void> updateRentalStatus(String rentalId, String status) =>
-      _dataSource.updateRentalStatus(rentalId, status);
+  Future<void> updateRentalStatus(
+    String rentalId,
+    String status, {
+    String? declineReason,
+  }) =>
+      _dataSource.updateRentalStatus(
+        rentalId,
+        status,
+        declineReason: declineReason,
+      );
 }
 

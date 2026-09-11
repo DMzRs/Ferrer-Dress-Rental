@@ -24,7 +24,8 @@ class _FakeRentals implements RentalRepository {
   Future<void> cancelRental(String id) async {}
 
   @override
-  Future<void> updateRentalStatus(String id, String status) async {}
+  Future<void> updateRentalStatus(String id, String status,
+      {String? declineReason}) async {}
 
   @override
   Stream<List<Rental>> userRentalsStream(String userId) => const Stream.empty();
@@ -79,41 +80,40 @@ CheckoutViewModel _vm(_FakeRentals r, _FakeInventory i) =>
 
 void main() {
   group('CheckoutViewModel pricing', () {
-    test('rentalDays minimum is 1', () {
+    test('rentalDays fixed to 5', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
-      vm.startDate = DateTime(2026, 9, 7);
-      vm.endDate = DateTime(2026, 9, 7, 12); // same-day -> 1 day
-      expect(vm.rentalDays, 1);
-      expect(vm.rentalFee, 500);
+      expect(vm.rentalDays, 5);
+      expect(vm.rentalFee, 2500);
       expect(vm.securityDeposit, 1000);
-      expect(vm.total, 1500);
+      expect(vm.total, 3500);
     });
 
-    test('rentalFee scales with days', () {
+    test('rentalFee fixed for 5 days', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
-      vm.startDate = DateTime(2026, 9, 7);
-      vm.endDate = DateTime(2026, 9, 10);
-      expect(vm.rentalDays, 3);
-      expect(vm.rentalFee, 1500);
-      expect(vm.total, 2500);
+      vm.updateStartDate(DateTime.now().add(const Duration(days: 10)));
+      expect(vm.rentalDays, 5);
+      expect(vm.rentalFee, 2500);
+      expect(vm.total, 3500);
     });
   });
 
   group('CheckoutViewModel dates', () {
-    test('updateStartDate pushes endDate forward when needed', () {
+    test('updateStartDate sets endDate to start + 4 days', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
-      vm.updateStartDate(DateTime(2026, 9, 20));
-      expect(vm.endDate.isAfter(vm.startDate), isTrue);
+      final start = DateTime.now().add(const Duration(days: 20));
+      vm.updateStartDate(start);
+      final startDay = DateTime(start.year, start.month, start.day);
+      final endDay =
+          DateTime(vm.endDate.year, vm.endDate.month, vm.endDate.day);
+      expect(endDay.difference(startDay).inDays, 4);
     });
 
-    test('updateEndDate ignores dates not after start', () {
+    test('updateEndDate is fixed and reports error', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
-      vm.startDate = DateTime(2026, 9, 10);
-      vm.endDate = DateTime(2026, 9, 15);
-      vm.updateEndDate(DateTime(2026, 9, 5));
-      expect(vm.endDate, DateTime(2026, 9, 15));
-      vm.updateEndDate(DateTime(2026, 9, 18));
-      expect(vm.endDate, DateTime(2026, 9, 18));
+      final before = vm.endDate;
+      vm.updateEndDate(before.add(const Duration(days: 10)));
+      expect(vm.endDate, before);
+      expect(vm.error, contains('fixed to 5 days'));
     });
   });
 

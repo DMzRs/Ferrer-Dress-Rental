@@ -35,7 +35,8 @@ class FakeRentalRepository implements RentalRepository {
   }
 
   @override
-  Future<void> updateRentalStatus(String id, String status) async {
+  Future<void> updateRentalStatus(String id, String status,
+      {String? declineReason}) async {
     if (throwOnStatusUpdate) throw Exception('db down');
     statusUpdates.add(status);
   }
@@ -80,7 +81,8 @@ Rental _rental({DateTime? start, DateTime? end, String status = 'active'}) {
     itemId: 'i1',
     itemName: 'Gown',
     startDate: start ?? now,
-    endDate: end ?? now.add(const Duration(days: 3)),
+    endDate: end ??
+        DateTime(now.year, now.month, now.day).add(const Duration(days: 4)),
     rentalFee: 1500,
     securityDeposit: 1000,
     total: 2500,
@@ -115,6 +117,21 @@ void main() {
       expect(
         () => usecase.execute(
           _rental(start: now, end: now.subtract(const Duration(days: 1))),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(rentals.createCalls, 0);
+    });
+
+    test('throws FormatException when period is not fixed 5 days', () async {
+      final rentals = FakeRentalRepository();
+      final inventory = FakeInventoryRepository();
+      final usecase = CreateRentalUseCase(rentals, inventory);
+      final now = DateTime.now();
+
+      expect(
+        () => usecase.execute(
+          _rental(start: now, end: now.add(const Duration(days: 3))),
         ),
         throwsA(isA<FormatException>()),
       );
@@ -180,10 +197,22 @@ void main() {
       final inventory = FakeInventoryRepository();
       final usecase = DeclineRentalUseCase(rentals, inventory);
 
-      await usecase.execute(_rental(status: 'pending'));
+      await usecase.execute(_rental(status: 'pending'), reason: 'Out of stock');
 
       expect(rentals.statusUpdates, ['declined']);
       expect(inventory.statusUpdates, [('i1', 'available')]);
+    });
+
+    test('requires a reason', () async {
+      final rentals = FakeRentalRepository();
+      final inventory = FakeInventoryRepository();
+      final usecase = DeclineRentalUseCase(rentals, inventory);
+
+      expect(
+        () => usecase.execute(_rental(status: 'pending'), reason: '  '),
+        throwsA(isA<FormatException>()),
+      );
+      expect(rentals.statusUpdates, isEmpty);
     });
 
     test('refuses to decline a rental that is not pending', () async {
@@ -192,7 +221,7 @@ void main() {
       final usecase = DeclineRentalUseCase(rentals, inventory);
 
       expect(
-        () => usecase.execute(_rental(status: 'completed')),
+        () => usecase.execute(_rental(status: 'completed'), reason: 'Nope'),
         throwsA(isA<FormatException>()),
       );
       expect(rentals.statusUpdates, isEmpty);
@@ -204,7 +233,7 @@ void main() {
       final inventory = FakeInventoryRepository();
       final usecase = DeclineRentalUseCase(rentals, inventory);
 
-      expect(() => usecase.execute(_rental(status: 'pending')),
+      expect(() => usecase.execute(_rental(status: 'pending'), reason: 'Busy'),
           throwsA(isA<NetworkFailure>()));
     });
   });

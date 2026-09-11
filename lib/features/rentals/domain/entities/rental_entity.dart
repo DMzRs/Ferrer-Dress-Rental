@@ -15,6 +15,9 @@ class Rental {
   final DateTime createdAt;
   final DateTime? returnedAt;
 
+  /// Admin-provided explanation, present when status == declined.
+  final String declineReason;
+
   const Rental({
     required this.id,
     required this.userId,
@@ -31,6 +34,7 @@ class Rental {
     this.deliveryAddress = '',
     required this.createdAt,
     this.returnedAt,
+    this.declineReason = '',
   });
 
   bool get isActive => status == 'active';
@@ -70,6 +74,11 @@ class Rental {
   }
 
   int get daysRemaining => (totalDays - daysElapsed).clamp(0, totalDays);
+
+  /// Due-soon reminder: active rental with 2 or fewer days left (not overdue).
+  /// Used for the auto-notify banner 2 days before the return date.
+  bool get isDueSoon =>
+      isActive && !isOverdue && daysRemaining <= 2 && daysRemaining >= 0;
 
   double get progress => isCompleted ? 1 : (daysElapsed / totalDays).clamp(0.0, 1.0);
 

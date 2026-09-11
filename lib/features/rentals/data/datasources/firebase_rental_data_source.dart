@@ -50,11 +50,18 @@ class FirebaseRentalDataSource implements RentalDataSource {
   }
 
   @override
-  Future<void> updateRentalStatus(String rentalId, String status) {
+  Future<void> updateRentalStatus(
+    String rentalId,
+    String status, {
+    String? declineReason,
+  }) {
     return _db
         .collection(FirestoreCollections.rentals)
         .doc(rentalId)
-        .update({'status': status});
+        .update({
+      'status': status,
+      if (declineReason != null) 'declineReason': declineReason.trim(),
+    });
   }
 }
 

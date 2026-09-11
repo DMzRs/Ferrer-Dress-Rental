@@ -11,6 +11,10 @@ abstract class RentalDataSource {
 
   Future<void> cancelRental(String rentalId);
 
-  Future<void> updateRentalStatus(String rentalId, String status);
+  Future<void> updateRentalStatus(
+    String rentalId,
+    String status, {
+    String? declineReason,
+  });
 }
 

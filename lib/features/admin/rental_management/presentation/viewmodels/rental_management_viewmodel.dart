@@ -104,12 +104,15 @@ class RentalManagementViewModel extends ChangeNotifier {
   }
 
   /// Returns null on success, otherwise an error message.
-  Future<String?> declineRental(Rental rental) async {
+  Future<String?> declineRental(Rental rental, String reason) async {
+    if (reason.trim().isEmpty) {
+      return 'Please write the reason for declining.';
+    }
     _processingRentalId = rental.id;
     _processingId = true;
     notifyListeners();
     try {
-      await _declineRental.execute(rental);
+      await _declineRental.execute(rental, reason: reason);
       return null;
     } catch (_) {
       return 'Could not decline this rental. Please try again.';

@@ -205,12 +205,21 @@ class MockRentalDataSource implements RentalDataSource {
   }
 
   @override
-  Future<void> updateRentalStatus(String rentalId, String status) async {
+  Future<void> updateRentalStatus(
+    String rentalId,
+    String status, {
+    String? declineReason,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 400));
     final index = _rentals.indexWhere((r) => r.id == rentalId);
     if (index != -1) {
       final rental = _rentals[index];
-      _rentals[index] = RentalModel.fromEntity(rental).copyWith(status: status);
+      _rentals[index] = RentalModel.fromEntity(rental).copyWith(
+        status: status,
+        declineReason: declineReason?.trim().isNotEmpty == true
+            ? declineReason!.trim()
+            : rental.declineReason,
+      );
       _emit();
       if (status == 'declined' || status == 'cancelled') {
         await _setItemStatus(rental.itemId, 'available');
