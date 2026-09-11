@@ -27,7 +27,7 @@ class MyRentalsViewModel extends ChangeNotifier {
 
   List<Rental> _rentals = const [];
   bool _loading = true;
-  String _filter = 'active';
+  String _filter = 'all';
 
   List<Rental> get rentals => _filtered;
   bool get isLoading => _loading;
