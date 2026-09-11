@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'core/config/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/services/firebase_service.dart';
 import 'core/theme/app_theme.dart';
@@ -12,10 +11,8 @@ import 'features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'features/booking/data/repositories/appointment_repository_impl.dart';
 import 'features/booking/domain/repositories/appointment_repository.dart';
 import 'features/booking/presentation/viewmodels/booking_viewmodel.dart';
-import 'features/inventory/data/datasources/mock_item_data_source.dart';
 import 'features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'features/inventory/domain/repositories/inventory_repository.dart';
-import 'features/rentals/data/datasources/item_status_hooks.dart';
 import 'features/rentals/data/repositories/rental_repository_impl.dart';
 import 'features/rentals/domain/repositories/rental_repository.dart';
 import 'features/rentals/domain/usecases/cancel_rental_usecase.dart';
@@ -33,13 +30,8 @@ Future<void> main() async {
   final itemSource = InventoryRepositoryImpl.defaultDataSource();
   final inventoryRepository = InventoryRepositoryImpl(itemSource);
 
-  ItemStatusHook? hook;
-  if (!AppConfig.firebaseEnabled && itemSource is MockItemDataSource) {
-    hook = itemSource.updateStatus;
-  }
-
   final rentalRepository =
-      RentalRepositoryImpl(RentalRepositoryImpl.defaultDataSource(hook));
+      RentalRepositoryImpl(RentalRepositoryImpl.defaultDataSource());
   final appointmentRepository =
       AppointmentRepositoryImpl(AppointmentRepositoryImpl.defaultDataSource());
 

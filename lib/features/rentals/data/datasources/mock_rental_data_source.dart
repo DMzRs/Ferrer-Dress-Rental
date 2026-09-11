@@ -5,9 +5,7 @@ import 'package:ferrer_rental_shop/features/rentals/data/models/rental_model.dar
 import 'rental_data_source.dart';
 
 class MockRentalDataSource implements RentalDataSource {
-  MockRentalDataSource(this._setItemStatus);
-
-  final Future<void> Function(String itemId, String status) _setItemStatus;
+  MockRentalDataSource();
 
   final List<Rental> _rentals = [];
   final StreamController<List<Rental>> _controller =
@@ -174,7 +172,8 @@ class MockRentalDataSource implements RentalDataSource {
     final id = 'rnt-${DateTime.now().millisecondsSinceEpoch}';
     _rentals.insert(0, RentalModel.fromEntity(rental).copyWith(id: id));
     _emit();
-    await _setItemStatus(rental.itemId, 'rented');
+    // NOTE: item status flips live in the use-case layer (same as Firebase),
+    // so this data source never touches inventory — no double writes.
   }
 
   @override
@@ -188,7 +187,6 @@ class MockRentalDataSource implements RentalDataSource {
         returnedAt: returnedAt ?? DateTime.now(),
       );
       _emit();
-      await _setItemStatus(rental.itemId, 'available');
     }
   }
 
@@ -200,7 +198,6 @@ class MockRentalDataSource implements RentalDataSource {
       final rental = _rentals[index];
       _rentals[index] = RentalModel.fromEntity(rental).copyWith(status: 'cancelled');
       _emit();
-      await _setItemStatus(rental.itemId, 'available');
     }
   }
 
@@ -221,9 +218,6 @@ class MockRentalDataSource implements RentalDataSource {
             : rental.declineReason,
       );
       _emit();
-      if (status == 'declined' || status == 'cancelled') {
-        await _setItemStatus(rental.itemId, 'available');
-      }
     }
   }
 }

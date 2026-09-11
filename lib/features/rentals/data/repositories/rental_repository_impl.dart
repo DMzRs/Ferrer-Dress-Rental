@@ -10,13 +10,9 @@ class RentalRepositoryImpl implements RentalRepository {
 
   final RentalDataSource _dataSource;
 
-  static RentalDataSource defaultDataSource(
-    Future<void> Function(String itemId, String status)? mockItemStatusUpdater,
-  ) {
+  static RentalDataSource defaultDataSource() {
     if (AppConfig.firebaseEnabled) return FirebaseRentalDataSource();
-    return MockRentalDataSource(
-      mockItemStatusUpdater ?? ((_, _) async {}),
-    );
+    return MockRentalDataSource();
   }
 
   @override
