@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/rental_management/presentation/viewmodels/rental_management_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
@@ -359,9 +360,7 @@ class _RentalRow extends StatelessWidget {
       final error = await vm.confirmRental(rental);
       if (error == null) return;
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: AppColors.adminRed),
-        );
+        showTopSnackBar(context, error, backgroundColor: AppColors.adminRed);
       }
       return;
     }
@@ -462,13 +461,10 @@ class _RentalRow extends StatelessWidget {
                                   Navigator.pop(sheetContext);
                                   if (error != null &&
                                       context.mounted) {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      SnackBar(
-                                        content: Text(error),
-                                        backgroundColor:
-                                            AppColors.adminRed,
-                                      ),
+                                    showTopSnackBar(
+                                      context,
+                                      error,
+                                      backgroundColor: AppColors.adminRed,
                                     );
                                   }
                                 },

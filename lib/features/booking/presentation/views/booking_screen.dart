@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -191,11 +192,10 @@ class _BookingScreenState extends State<BookingScreen> {
                 onPressed: vm.canConfirm
                     ? _confirm
                     : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please choose a date and time slot first.'),
-                            backgroundColor: AppColors.danger,
-                          ),
+                        showTopSnackBar(
+                          context,
+                          'Please choose a date and time slot first.',
+                          backgroundColor: AppColors.danger,
                         );
                       },
               ),

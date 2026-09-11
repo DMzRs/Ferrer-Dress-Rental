@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/constants/app_strings.dart';
 import 'package:ferrer_rental_shop/core/router/app_router.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
@@ -533,13 +534,12 @@ class _BottomBar extends StatelessWidget {
                     ? () => context.pushNamed(AppRoutes.checkout,
                         arguments: vm.item)
                     : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(!vm.item.isAvailable
-                                ? 'This piece is currently ${vm.item.statusLabel.toLowerCase()}.'
-                                : 'Please select your size to continue.'),
-                            backgroundColor: AppColors.danger,
-                          ),
+                        showTopSnackBar(
+                          context,
+                          !vm.item.isAvailable
+                              ? 'This piece is currently ${vm.item.statusLabel.toLowerCase()}.'
+                              : 'Please select your size to continue.',
+                          backgroundColor: AppColors.danger,
                         );
                       },
               ),

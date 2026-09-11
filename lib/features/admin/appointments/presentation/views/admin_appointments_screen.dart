@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/viewmodels/appointments_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
@@ -312,20 +313,22 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     final ok = await widget.vm.confirm(widget.appointment);
     if (!mounted) return;
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(ok
+    showTopSnackBar(
+      context,
+      ok
           ? 'Appointment confirmed.'
-          : 'Could not confirm the appointment. Please try again.'),
+          : 'Could not confirm the appointment. Please try again.',
       backgroundColor: ok ? AppColors.adminPrimary : AppColors.adminRed,
-    ));
+    );
   }
 
   Future<void> _decline() async {
     if (_reasonController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Please write the reason for declining.'),
+      showTopSnackBar(
+        context,
+        'Please write the reason for declining.',
         backgroundColor: AppColors.adminRed,
-      ));
+      );
       return;
     }
     setState(() => _busy = true);
@@ -333,12 +336,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         await widget.vm.decline(widget.appointment, _reasonController.text);
     if (!mounted) return;
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(ok
+    showTopSnackBar(
+      context,
+      ok
           ? 'Request declined — the customer will see your reason.'
-          : 'Could not decline the request. Please try again.'),
+          : 'Could not decline the request. Please try again.',
       backgroundColor: ok ? AppColors.adminPrimary : AppColors.adminRed,
-    ));
+    );
   }
 
   @override

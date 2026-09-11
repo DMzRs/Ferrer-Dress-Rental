@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/services/item_photo_encoder.dart';
 import 'package:ferrer_rental_shop/core/utils/validators.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
@@ -123,9 +124,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
     try {
       final remaining = _maxImages - _totalPhotos;
       if (remaining <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Up to $_maxImages photos per item.'),
-        ));
+        showTopSnackBar(context, 'Up to $_maxImages photos per item.');
         return;
       }
       final picked = await _picker.pickMultiImage(
@@ -140,10 +139,11 @@ class _AddItemSheetState extends State<AddItemSheet> {
       });
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Could not open your photos. Please try again.'),
+      showTopSnackBar(
+        context,
+        'Could not open your photos. Please try again.',
         backgroundColor: AppColors.adminRed,
-      ));
+      );
     }
   }
 
@@ -187,9 +187,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_sizes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one available size')),
-      );
+      showTopSnackBar(context, 'Select at least one available size');
       return;
     }
     setState(() => _saving = true);
@@ -228,11 +226,11 @@ class _AddItemSheetState extends State<AddItemSheet> {
     } on PhotoTooLargeException {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'These photos are too large to store. Remove one or two and try again.'),
+      showTopSnackBar(
+        context,
+        'These photos are too large to store. Remove one or two and try again.',
         backgroundColor: AppColors.adminRed,
-      ));
+      );
       return;
     } catch (_) {
       // fall through to the generic failure below
@@ -242,19 +240,16 @@ class _AddItemSheetState extends State<AddItemSheet> {
     setState(() => _saving = false);
     if (ok) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isEdit
-              ? '$name updated'
-              : '$name added to inventory'),
-          backgroundColor: AppColors.adminPrimary,
-        ),
+      showTopSnackBar(
+        context,
+        _isEdit ? '$name updated' : '$name added to inventory',
+        backgroundColor: AppColors.adminPrimary,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Could not save item. Please try again.'),
-            backgroundColor: AppColors.adminRed),
+      showTopSnackBar(
+        context,
+        'Could not save item. Please try again.',
+        backgroundColor: AppColors.adminRed,
       );
     }
   }

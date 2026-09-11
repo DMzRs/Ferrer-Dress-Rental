@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/router/app_router.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
@@ -76,11 +77,10 @@ class _BodyState extends State<_Body> {
 
     final address = _addressController.text.trim();
     if (address.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your address so we know where to bring the item.'),
-          backgroundColor: AppColors.danger,
-        ),
+      showTopSnackBar(
+        context,
+        'Please enter your address so we know where to bring the item.',
+        backgroundColor: AppColors.danger,
       );
       return;
     }
@@ -88,11 +88,10 @@ class _BodyState extends State<_Body> {
     final ok = await vm.confirm(user, address: address);
     if (!mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(vm.error ?? 'Something went wrong.'),
-          backgroundColor: AppColors.danger,
-        ),
+      showTopSnackBar(
+        context,
+        vm.error ?? 'Something went wrong.',
+        backgroundColor: AppColors.danger,
       );
       return;
     }
@@ -180,12 +179,10 @@ class _BodyState extends State<_Body> {
                       dateText: Formatters.date(vm.endDate),
                       icon: Icons.event_available_outlined,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Rental period is fixed to 5 days.'),
-                            backgroundColor: AppColors.roseDark,
-                          ),
+                        showTopSnackBar(
+                          context,
+                          'Rental period is fixed to 5 days.',
+                          backgroundColor: AppColors.roseDark,
                         );
                       },
                     ),

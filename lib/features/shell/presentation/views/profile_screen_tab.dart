@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/constants/app_strings.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -308,8 +309,8 @@ Future<void> _showEditProfileSheet(BuildContext context) async {
                   busy: busy,
                   onPressed: () async {
                     if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Please enter your full name.')));
+                      showTopSnackBar(
+                          context, 'Please enter your full name.');
                       return;
                     }
                     setSheetState(() => busy = true);
@@ -321,13 +322,14 @@ Future<void> _showEditProfileSheet(BuildContext context) async {
                     if (!sheetContext.mounted) return;
                     setSheetState(() => busy = false);
                     Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(ok
+                    showTopSnackBar(
+                      context,
+                      ok
                           ? 'Profile updated.'
-                          : (vm.error ?? 'Could not save your profile.')),
+                          : (vm.error ?? 'Could not save your profile.'),
                       backgroundColor:
                           ok ? AppColors.success : AppColors.danger,
-                    ));
+                    );
                   },
                 ),
               ],

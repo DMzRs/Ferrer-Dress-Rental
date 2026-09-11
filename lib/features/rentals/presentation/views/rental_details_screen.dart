@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
@@ -61,13 +62,12 @@ class _Body extends StatelessWidget {
     final vm = context.read<RentalDetailsViewModel>();
     final ok = await vm.cancel(rental);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Rental cancelled. Refund is on its way.'
-            : 'Could not cancel right now. Please try again.'),
-        backgroundColor: ok ? AppColors.success : AppColors.danger,
-      ),
+    showTopSnackBar(
+      context,
+      ok
+          ? 'Rental cancelled. Refund is on its way.'
+          : 'Could not cancel right now. Please try again.',
+      backgroundColor: ok ? AppColors.success : AppColors.danger,
     );
     if (ok) Navigator.of(context).pop();
   }
