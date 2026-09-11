@@ -26,8 +26,10 @@ exports.requestEmailOtp = onCall(async (request) => {
   const ref = db.collection('emailOtps').doc(Buffer.from(email).toString('base64url'));
   const now = Date.now();
   const snap = await ref.get();
-  if (snap.exists && !otp.canResend(snap.get('resendAvailableAt') || 0, now)) {
-    const retry = Math.ceil(((snap.get('resendAvailableAt') || now) - now) / 1000);
+  const d = snap.data() || {};
+  const resendAt = d.resendAvailableAt && d.resendAvailableAt.toMillis ? d.resendAvailableAt.toMillis() : 0;
+  if (snap.exists && !otp.canResend(resendAt, now)) {
+    const retry = Math.ceil((resendAt - now) / 1000);
     throw new HttpsError('resource-exhausted', 'Wait ' + retry + 's before requesting a new code.');
   }
   const code = otp.genCode();

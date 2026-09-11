@@ -113,5 +113,10 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
     }
+
+    // Email OTP docs are server-only (Admin SDK). No client access.
+    match /emailOtps/{doc} {
+      allow read, write: if false;
+    }
   }
 }
