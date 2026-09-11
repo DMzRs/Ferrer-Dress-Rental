@@ -55,3 +55,4 @@ ios/Runner/GoogleService-Info.plist
 
 # Agent scratch (ledgers, briefs, review packs) - never commit
 .superpowers/
+docs/superpowers/
