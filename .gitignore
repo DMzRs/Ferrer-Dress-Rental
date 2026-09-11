@@ -52,3 +52,6 @@ android/local.properties
 lib/firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+
+# Agent scratch (ledgers, briefs, review packs) - never commit
+.superpowers/

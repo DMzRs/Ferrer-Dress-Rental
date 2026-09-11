@@ -1,5 +1,9 @@
 # Email OTP (6-Digit Code) — Signup Verification Design
 
+> SUPERSEDED 2026-09-12: pivoted to Firebase-native email-LINK signup (free,
+> no backend). The Node `functions/` backend was deleted; signup now uses
+> `sendSignInLinkToEmail` + app-link capture. This doc stays as history.
+
 Date: 2026-09-11
 Status: Proposed — awaiting user review before implementation plan.
 Scope: Signup-only. Login keeps email + password. Gmail SMTP via app password
