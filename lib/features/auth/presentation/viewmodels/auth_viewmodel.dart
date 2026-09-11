@@ -6,6 +6,8 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
+enum OtpState { idle, sending, codeSent, verifying, verified }
+
 class AuthViewModel extends ChangeNotifier {
   AuthViewModel(this._repository) {
     _subscription = _repository.authStateChanges.listen((user) {
@@ -21,9 +23,19 @@ class AuthViewModel extends ChangeNotifier {
   bool _busy = false;
   String? _error;
 
+  OtpState _otpState = OtpState.idle;
+  String? _otpError;
+  int _resendCooldownSeconds = 0;
+  Timer? _cooldownTimer;
+  bool _disposed = false;
+
   AppUser? get user => _user;
   bool get busy => _busy;
   String? get error => _error;
+
+  OtpState get otpState => _otpState;
+  String? get otpError => _otpError;
+  int get resendCooldownSeconds => _resendCooldownSeconds;
 
   void _setBusy(bool value) {
     _busy = value;
@@ -112,8 +124,73 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> signOut() => _repository.signOut();
 
+  Future<bool> sendOtp(String email) async {
+    _otpError = null;
+    _otpState = OtpState.sending;
+    notifyListeners();
+    final result = await _repository.requestEmailOtp(email);
+    if (_disposed) return result is Success;
+    if (result is Success) {
+      _otpState = OtpState.codeSent;
+      _startCooldown();
+    } else {
+      _otpState = OtpState.idle;
+      _otpError =
+          result.failure?.message ?? 'Something went wrong. Please try again.';
+    }
+    notifyListeners();
+    return result is Success;
+  }
+
+  Future<bool> confirmOtp({required String email, required String code}) async {
+    _otpError = null;
+    _otpState = OtpState.verifying;
+    notifyListeners();
+    final result = await _repository.verifyEmailOtp(email: email, code: code);
+    if (_disposed) return result is Success;
+    if (result is Success) {
+      _otpState = OtpState.verified;
+    } else {
+      _otpState = OtpState.codeSent;
+      _otpError =
+          result.failure?.message ?? 'Something went wrong. Please try again.';
+    }
+    notifyListeners();
+    return result is Success;
+  }
+
+  void resetOtp() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+    _otpState = OtpState.idle;
+    _otpError = null;
+    _resendCooldownSeconds = 0;
+    if (!_disposed) notifyListeners();
+  }
+
+  void _startCooldown() {
+    _cooldownTimer?.cancel();
+    _resendCooldownSeconds = 60;
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_disposed) {
+        timer.cancel();
+        return;
+      }
+      if (_resendCooldownSeconds <= 0) {
+        timer.cancel();
+        return;
+      }
+      _resendCooldownSeconds--;
+      notifyListeners();
+      if (_resendCooldownSeconds <= 0) timer.cancel();
+    });
+  }
+
   @override
   void dispose() {
+    _disposed = true;
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
     _subscription?.cancel();
     super.dispose();
   }
