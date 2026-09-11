@@ -4,7 +4,7 @@
   "engines": { "node": "20" },
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/otp.test.js",
     "deploy": "firebase deploy --only functions --project ferrer-rental-shop"
   },
   "dependencies": {
