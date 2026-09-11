@@ -42,6 +42,8 @@ class _BookingScreenState extends State<BookingScreen> {
   Future<void> _confirm() async {
     final user = context.read<AuthViewModel>().user;
     if (user == null) return;
+    // Dismiss any open keyboard before showing the result sheet.
+    FocusScope.of(context).unfocus();
     final ok = await _viewModel.confirm(
       userId: user.uid,
       userName: user.fullName,
@@ -52,8 +54,17 @@ class _BookingScreenState extends State<BookingScreen> {
 
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _ResultSheet(success: ok),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: _ResultSheet(
+          success: ok,
+          errorMessage: ok ? null : _viewModel.error,
+        ),
+      ),
     );
     if (ok && mounted) Navigator.of(context).pop();
   }
@@ -323,8 +334,9 @@ class _PurposeDropdown extends StatelessWidget {
 
 class _ResultSheet extends StatelessWidget {
   final bool success;
+  final String? errorMessage;
 
-  const _ResultSheet({required this.success});
+  const _ResultSheet({required this.success, this.errorMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -364,7 +376,7 @@ class _ResultSheet extends StatelessWidget {
           Text(
             success
                 ? "We can't wait to see you! A reminder will be sent before your visit."
-                : 'Please check your connection and try again.',
+                : (errorMessage ?? 'Please check your connection and try again.'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.inkSoft, fontSize: 13.5, height: 1.5),
           ),

@@ -46,6 +46,14 @@ class BookingViewModel extends ChangeNotifier {
   Future<void> selectDate(DateTime date) async {
     final normalized = DateTime(date.year, date.month, date.day);
     if (normalized == _selectedDate) return;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (normalized.isBefore(today)) {
+      _error = 'Cannot select a past date.';
+      notifyListeners();
+      return;
+    }
+    _error = null;
     _selectedDate = normalized;
     _selectedSlot = null;
     notifyListeners();
@@ -66,6 +74,7 @@ class BookingViewModel extends ChangeNotifier {
 
   void selectSlot(String slot) {
     if (_bookedSlots.contains(slot)) return;
+    _error = null;
     _selectedSlot = slot;
     notifyListeners();
   }
@@ -81,12 +90,25 @@ class BookingViewModel extends ChangeNotifier {
     String? itemId,
     String? itemName,
   }) async {
-    if (_selectedSlot == null) return false;
+    if (_selectedSlot == null) {
+      _error = 'Please choose a date and time slot first.';
+      notifyListeners();
+      return false;
+    }
+    _error = null;
     _confirming = true;
     notifyListeners();
 
     final scheduledAt =
         _combineDateAndSlot(_selectedDate, _selectedSlot!);
+    // No back-scheduling: block past dates/times (e.g. stale selection kept
+    // overnight, or a same-day slot that already passed).
+    if (!scheduledAt.isAfter(DateTime.now())) {
+      _error = 'Cannot book an appointment in the past. Please pick a future date and time.';
+      _confirming = false;
+      notifyListeners();
+      return false;
+    }
     final appointment = Appointment(
       id: '',
       userId: userId,
