@@ -10,7 +10,10 @@ import 'package:ferrer_rental_shop/features/home/presentation/widgets/item_card.
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  /// Tapping the greeting avatar jumps to the Profile tab in [UserShell].
+  final VoidCallback? onAvatarTap;
+
+  const HomeScreen({super.key, this.onAvatarTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -63,7 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        _UserAvatar(user: user),
+                        _UserAvatar(
+                          user: user,
+                          onTap: widget.onAvatarTap,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -201,33 +207,42 @@ class _SearchBar extends StatelessWidget {
 
 class _UserAvatar extends StatelessWidget {
   final AppUser? user;
+  final VoidCallback? onTap;
 
-  const _UserAvatar({required this.user});
+  const _UserAvatar({required this.user, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: AppColors.brandGradient,
-        border: Border.all(color: Colors.white, width: 2.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.blush.withValues(alpha: .45),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
+    return Tooltip(
+      message: 'View profile',
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        splashColor: AppColors.blushSoft,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: AppColors.brandGradient,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.blush.withValues(alpha: .45),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        user?.initials ?? '?',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
+          alignment: Alignment.center,
+          child: Text(
+            user?.initials ?? '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
         ),
       ),
     );

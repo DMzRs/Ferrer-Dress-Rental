@@ -61,7 +61,7 @@ class _UserShellViewState extends State<_UserShellView> {
       body: IndexedStack(
         index: _index,
         children: [
-          const HomeScreen(),
+          HomeScreen(onAvatarTap: () => setState(() => _index = 3)),
           const MyAppointmentsScreen(),
           const MyRentalsScreen(),
           ProfileScreenTab(
