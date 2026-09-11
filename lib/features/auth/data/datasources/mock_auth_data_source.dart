@@ -99,17 +99,40 @@ class MockAuthDataSource implements AuthDataSource {
   }
 
   @override
-  Future<void> requestEmailOtp(String email) async {
+  Future<void> sendSignInLink(String email) async {
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override
-  Future<void> verifyEmailOtp({required String email, required String code}) async {
+  Future<AppUser> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    if (code.trim() != '123456') {
-      throw Exception('Incorrect code. Try 123456 in demo mode.');
+    // Demo mode: any link tap counts as proof of inbox ownership.
+    final normalized = email.trim().toLowerCase();
+    final match = _users.where((u) => u.email.toLowerCase() == normalized).toList();
+    if (match.isNotEmpty) {
+      _setSession(match.first);
+      return match.first;
     }
+    final user = AppUserModel(
+      uid: 'user-${DateTime.now().millisecondsSinceEpoch}',
+      fullName: (fullName ?? '').trim(),
+      email: normalized,
+      phone: (phone ?? '').trim(),
+      role: UserRole.customer,
+    );
+    _users.add(user);
+    _setSession(user);
+    return user;
   }
+
+  @override
+  Stream<String> get emailLinkStream => const Stream.empty();
 
   @override
   Future<void> signOut() async {

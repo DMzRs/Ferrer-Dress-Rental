@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ferrer_rental_shop/core/error/failure.dart';
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
@@ -5,10 +7,19 @@ import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_reposi
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _user = AppUser(
+  uid: 'u1',
+  fullName: 'Jane Doe',
+  email: 'j@x.com',
+  phone: '0917',
+  role: UserRole.customer,
+);
+
 class FakeAuthRepository implements AuthRepository {
-  bool failRequest = false;
-  bool failVerify = false;
+  bool failSend = false;
+  bool failComplete = false;
   String failureMessage = 'boom';
+  final linkController = StreamController<String>.broadcast();
 
   @override
   Stream<AppUser?> get authStateChanges => const Stream.empty();
@@ -29,16 +40,25 @@ class FakeAuthRepository implements AuthRepository {
   Future<Result<void>> sendPasswordReset(String email) async => const Success(null);
 
   @override
-  Future<Result<void>> requestEmailOtp(String email) async {
-    if (failRequest) return Err(AuthFailure(failureMessage));
+  Future<Result<void>> sendSignInLink(String email) async {
+    if (failSend) return Err(AuthFailure(failureMessage));
     return const Success(null);
   }
 
   @override
-  Future<Result<void>> verifyEmailOtp({required String email, required String code}) async {
-    if (failVerify) return Err(AuthFailure(failureMessage));
-    return const Success(null);
+  Future<Result<AppUser>> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  }) async {
+    if (failComplete) return Err(AuthFailure(failureMessage));
+    return const Success(_user);
   }
+
+  @override
+  Stream<String> emailLinkStream() => linkController.stream;
 
   @override
   Future<void> signOut() async {}
@@ -55,71 +75,69 @@ class FakeAuthRepository implements AuthRepository {
   Stream<int> usersCountStream() => const Stream.empty();
 }
 
+Future<bool> _send(AuthViewModel vm) {
+  return vm.sendLink(
+    fullName: 'Jane Doe',
+    email: 'j@x.com',
+    phone: '0917',
+    password: 'secret123',
+  );
+}
+
 void main() {
-  group('AuthViewModel OTP state machine', () {
-    test('sendOtp transitions idle->sending->codeSent', () async {
+  group('AuthViewModel email-link state machine', () {
+    test('sendLink transitions idle->linkSent', () async {
       final vm = AuthViewModel(FakeAuthRepository());
-      expect(vm.otpState, OtpState.idle);
-      final ok = await vm.sendOtp('j@x.com');
+      expect(vm.linkState, EmailLinkState.idle);
+      final ok = await _send(vm);
       expect(ok, isTrue);
-      expect(vm.otpState, OtpState.codeSent);
+      expect(vm.linkState, EmailLinkState.linkSent);
       expect(vm.resendCooldownSeconds, 60);
-      expect(vm.otpError, isNull);
+      expect(vm.linkError, isNull);
       vm.dispose();
     });
 
-    test('sendOtp failure returns to idle with otpError', () async {
-      final repo = FakeAuthRepository()..failRequest = true;
+    test('sendLink failure returns to idle with linkError', () async {
+      final repo = FakeAuthRepository()..failSend = true;
       final vm = AuthViewModel(repo);
-      final ok = await vm.sendOtp('j@x.com');
+      final ok = await _send(vm);
       expect(ok, isFalse);
-      expect(vm.otpState, OtpState.idle);
-      expect(vm.otpError, 'boom');
+      expect(vm.linkState, EmailLinkState.idle);
+      expect(vm.linkError, 'boom');
       vm.dispose();
     });
 
-    test('confirmOtp success transitions to verified', () async {
-      final vm = AuthViewModel(FakeAuthRepository());
-      await vm.sendOtp('j@x.com');
-      final ok = await vm.confirmOtp(email: 'j@x.com', code: '123456');
-      expect(ok, isTrue);
-      expect(vm.otpState, OtpState.verified);
-      expect(vm.otpError, isNull);
-      vm.dispose();
-    });
-
-    test('wrong-code path keeps codeSent and sets otpError', () async {
-      final repo = FakeAuthRepository()..failVerify = true;
+    test('incoming link auto-completes signup', () async {
+      final repo = FakeAuthRepository();
       final vm = AuthViewModel(repo);
-      await vm.sendOtp('j@x.com');
-      final ok = await vm.confirmOtp(email: 'j@x.com', code: '000000');
+      await _send(vm);
+      repo.linkController.add('https://ferrer-rental-shop.firebaseapp.com/__/auth/handler?mode=signIn&oobCode=x');
+      await Future.delayed(const Duration(milliseconds: 100));
+      expect(vm.linkState, EmailLinkState.verified);
+      expect(vm.user?.uid, 'u1');
+      expect(vm.linkError, isNull);
+      vm.dispose();
+    });
+
+    test('failed link completion stays linkSent with linkError', () async {
+      final repo = FakeAuthRepository()..failComplete = true;
+      final vm = AuthViewModel(repo);
+      await _send(vm);
+      final ok = await vm.completeWithLink('https://x/bad');
       expect(ok, isFalse);
-      expect(vm.otpState, OtpState.codeSent);
-      expect(vm.otpError, 'boom');
+      expect(vm.linkState, EmailLinkState.linkSent);
+      expect(vm.linkError, 'boom');
       vm.dispose();
     });
 
-    test('new attempt clears previous otpError', () async {
-      final repo = FakeAuthRepository()..failVerify = true;
+    test('resetLink restores idle, clears error, zeroes cooldown', () async {
+      final repo = FakeAuthRepository()..failComplete = true;
       final vm = AuthViewModel(repo);
-      await vm.sendOtp('j@x.com');
-      await vm.confirmOtp(email: 'j@x.com', code: '000000');
-      expect(vm.otpError, isNotNull);
-      repo.failVerify = false;
-      final ok = await vm.confirmOtp(email: 'j@x.com', code: '123456');
-      expect(ok, isTrue);
-      expect(vm.otpError, isNull);
-      vm.dispose();
-    });
-
-    test('resetOtp restores idle, clears error, zeroes cooldown', () async {
-      final repo = FakeAuthRepository()..failVerify = true;
-      final vm = AuthViewModel(repo);
-      await vm.sendOtp('j@x.com');
-      await vm.confirmOtp(email: 'j@x.com', code: '000000');
-      vm.resetOtp();
-      expect(vm.otpState, OtpState.idle);
-      expect(vm.otpError, isNull);
+      await _send(vm);
+      await vm.completeWithLink('https://x/bad');
+      vm.resetLink();
+      expect(vm.linkState, EmailLinkState.idle);
+      expect(vm.linkError, isNull);
       expect(vm.resendCooldownSeconds, 0);
       vm.dispose();
     });

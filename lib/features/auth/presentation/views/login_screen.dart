@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/config/app_config.dart';
@@ -34,39 +33,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  // Step 2 of signup: OTP code entry. Saved Step-1 details are snapshotted
-  // into local vars so verify + signUp use exactly what was submitted.
-  bool _otpStep = false;
-  String _otpName = '';
-  String _otpEmail = '';
-  String _otpPhone = '';
-  String _otpPassword = '';
-  final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
-  late final List<FocusNode> _otpNodes;
-  bool _settingOtpProgrammatically = false;
+  // Step 2 of signup: email-link verification. The link the user taps
+  // re-enters the app and the viewmodel completes signup automatically.
+  bool _linkStep = false;
+  String _linkEmail = '';
 
   AuthViewModel get _vm => context.read<AuthViewModel>();
 
   @override
   void initState() {
     super.initState();
-    _otpNodes = List.generate(
-      6,
-      (i) => FocusNode(
-        onKeyEvent: (node, event) {
-          // Hardware-keyboard backspace on an empty box moves back.
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.backspace &&
-              _otpControllers[i].text.isEmpty &&
-              i > 0) {
-            _otpNodes[i - 1].requestFocus();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-      ),
-    );
     for (final controller in [
       _emailController,
       _passwordController,
@@ -107,93 +83,25 @@ class _LoginScreenState extends State<LoginScreen> {
     _confirmPasswordController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
-    for (final controller in _otpControllers) {
-      controller.dispose();
-    }
-    for (final node in _otpNodes) {
-      node.dispose();
-    }
     super.dispose();
   }
 
   void _switchMode(AuthMode mode) {
     FocusScope.of(context).unfocus();
-    _vm.resetOtp();
-    _clearOtpBoxes();
-    _clearOtpSnapshot();
+    _vm.resetLink();
     setState(() {
       _mode = mode;
-      _otpStep = false;
+      _linkStep = false;
+      _linkEmail = '';
       _canSubmit = _isValidFor(mode);
     });
-  }
-
-  void _clearOtpBoxes() {
-    _settingOtpProgrammatically = true;
-    try {
-      for (final controller in _otpControllers) {
-        controller.clear();
-      }
-    } finally {
-      _settingOtpProgrammatically = false;
-    }
-  }
-
-  void _clearOtpSnapshot() {
-    _otpName = '';
-    _otpEmail = '';
-    _otpPhone = '';
-    _otpPassword = '';
-  }
-
-  bool get _otpComplete =>
-      _otpControllers.every((c) => c.text.isNotEmpty);
-
-  /// Single-char UX is enforced here in [onChanged] rather than with a
-  /// length limiter: a length-1 limiter would truncate an incoming paste to
-  /// one box, while this keeps typed input to one digit per box and still
-  /// distributes a full-code paste across all six.
-  void _onOtpChanged(int index, String value) {
-    if (_settingOtpProgrammatically) return;
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    _settingOtpProgrammatically = true;
-    try {
-      if (digits.length > 1) {
-        // Full-code paste: fill all six boxes.
-        for (var i = 0; i < 6; i++) {
-          _otpControllers[i].text =
-              i < digits.length ? digits[i] : '';
-        }
-      } else {
-        // Typed input: keep only the latest digit.
-        _otpControllers[index].text =
-            digits.isEmpty ? '' : digits[digits.length - 1];
-      }
-    } finally {
-      _settingOtpProgrammatically = false;
-    }
-    if (digits.length > 1) {
-      if (digits.length >= 6) {
-        _otpNodes[index].unfocus();
-      } else {
-        _otpNodes[digits.length.clamp(0, 5)].requestFocus();
-      }
-    } else if (digits.isEmpty) {
-      // Cleared via soft-keyboard backspace: move to the previous box.
-      if (index > 0) _otpNodes[index - 1].requestFocus();
-    } else if (index < 5) {
-      _otpNodes[index + 1].requestFocus();
-    } else {
-      _otpNodes[index].unfocus();
-    }
-    setState(() {});
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_mode == AuthMode.signup) {
-      await _startOtpStep();
+      await _startLinkStep();
       return;
     }
     _vm.clearError();
@@ -212,89 +120,69 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Step 1 of signup: validate the details form, snapshot the details, and
-  /// send the OTP. Only flips to the code-entry step on success.
-  Future<void> _startOtpStep() async {
-    final name = _nameController.text;
-    final email = _emailController.text;
-    final phone = _phoneController.text;
-    final password = _passwordController.text;
-    final sent = await _vm.sendOtp(email);
+  /// Step 1 of signup: validate the details form and send the email
+  /// sign-in link. Only flips to the waiting step on success; tapping the
+  /// link completes signup automatically via the viewmodel's link listener.
+  Future<void> _startLinkStep() async {
+    final sent = await _vm.sendLink(
+      fullName: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      password: _passwordController.text,
+    );
     if (!mounted) return;
     if (sent) {
       setState(() {
-        _otpName = name;
-        _otpEmail = email;
-        _otpPhone = phone;
-        _otpPassword = password;
-        _otpStep = true;
+        _linkEmail = _emailController.text.trim();
+        _linkStep = true;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_vm.otpError ?? 'Something went wrong'),
+          content: Text(_vm.linkError ?? 'Something went wrong'),
           backgroundColor: AppColors.danger,
         ),
       );
     }
   }
 
-  Future<void> _resendOtp() async {
+  Future<void> _resendLink() async {
     // Guard against double-taps while a send is in flight.
-    if (_vm.otpState == OtpState.sending) return;
-    final sent = await _vm.sendOtp(_otpEmail);
+    if (_vm.linkState == EmailLinkState.sending) return;
+    final sent = await _vm.sendLink(
+      fullName: _nameController.text,
+      email: _linkEmail,
+      phone: _phoneController.text,
+      password: _passwordController.text,
+    );
     if (!mounted || sent) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_vm.otpError ?? 'Something went wrong'),
+        content: Text(_vm.linkError ?? 'Something went wrong'),
         backgroundColor: AppColors.danger,
       ),
     );
   }
 
-  /// Step 2 of signup: verify the code, then create the account with the
-  /// saved Step-1 details.
-  Future<void> _verifyOtp() async {
-    FocusScope.of(context).unfocus();
-    final code = _otpControllers.map((c) => c.text).join();
-    if (code.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter the 6-digit code'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-      return;
-    }
-    final verified = await _vm.confirmOtp(email: _otpEmail, code: code);
-    if (!mounted) return;
-    // Wrong code: vm.otpError renders under the boxes; stay on Step 2.
-    if (!verified) return;
-    final success = await _vm.signUp(
-      fullName: _otpName,
-      email: _otpEmail,
-      phone: _otpPhone,
-      password: _otpPassword,
+  /// Demo only (mock mode): simulates tapping the email link.
+  Future<void> _simulateLinkTap() async {
+    final done = await _vm.completeWithLink('demo-link');
+    if (!mounted || done) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_vm.linkError ?? 'Something went wrong'),
+        backgroundColor: AppColors.danger,
+      ),
     );
-    if (!mounted) return;
-    if (success) {
-      _vm.resetOtp();
-      _clearOtpBoxes();
-      _clearOtpSnapshot();
-      setState(() => _otpStep = false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_vm.error ?? 'Something went wrong'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-    }
   }
 
   void _backToDetails() {
     FocusScope.of(context).unfocus();
-    setState(() => _otpStep = false);
+    _vm.resetLink();
+    setState(() {
+      _linkStep = false;
+      _linkEmail = '';
+    });
   }
 
   Future<void> _showForgotPasswordSheet() async {
@@ -405,19 +293,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 18),
                         FerrerWordmark(fontSize: 32),
                         const SizedBox(height: 36),
-                        _mode == AuthMode.signup && _otpStep
-                            ? _OtpStepCard(
-                                email: _otpEmail,
-                                otpControllers: _otpControllers,
-                                otpNodes: _otpNodes,
-                                otpError: vm.otpError,
-                                otpState: vm.otpState,
+                        _mode == AuthMode.signup && _linkStep
+                            ? _LinkSentCard(
+                                email: _linkEmail,
+                                linkError: vm.linkError,
+                                linkState: vm.linkState,
                                 resendCooldownSeconds:
                                     vm.resendCooldownSeconds,
-                                codeComplete: _otpComplete,
-                                onChanged: _onOtpChanged,
-                                onVerify: _verifyOtp,
-                                onResend: _resendOtp,
+                                showDemoTap:
+                                    !AppConfig.firebaseEnabled,
+                                onResend: _resendLink,
+                                onDemoTap: _simulateLinkTap,
                                 onBack: _backToDetails,
                               )
                             : _AuthCard(
@@ -434,7 +320,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onToggleObscure: () =>
                                     setState(() => _obscure = !_obscure),
                                 busy: vm.busy ||
-                                    vm.otpState == OtpState.sending,
+                                    vm.linkState ==
+                                        EmailLinkState.sending,
                                 onSubmit: _submit,
                                 onForgotPassword: _showForgotPasswordSheet,
                                 onSwitchToSignup: () =>
@@ -466,35 +353,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _OtpStepCard extends StatelessWidget {
+class _LinkSentCard extends StatelessWidget {
   final String email;
-  final List<TextEditingController> otpControllers;
-  final List<FocusNode> otpNodes;
-  final String? otpError;
-  final OtpState otpState;
+  final String? linkError;
+  final EmailLinkState linkState;
   final int resendCooldownSeconds;
-  final bool codeComplete;
-  final void Function(int index, String value) onChanged;
-  final VoidCallback onVerify;
+  final bool showDemoTap;
   final VoidCallback onResend;
+  final VoidCallback onDemoTap;
   final VoidCallback onBack;
 
-  const _OtpStepCard({
+  const _LinkSentCard({
     required this.email,
-    required this.otpControllers,
-    required this.otpNodes,
-    required this.otpError,
-    required this.otpState,
+    required this.linkError,
+    required this.linkState,
     required this.resendCooldownSeconds,
-    required this.codeComplete,
-    required this.onChanged,
-    required this.onVerify,
+    required this.showDemoTap,
     required this.onResend,
+    required this.onDemoTap,
     required this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
+    final waiting = linkState == EmailLinkState.linkSent;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 30),
@@ -520,49 +402,59 @@ class _OtpStepCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'We sent a 6-digit code to $email',
+            'We sent a sign-in link to $email. Tap it and you will be signed straight in — no password needed.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
           ),
-          const SizedBox(height: 26),
-          Row(
-            children: List.generate(6, (i) {
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
-                  child: TextField(
-                    controller: otpControllers[i],
-                    focusNode: otpNodes[i],
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    textAlign: TextAlign.center,
-                    textInputAction:
-                        i < 5 ? TextInputAction.next : TextInputAction.done,
-                    onSubmitted: i == 5 ? (_) => onVerify() : null,
-                    onChanged: (value) => onChanged(i, value),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
+          const SizedBox(height: 22),
+          if (waiting) ...[
+            const Center(
+              child: SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: AppColors.roseDark,
                 ),
-              );
-            }),
-          ),
-          if (otpError != null) ...[
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Waiting for you to tap the link…',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (linkState == EmailLinkState.verifying) ...[
+            const Center(
+              child: SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: AppColors.roseDark,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Link received — finishing signup…',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (linkError != null) ...[
             const SizedBox(height: 10),
             Text(
-              otpError!,
+              linkError!,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.danger,
@@ -585,7 +477,9 @@ class _OtpStepCard extends StatelessWidget {
                 )
               else
                 TextButton(
-                  onPressed: onResend,
+                  onPressed: linkState == EmailLinkState.sending
+                      ? null
+                      : onResend,
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.roseDark,
                     textStyle: const TextStyle(
@@ -593,16 +487,20 @@ class _OtpStepCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: const Text('Resend code'),
+                  child: linkState == EmailLinkState.sending
+                      ? const Text('Sending…')
+                      : const Text('Resend link'),
                 ),
             ],
           ),
-          const SizedBox(height: 14),
-          GradientButton(
-            label: 'Verify Code',
-            busy: otpState == OtpState.verifying,
-            onPressed: codeComplete ? onVerify : null,
-          ),
+          if (showDemoTap) ...[
+            const SizedBox(height: 6),
+            GradientButton(
+              label: 'Simulate link tap (demo)',
+              busy: linkState == EmailLinkState.verifying,
+              onPressed: onDemoTap,
+            ),
+          ],
           const SizedBox(height: 8),
           Center(
             child: TextButton(

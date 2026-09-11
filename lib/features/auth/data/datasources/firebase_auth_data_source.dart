@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:ferrer_rental_shop/core/services/app_firestore.dart';
 
+import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:ferrer_rental_shop/core/constants/firestore_collections.dart';
@@ -13,6 +13,11 @@ import 'auth_data_source.dart';
 class FirebaseAuthDataSource implements AuthDataSource {
   FirebaseAuth get _auth => FirebaseAuth.instance;
   FirebaseFirestore get _db => AppFirestore.instance;
+  final AppLinks _appLinks = AppLinks();
+
+  /// Must match the authorized domain + app-link host configured for the
+  /// Firebase project (see README / console checklist).
+  static const String _linkHost = 'ferrer-rental-shop.firebaseapp.com';
 
   @override
   Stream<AppUser?> get authStateChanges =>
@@ -91,24 +96,80 @@ class FirebaseAuthDataSource implements AuthDataSource {
       _auth.sendPasswordResetEmail(email: email.trim());
 
   @override
-  Future<void> requestEmailOtp(String email) async {
-    try {
-      await FirebaseFunctions.instance
-          .httpsCallable('requestEmailOtp')
-          .call({'email': email.trim()});
-    } on FirebaseFunctionsException catch (e) {
-      throw Exception(e.message ?? 'Could not send the code.');
-    }
+  Future<void> sendSignInLink(String email) async {
+    final actionCodeSettings = ActionCodeSettings(
+      url: 'https://$_linkHost/__/auth/handler',
+      handleCodeInApp: true,
+      androidPackageName: 'com.example.ferrer_rental_shop',
+      androidInstallApp: false,
+      androidMinimumVersion: '21',
+      iOSBundleId: 'com.example.ferrerRentalShop',
+    );
+    await _auth.sendSignInLinkToEmail(
+      email: email.trim(),
+      actionCodeSettings: actionCodeSettings,
+    );
   }
 
   @override
-  Future<void> verifyEmailOtp({required String email, required String code}) async {
-    try {
-      await FirebaseFunctions.instance
-          .httpsCallable('verifyEmailOtp')
-          .call({'email': email.trim(), 'code': code.trim()});
-    } on FirebaseFunctionsException catch (e) {
-      throw Exception(e.message ?? 'Could not verify the code.');
+  Future<AppUser> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  }) async {
+    final normalizedEmail = email.trim();
+    final credential = await _auth.signInWithEmailLink(
+      email: normalizedEmail,
+      emailLink: link,
+    );
+    final firebaseUser = credential.user;
+    if (firebaseUser == null) throw Exception('Sign-in failed. Try the link again.');
+    // Attach the password login so the account also works with
+    // email + password afterwards. Best-effort: the link sign-in above
+    // already proves email ownership.
+    final pwd = password ?? '';
+    if (pwd.length >= 6) {
+      try {
+        await firebaseUser.linkWithCredential(
+          EmailAuthProvider.credential(email: normalizedEmail, password: pwd),
+        );
+      } on Object {
+        // Already linked or provider conflict — link sign-in stands on its own.
+      }
+    }
+    final name = fullName?.trim() ?? '';
+    final phoneNumber = phone?.trim() ?? '';
+    if (name.isNotEmpty && (firebaseUser.displayName ?? '').isEmpty) {
+      await firebaseUser.updateDisplayName(name);
+    }
+    final ref = _db.collection(FirestoreCollections.users).doc(firebaseUser.uid);
+    final doc = await ref.get();
+    if (!doc.exists) {
+      await ref.set(AppUserModel(
+        uid: firebaseUser.uid,
+        fullName: name,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        role: UserRole.customer,
+      ).toMap());
+    }
+    final user = await _resolveUser(firebaseUser);
+    if (user == null) throw Exception('Account not found');
+    return user;
+  }
+
+  @override
+  Stream<String> get emailLinkStream async* {
+    final initial = await _appLinks.getInitialLink();
+    if (initial != null &&
+        _auth.isSignInWithEmailLink(initial.toString())) {
+      yield initial.toString();
+    }
+    await for (final uri in _appLinks.uriLinkStream) {
+      final link = uri.toString();
+      if (_auth.isSignInWithEmailLink(link)) yield link;
     }
   }
 

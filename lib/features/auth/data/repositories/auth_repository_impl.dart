@@ -36,6 +36,12 @@ class AuthRepositoryImpl implements AuthRepository {
     if (message.contains('email-already-in-use')) {
       return 'This email is already registered.';
     }
+    if (message.contains('expired-action-code')) {
+      return 'This sign-in link expired. Request a new one.';
+    }
+    if (message.contains('invalid-action-code')) {
+      return 'This sign-in link is invalid. Request a new one.';
+    }
     if (message.contains('network')) return 'Please check your internet connection.';
     return message;
   }
@@ -66,14 +72,29 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> requestEmailOtp(String email) {
-    return _safe(() => _dataSource.requestEmailOtp(email));
+  Future<Result<void>> sendSignInLink(String email) {
+    return _safe(() => _dataSource.sendSignInLink(email));
   }
 
   @override
-  Future<Result<void>> verifyEmailOtp({required String email, required String code}) {
-    return _safe(() => _dataSource.verifyEmailOtp(email: email, code: code));
+  Future<Result<AppUser>> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  }) {
+    return _safe(() => _dataSource.signInWithEmailLink(
+          email: email,
+          link: link,
+          fullName: fullName,
+          phone: phone,
+          password: password,
+        ));
   }
+
+  @override
+  Stream<String> emailLinkStream() => _dataSource.emailLinkStream;
 
   @override
   Future<void> signOut() => _dataSource.signOut();

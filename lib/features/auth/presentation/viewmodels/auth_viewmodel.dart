@@ -6,7 +6,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
-enum OtpState { idle, sending, codeSent, verifying, verified }
+enum EmailLinkState { idle, sending, linkSent, verifying, verified }
 
 class AuthViewModel extends ChangeNotifier {
   AuthViewModel(this._repository) {
@@ -23,18 +23,25 @@ class AuthViewModel extends ChangeNotifier {
   bool _busy = false;
   String? _error;
 
-  OtpState _otpState = OtpState.idle;
-  String? _otpError;
+  EmailLinkState _linkState = EmailLinkState.idle;
+  String? _linkError;
   int _resendCooldownSeconds = 0;
   Timer? _cooldownTimer;
+  StreamSubscription<String>? _linkSub;
   bool _disposed = false;
+
+  // Step-1 signup details, kept so an incoming link can complete the flow.
+  String _linkName = '';
+  String _linkEmail = '';
+  String _linkPhone = '';
+  String _linkPassword = '';
 
   AppUser? get user => _user;
   bool get busy => _busy;
   String? get error => _error;
 
-  OtpState get otpState => _otpState;
-  String? get otpError => _otpError;
+  EmailLinkState get linkState => _linkState;
+  String? get linkError => _linkError;
   int get resendCooldownSeconds => _resendCooldownSeconds;
 
   void _setBusy(bool value) {
@@ -124,47 +131,82 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> signOut() => _repository.signOut();
 
-  Future<bool> sendOtp(String email) async {
-    _otpError = null;
-    _otpState = OtpState.sending;
+  /// Signup step 1: sends the email sign-in link and starts listening for
+  /// the incoming app link so tapping it completes signup automatically.
+  Future<bool> sendLink({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    _linkError = null;
+    _linkState = EmailLinkState.sending;
     notifyListeners();
-    final result = await _repository.requestEmailOtp(email);
+    final result = await _repository.sendSignInLink(email);
     if (_disposed) return result is Success;
     if (result is Success) {
-      _otpState = OtpState.codeSent;
+      _linkName = fullName.trim();
+      _linkEmail = email.trim();
+      _linkPhone = phone.trim();
+      _linkPassword = password;
+      _linkState = EmailLinkState.linkSent;
       _startCooldown();
+      _listenForLink();
     } else {
-      _otpState = OtpState.idle;
-      _otpError =
+      _linkState = EmailLinkState.idle;
+      _linkError =
           result.failure?.message ?? 'Something went wrong. Please try again.';
     }
     notifyListeners();
     return result is Success;
   }
 
-  Future<bool> confirmOtp({required String email, required String code}) async {
-    _otpError = null;
-    _otpState = OtpState.verifying;
+  /// Signup step 2: completes sign-in with a tapped (or demo) link, attaches
+  /// the password login, and creates the profile.
+  Future<bool> completeWithLink(String link) async {
+    _linkError = null;
+    _linkState = EmailLinkState.verifying;
     notifyListeners();
-    final result = await _repository.verifyEmailOtp(email: email, code: code);
+    final result = await _repository.signInWithEmailLink(
+      email: _linkEmail,
+      link: link,
+      fullName: _linkName,
+      phone: _linkPhone,
+      password: _linkPassword,
+    );
     if (_disposed) return result is Success;
-    if (result is Success) {
-      _otpState = OtpState.verified;
+    if (result is Success<AppUser>) {
+      _user = result.data;
+      _linkState = EmailLinkState.verified;
     } else {
-      _otpState = OtpState.codeSent;
-      _otpError =
+      _linkState = EmailLinkState.linkSent;
+      _linkError =
           result.failure?.message ?? 'Something went wrong. Please try again.';
     }
     notifyListeners();
     return result is Success;
   }
 
-  void resetOtp() {
+  void _listenForLink() {
+    _linkSub?.cancel();
+    _linkSub = _repository.emailLinkStream().listen((link) async {
+      if (_disposed || _linkState != EmailLinkState.linkSent) return;
+      await completeWithLink(link);
+    });
+  }
+
+  void resetLink() {
+    _linkSub?.cancel();
+    _linkSub = null;
     _cooldownTimer?.cancel();
     _cooldownTimer = null;
-    _otpState = OtpState.idle;
-    _otpError = null;
+    _linkState = EmailLinkState.idle;
+    _linkError = null;
     _resendCooldownSeconds = 0;
+    _linkName = '';
+    _linkEmail = '';
+    _linkPhone = '';
+    _linkPassword = '';
     if (!_disposed) notifyListeners();
   }
 
@@ -189,6 +231,8 @@ class AuthViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _linkSub?.cancel();
+    _linkSub = null;
     _cooldownTimer?.cancel();
     _cooldownTimer = null;
     _subscription?.cancel();

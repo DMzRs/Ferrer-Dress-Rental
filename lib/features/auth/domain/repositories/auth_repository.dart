@@ -15,9 +15,17 @@ abstract class AuthRepository {
 
   Future<Result<void>> sendPasswordReset(String email);
 
-  Future<Result<void>> requestEmailOtp(String email);
+  Future<Result<void>> sendSignInLink(String email);
 
-  Future<Result<void>> verifyEmailOtp({required String email, required String code});
+  Future<Result<AppUser>> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  });
+
+  Stream<String> emailLinkStream();
 
   Future<void> signOut();
 

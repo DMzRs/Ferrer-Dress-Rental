@@ -14,9 +14,23 @@ abstract class AuthDataSource {
 
   Future<void> sendPasswordReset(String email);
 
-  Future<void> requestEmailOtp(String email);
+  /// Passwordless email-link signup step 1: sends the sign-in link.
+  Future<void> sendSignInLink(String email);
 
-  Future<void> verifyEmailOtp({required String email, required String code});
+  /// Passwordless email-link signup step 2: completes sign-in with the link
+  /// the user tapped, then attaches the password login + profile so the
+  /// account works with both. Emits incoming app links that look like
+  /// Firebase email sign-in links (empty when unsupported, e.g. mock).
+  Future<AppUser> signInWithEmailLink({
+    required String email,
+    required String link,
+    String? fullName,
+    String? phone,
+    String? password,
+  });
+
+  /// Raw incoming deep links filtered to Firebase email sign-in links.
+  Stream<String> get emailLinkStream;
 
   Future<void> signOut();
 
