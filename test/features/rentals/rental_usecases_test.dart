@@ -159,6 +159,32 @@ void main() {
       expect(() => usecase.execute(_rental()),
           throwsA(isA<NetworkFailure>()));
     });
+
+    test('refuses completed, cancelled and overdue rentals', () async {
+      final rentals = FakeRentalRepository();
+      final inventory = FakeInventoryRepository();
+      final usecase = CancelRentalUseCase(rentals, inventory);
+      final now = DateTime.now();
+
+      expect(
+        () => usecase.execute(_rental(status: 'completed')),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => usecase.execute(_rental(status: 'cancelled')),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => usecase.execute(_rental(
+          status: 'active',
+          start: now.subtract(const Duration(days: 10)),
+          end: now.subtract(const Duration(days: 2)),
+        )),
+        throwsA(isA<FormatException>()),
+      );
+      expect(rentals.cancelCalls, 0);
+      expect(inventory.statusUpdates, isEmpty);
+    });
   });
 
   group('ConfirmRentalUseCase', () {

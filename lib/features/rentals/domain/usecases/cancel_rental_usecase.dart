@@ -10,6 +10,12 @@ class CancelRentalUseCase {
   final InventoryRepository _inventoryRepository;
 
   Future<void> execute(Rental rental) async {
+    // Only pending or non-overdue active rentals can be cancelled. This
+    // mirrors the UI gate and blocks cancelling completed/declined rentals
+    // or overdue ones (which must go through return + deposit penalty).
+    if (!rental.isPending && !(rental.isActive && !rental.isOverdue)) {
+      throw const FormatException('This rental can no longer be cancelled.');
+    }
     try {
       await _rentalRepository.cancelRental(rental.id);
       await _inventoryRepository.updateStatus(rental.itemId, 'available');
