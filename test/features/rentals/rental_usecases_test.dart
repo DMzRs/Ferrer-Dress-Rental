@@ -51,6 +51,19 @@ class FakeRentalRepository implements RentalRepository {
 class FakeInventoryRepository implements InventoryRepository {
   final List<(String, String)> statusUpdates = [];
 
+  /// Catalog snapshot served to availability checks; tests mutate item
+  /// status through this list (e.g. mark 'rented' to simulate a race).
+  final List<CatalogItem> catalog = [
+    CatalogItem(
+      id: 'i1',
+      name: 'Gown',
+      category: 'dress',
+      basePrice: 500,
+      securityDeposit: 1000,
+      createdAt: DateTime(2026, 1, 1),
+    ),
+  ];
+
   @override
   Future<String> addItem(CatalogItem item) async => 'new-id';
 
@@ -58,7 +71,9 @@ class FakeInventoryRepository implements InventoryRepository {
   Future<List<String>> itemPhotos(String itemId) async => [];
 
   @override
-  Stream<List<CatalogItem>> itemsStream() => const Stream.empty();
+  Stream<List<CatalogItem>> itemsStream() async* {
+    yield List.unmodifiable(catalog);
+  }
 
   @override
   Future<void> saveItemPhotos(String itemId, List<String> photos) async {}
@@ -123,8 +138,7 @@ void main() {
       expect(rentals.createCalls, 0);
     });
 
-    test('throws FormatException when period is not fixed 5 days', () async {
-      final rentals = FakeRentalRepository();
+    test('throws FormatException when period is not fixed 5 days', () async {      final rentals = FakeRentalRepository();
       final inventory = FakeInventoryRepository();
       final usecase = CreateRentalUseCase(rentals, inventory);
       final now = DateTime.now();
@@ -133,6 +147,20 @@ void main() {
         () => usecase.execute(
           _rental(start: now, end: now.add(const Duration(days: 3))),
         ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(rentals.createCalls, 0);
+    });
+
+    test('refuses when the item is no longer available', () async {
+      final rentals = FakeRentalRepository();
+      final inventory = FakeInventoryRepository();
+      final usecase = CreateRentalUseCase(rentals, inventory);
+      inventory.catalog[0] =
+          inventory.catalog[0].copyWith(status: 'rented');
+
+      expect(
+        () => usecase.execute(_rental()),
         throwsA(isA<FormatException>()),
       );
       expect(rentals.createCalls, 0);

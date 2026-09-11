@@ -44,7 +44,18 @@ class _FakeInventory implements InventoryRepository {
   Future<List<String>> itemPhotos(String itemId) async => [];
 
   @override
-  Stream<List<CatalogItem>> itemsStream() => const Stream.empty();
+  Stream<List<CatalogItem>> itemsStream() async* {
+    yield [
+      CatalogItem(
+        id: 'i1',
+        name: 'Gown',
+        category: 'dress',
+        basePrice: 500,
+        securityDeposit: 1000,
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    ];
+  }
 
   @override
   Future<void> saveItemPhotos(String id, List<String> p) async {}

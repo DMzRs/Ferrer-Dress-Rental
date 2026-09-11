@@ -33,6 +33,18 @@ class CreateRentalUseCase {
     if (endDay.difference(startDay).inDays != 4) {
       throw const FormatException('Rental period is fixed to 5 days.');
     }
+    // Fresh availability check: the details screen gates on a snapshot that
+    // may be stale, so re-read the catalog here. (A truly simultaneous race
+    // still needs a server transaction — noted limitation.)
+    final items = await _inventoryRepository.itemsStream().first;
+    final matches = items.where((i) => i.id == rental.itemId).toList();
+    if (matches.isEmpty) {
+      throw const FormatException('This piece is no longer listed.');
+    }
+    if (!matches.first.isAvailable) {
+      throw const FormatException(
+          'This piece was just rented by someone else.');
+    }
     await _rentalRepository.createRental(rental);
     await _inventoryRepository.updateStatus(rental.itemId, 'rented');
   }
