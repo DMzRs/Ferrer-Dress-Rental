@@ -88,13 +88,58 @@ class ReportsScreen extends StatelessWidget {
                                 'Active Rentals', '${vm.activeCount}'),
                           ],
                         ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 13, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text('DEVELOPER SHARE · 5% OF FEES',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        letterSpacing: 1,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white70)),
+                              ),
+                              Text(Formatters.peso(vm.totalDeveloperCut),
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      for (final entry in const {
+                        ReportPeriod.daily: 'Daily',
+                        ReportPeriod.weekly: 'Weekly',
+                        ReportPeriod.monthly: 'Monthly',
+                      }.entries)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(entry.value),
+                            selected: vm.period == entry.key,
+                            onSelected: (_) => vm.setPeriod(entry.key),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
                   _sectionCard(
-                    title: 'Revenue by Month',
-                    subtitle: 'Last 6 months of rental fees',
+                    title: 'Revenue by ${_periodLabel(vm.period)}',
+                    subtitle:
+                        'Last ${_periodCount(vm.period)} of rental fees · dev 5%: ${Formatters.peso(vm.periodDeveloperCut)}',
                     child: RevenueBarChart(
                       values: vm.points.map((p) => p.revenue).toList(),
                       labels: vm.points.map((p) => p.label).toList(),
@@ -102,8 +147,9 @@ class ReportsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   _sectionCard(
-                    title: 'Rentals Completed per Month',
-                    subtitle: 'Items returned on schedule or late',
+                    title: 'Rentals Completed per ${_periodLabel(vm.period)}',
+                    subtitle:
+                        '${vm.periodCompleted} completed in period · items returned on schedule or late',
                     child: RentalsLineChart(
                       values: vm.points
                           .map((p) => p.rentalsCompleted)
@@ -118,8 +164,29 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _miniStat(String label, String value) {
-    return Expanded(
+  String _periodLabel(ReportPeriod period) {
+    switch (period) {
+      case ReportPeriod.daily:
+        return 'Day';
+      case ReportPeriod.weekly:
+        return 'Week';
+      case ReportPeriod.monthly:
+        return 'Month';
+    }
+  }
+
+  String _periodCount(ReportPeriod period) {
+    switch (period) {
+      case ReportPeriod.daily:
+        return '14 days';
+      case ReportPeriod.weekly:
+        return '8 weeks';
+      case ReportPeriod.monthly:
+        return '6 months';
+    }
+  }
+
+  Widget _miniStat(String label, String value) {    return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
