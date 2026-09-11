@@ -300,5 +300,20 @@ void main() {
       expect(result.wasOverdue, isTrue);
       expect(result.depositRefunded, 500);
     });
+
+    test('refuses pending, cancelled and completed rentals', () async {
+      final rentals = FakeRentalRepository();
+      final inventory = FakeInventoryRepository();
+      final usecase = ProcessReturnUseCase(rentals, inventory);
+
+      for (final status in ['pending', 'cancelled', 'completed', 'declined']) {
+        expect(
+          () => usecase.execute(_rental(status: status)),
+          throwsA(isA<FormatException>()),
+        );
+      }
+      expect(rentals.completeCalls, 0);
+      expect(inventory.statusUpdates, isEmpty);
+    });
   });
 }

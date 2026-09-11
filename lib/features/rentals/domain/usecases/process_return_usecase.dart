@@ -21,6 +21,12 @@ class ProcessReturnUseCase {
   final InventoryRepository _inventoryRepository;
 
   Future<ProcessReturnResult> execute(Rental rental) async {
+    // Only live rentals can be returned. This blocks completing pending
+    // requests, already-cancelled/declined rentals, and double returns
+    // (which would refund the deposit twice on paper).
+    if (!rental.isActive && !rental.isOverdue) {
+      throw const FormatException('Only active rentals can be returned.');
+    }
     final wasOverdue = rental.isOverdue;
     await _rentalRepository.completeRental(rental.id, returnedAt: DateTime.now());
     await _inventoryRepository.updateStatus(rental.itemId, 'available');
