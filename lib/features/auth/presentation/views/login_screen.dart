@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/config/app_config.dart';
@@ -33,11 +34,39 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  // Step 2 of signup: OTP code entry. Saved Step-1 details are snapshotted
+  // into local vars so verify + signUp use exactly what was submitted.
+  bool _otpStep = false;
+  String _otpName = '';
+  String _otpEmail = '';
+  String _otpPhone = '';
+  String _otpPassword = '';
+  final List<TextEditingController> _otpControllers =
+      List.generate(6, (_) => TextEditingController());
+  late final List<FocusNode> _otpNodes;
+  bool _settingOtpProgrammatically = false;
+
   AuthViewModel get _vm => context.read<AuthViewModel>();
 
   @override
   void initState() {
     super.initState();
+    _otpNodes = List.generate(
+      6,
+      (i) => FocusNode(
+        onKeyEvent: (node, event) {
+          // Hardware-keyboard backspace on an empty box moves back.
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.backspace &&
+              _otpControllers[i].text.isEmpty &&
+              i > 0) {
+            _otpNodes[i - 1].requestFocus();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+      ),
+    );
     for (final controller in [
       _emailController,
       _passwordController,
@@ -78,30 +107,91 @@ class _LoginScreenState extends State<LoginScreen> {
     _confirmPasswordController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
+    for (final controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (final node in _otpNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
   void _switchMode(AuthMode mode) {
     FocusScope.of(context).unfocus();
+    _vm.resetOtp();
+    _clearOtpBoxes();
     setState(() {
       _mode = mode;
+      _otpStep = false;
       _canSubmit = _isValidFor(mode);
     });
+  }
+
+  void _clearOtpBoxes() {
+    _settingOtpProgrammatically = true;
+    try {
+      for (final controller in _otpControllers) {
+        controller.clear();
+      }
+    } finally {
+      _settingOtpProgrammatically = false;
+    }
+  }
+
+  bool get _otpComplete =>
+      _otpControllers.every((c) => c.text.isNotEmpty);
+
+  /// Single-char UX is enforced here in [onChanged] rather than with a
+  /// length limiter: a length-1 limiter would truncate an incoming paste to
+  /// one box, while this keeps typed input to one digit per box and still
+  /// distributes a full-code paste across all six.
+  void _onOtpChanged(int index, String value) {
+    if (_settingOtpProgrammatically) return;
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    _settingOtpProgrammatically = true;
+    try {
+      if (digits.length > 1) {
+        // Full-code paste: fill all six boxes.
+        for (var i = 0; i < 6; i++) {
+          _otpControllers[i].text =
+              i < digits.length ? digits[i] : '';
+        }
+      } else {
+        // Typed input: keep only the latest digit.
+        _otpControllers[index].text =
+            digits.isEmpty ? '' : digits[digits.length - 1];
+      }
+    } finally {
+      _settingOtpProgrammatically = false;
+    }
+    if (digits.length > 1) {
+      if (digits.length >= 6) {
+        _otpNodes[index].unfocus();
+      } else {
+        _otpNodes[digits.length.clamp(0, 5)].requestFocus();
+      }
+    } else if (digits.isEmpty) {
+      // Cleared via soft-keyboard backspace: move to the previous box.
+      if (index > 0) _otpNodes[index - 1].requestFocus();
+    } else if (index < 5) {
+      _otpNodes[index + 1].requestFocus();
+    } else {
+      _otpNodes[index].unfocus();
+    }
+    setState(() {});
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_mode == AuthMode.signup) {
+      await _startOtpStep();
+      return;
+    }
     _vm.clearError();
 
-    final success = _mode == AuthMode.login
-        ? await _vm.signIn(_emailController.text, _passwordController.text)
-        : await _vm.signUp(
-            fullName: _nameController.text,
-            email: _emailController.text,
-            phone: _phoneController.text,
-            password: _passwordController.text,
-          );
+    final success =
+        await _vm.signIn(_emailController.text, _passwordController.text);
 
     if (!mounted) return;
     if (!success) {
@@ -112,6 +202,88 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
+  }
+
+  /// Step 1 of signup: validate the details form, snapshot the details, and
+  /// send the OTP. Only flips to the code-entry step on success.
+  Future<void> _startOtpStep() async {
+    final name = _nameController.text;
+    final email = _emailController.text;
+    final phone = _phoneController.text;
+    final password = _passwordController.text;
+    final sent = await _vm.sendOtp(email);
+    if (!mounted) return;
+    if (sent) {
+      setState(() {
+        _otpName = name;
+        _otpEmail = email;
+        _otpPhone = phone;
+        _otpPassword = password;
+        _otpStep = true;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_vm.otpError ?? 'Something went wrong'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _resendOtp() async {
+    final sent = await _vm.sendOtp(_otpEmail);
+    if (!mounted || sent) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_vm.otpError ?? 'Something went wrong'),
+        backgroundColor: AppColors.danger,
+      ),
+    );
+  }
+
+  /// Step 2 of signup: verify the code, then create the account with the
+  /// saved Step-1 details.
+  Future<void> _verifyOtp() async {
+    FocusScope.of(context).unfocus();
+    final code = _otpControllers.map((c) => c.text).join();
+    if (code.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter the 6-digit code'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+    final verified = await _vm.confirmOtp(email: _otpEmail, code: code);
+    if (!mounted) return;
+    // Wrong code: vm.otpError renders under the boxes; stay on Step 2.
+    if (!verified) return;
+    final success = await _vm.signUp(
+      fullName: _otpName,
+      email: _otpEmail,
+      phone: _otpPhone,
+      password: _otpPassword,
+    );
+    if (!mounted) return;
+    if (success) {
+      _vm.resetOtp();
+      _clearOtpBoxes();
+      setState(() => _otpStep = false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_vm.error ?? 'Something went wrong'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  void _backToDetails() {
+    FocusScope.of(context).unfocus();
+    setState(() => _otpStep = false);
   }
 
   Future<void> _showForgotPasswordSheet() async {
@@ -222,23 +394,43 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 18),
                         FerrerWordmark(fontSize: 32),
                         const SizedBox(height: 36),
-                        _AuthCard(
-                          mode: _mode,
-                          formKey: _formKey,
-                          emailController: _emailController,
-                          passwordController: _passwordController,
-                          confirmPasswordController: _confirmPasswordController,
-                          nameController: _nameController,
-                          phoneController: _phoneController,
-                          obscure: _obscure,
-                          canSubmit: _canSubmit,
-                          onToggleObscure: () => setState(() => _obscure = !_obscure),
-                          busy: vm.busy,
-                          onSubmit: _submit,
-                          onForgotPassword: _showForgotPasswordSheet,
-                          onSwitchToSignup: () => _switchMode(AuthMode.signup),
-                          onSwitchToLogin: () => _switchMode(AuthMode.login),
-                        ),
+                        _mode == AuthMode.signup && _otpStep
+                            ? _OtpStepCard(
+                                email: _otpEmail,
+                                otpControllers: _otpControllers,
+                                otpNodes: _otpNodes,
+                                otpError: vm.otpError,
+                                otpState: vm.otpState,
+                                resendCooldownSeconds:
+                                    vm.resendCooldownSeconds,
+                                codeComplete: _otpComplete,
+                                onChanged: _onOtpChanged,
+                                onVerify: _verifyOtp,
+                                onResend: _resendOtp,
+                                onBack: _backToDetails,
+                              )
+                            : _AuthCard(
+                                mode: _mode,
+                                formKey: _formKey,
+                                emailController: _emailController,
+                                passwordController: _passwordController,
+                                confirmPasswordController:
+                                    _confirmPasswordController,
+                                nameController: _nameController,
+                                phoneController: _phoneController,
+                                obscure: _obscure,
+                                canSubmit: _canSubmit,
+                                onToggleObscure: () =>
+                                    setState(() => _obscure = !_obscure),
+                                busy: vm.busy ||
+                                    vm.otpState == OtpState.sending,
+                                onSubmit: _submit,
+                                onForgotPassword: _showForgotPasswordSheet,
+                                onSwitchToSignup: () =>
+                                    _switchMode(AuthMode.signup),
+                                onSwitchToLogin: () =>
+                                    _switchMode(AuthMode.login),
+                              ),
                         const SizedBox(height: 22),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 250),
@@ -258,6 +450,163 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OtpStepCard extends StatelessWidget {
+  final String email;
+  final List<TextEditingController> otpControllers;
+  final List<FocusNode> otpNodes;
+  final String? otpError;
+  final OtpState otpState;
+  final int resendCooldownSeconds;
+  final bool codeComplete;
+  final void Function(int index, String value) onChanged;
+  final VoidCallback onVerify;
+  final VoidCallback onResend;
+  final VoidCallback onBack;
+
+  const _OtpStepCard({
+    required this.email,
+    required this.otpControllers,
+    required this.otpNodes,
+    required this.otpError,
+    required this.otpState,
+    required this.resendCooldownSeconds,
+    required this.codeComplete,
+    required this.onChanged,
+    required this.onVerify,
+    required this.onResend,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 30),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .92),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.goldSoft.withValues(alpha: .55)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.blush.withValues(alpha: .38),
+            blurRadius: 34,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Check your email',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'We sent a 6-digit code to $email',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
+          ),
+          const SizedBox(height: 26),
+          Row(
+            children: List.generate(6, (i) {
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
+                  child: TextField(
+                    controller: otpControllers[i],
+                    focusNode: otpNodes[i],
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    textAlign: TextAlign.center,
+                    textInputAction:
+                        i < 5 ? TextInputAction.next : TextInputAction.done,
+                    onSubmitted: i == 5 ? (_) => onVerify() : null,
+                    onChanged: (value) => onChanged(i, value),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          if (otpError != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              otpError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.danger,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (resendCooldownSeconds > 0)
+                Text(
+                  'Resend in ${resendCooldownSeconds}s',
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 13,
+                  ),
+                )
+              else
+                TextButton(
+                  onPressed: onResend,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.roseDark,
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: const Text('Resend code'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          GradientButton(
+            label: 'Verify Code',
+            busy: otpState == OtpState.verifying,
+            onPressed: codeComplete ? onVerify : null,
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: onBack,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.roseDark,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              child: const Text('Back to details'),
+            ),
+          ),
+        ],
       ),
     );
   }
