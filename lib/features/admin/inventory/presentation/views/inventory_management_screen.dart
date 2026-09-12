@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
+import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/features/admin/inventory/presentation/viewmodels/inventory_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/inventory/presentation/widgets/add_item_sheet.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
@@ -218,8 +219,18 @@ class _InventoryTile extends StatelessWidget {
         trailing: PopupMenuButton<String>(
           initialValue: item.status,
           tooltip: 'Quick edit status',
-          onSelected: (value) =>
-              context.read<InventoryViewModel>().changeStatus(item, value),
+          onSelected: (value) async {
+            final error = await context
+                .read<InventoryViewModel>()
+                .changeStatus(item, value);
+            if (error != null && context.mounted) {
+              showTopSnackBar(
+                context,
+                error,
+                backgroundColor: AppColors.danger,
+              );
+            }
+          },
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           offset: const Offset(0, 42),

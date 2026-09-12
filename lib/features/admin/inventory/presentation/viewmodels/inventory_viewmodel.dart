@@ -49,19 +49,39 @@ class InventoryViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> changeStatus(CatalogItem item, String status) async {
-    if (item.status == status) return true;
+  /// Changes an item's status. Only available <-> maintenance switch freely:
+  /// rented items unlock via Process Return, scheduled ones via finishing or
+  /// cancelling the appointment, and rented/scheduled states are owned by the
+  /// rental/booking flows (never set by hand). Returns null on success,
+  /// otherwise a user-facing reason.
+  Future<String?> changeStatus(CatalogItem item, String status) async {
+    if (item.status == status) return null;
+    final reason = _blockedReason(item.status, status);
+    if (reason != null) return reason;
     _busyItemId = item.id;
     notifyListeners();
     try {
       await _repository.updateStatus(item.id, status);
-      return true;
+      return null;
     } catch (_) {
-      return false;
+      return 'Could not update status. Please try again.';
     } finally {
       _busyItemId = null;
       notifyListeners();
     }
+  }
+
+  /// Null when the switch is allowed, otherwise the reason to show.
+  String? _blockedReason(String from, String to) {
+    const free = ['available', 'maintenance'];
+    if (free.contains(from) && free.contains(to)) return null;
+    if (from == 'rented') {
+      return 'Rented items stay locked until returned via Process Return.';
+    }
+    if (from == 'scheduled_for_appointment') {
+      return 'Finish or cancel the appointment first.';
+    }
+    return 'Bookings own this status — create it via checkout or appointments.';
   }
 
   /// Creates the item (with its thumbnail) and stores its full photos.
