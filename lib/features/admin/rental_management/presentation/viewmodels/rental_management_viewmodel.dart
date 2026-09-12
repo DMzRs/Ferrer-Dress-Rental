@@ -8,7 +8,7 @@ import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rent
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/decline_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
 
-enum RentalTab { requests, active, overdue, completed, rejected }
+enum RentalTab { requests, rejected, active, overdue, completed }
 
 class RentalManagementViewModel extends ChangeNotifier {
   RentalManagementViewModel(

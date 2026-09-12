@@ -65,10 +65,10 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
                 const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             tabs: [
               Tab(text: 'Requests (${vm.pendingCount})'),
+              Tab(text: 'Rejected (${vm.rejectedCount})'),
               Tab(text: 'Active (${vm.activeCount})'),
               Tab(text: 'Overdue (${vm.overdueCount})'),
               Tab(text: 'Completed (${vm.completedCount})'),
-              Tab(text: 'Rejected (${vm.rejectedCount})'),
             ],
           ),
         ),
@@ -80,10 +80,10 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
                 controller: _controller,
                 children: [
                   _list(context, vm, RentalTab.requests),
+                  _list(context, vm, RentalTab.rejected),
                   _list(context, vm, RentalTab.active),
                   _list(context, vm, RentalTab.overdue),
                   _list(context, vm, RentalTab.completed),
-                  _list(context, vm, RentalTab.rejected),
                 ],
               ),
       );
@@ -127,11 +127,12 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, index) => _RentalRow(
-          rental: items[index],
-          showReturnButton: tab != RentalTab.completed,
-          showDecisionButtons: tab == RentalTab.requests,
-        ),
+                        itemBuilder: (context, index) => _RentalRow(
+                          rental: items[index],
+                          showReturnButton: tab == RentalTab.active ||
+                              tab == RentalTab.overdue,
+                          showDecisionButtons: tab == RentalTab.requests,
+                        ),
       ),
     );
   }
@@ -220,7 +221,11 @@ class _RentalRow extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
-                          color: overdue ? AppColors.adminRed : AppColors.adminMuted),
+                          color: (overdue ||
+                                  rental.isDeclined ||
+                                  rental.isCancelled)
+                              ? AppColors.adminRed
+                              : AppColors.adminMuted),
                     ),
                     if (rental.isPending)
                       Padding(
@@ -253,6 +258,26 @@ class _RentalRow extends StatelessWidget {
                           ),
                           child: const Text('OVERDUE',
                               style: TextStyle(
+                                  fontSize: 9.5,
+                                  letterSpacing: .6,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.adminRed)),
+                        ),
+                      )
+                    else if (rental.isDeclined || rental.isCancelled)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color:
+                                AppColors.adminRed.withValues(alpha: .09),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                              rental.isDeclined ? 'DECLINED' : 'CANCELLED',
+                              style: const TextStyle(
                                   fontSize: 9.5,
                                   letterSpacing: .6,
                                   fontWeight: FontWeight.w800,

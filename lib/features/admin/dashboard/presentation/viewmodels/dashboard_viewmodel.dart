@@ -160,7 +160,7 @@ class DashboardViewModel extends ChangeNotifier {
         timestamp: time,
         tabIndex: 3,
         kind: ActivityKind.rental,
-        subTab: 3,
+        subTab: 4,
         recordId: r.id,
       );
     }
@@ -174,7 +174,7 @@ class DashboardViewModel extends ChangeNotifier {
         timestamp: time,
         tabIndex: 3,
         kind: ActivityKind.rental,
-        subTab: 4,
+        subTab: 1,
         recordId: r.id,
       );
     }
@@ -188,7 +188,7 @@ class DashboardViewModel extends ChangeNotifier {
         timestamp: time,
         tabIndex: 3,
         kind: ActivityKind.rental,
-        subTab: 4,
+        subTab: 1,
         recordId: r.id,
       );
     }
@@ -244,15 +244,14 @@ class DashboardViewModel extends ChangeNotifier {
     );
   }
 
-  /// RentalTab order: requests(0), active(1), overdue(2), completed(3),
-  /// rejected(4). Rejected has its own tab so declined/cancelled rows land
-  /// somewhere real instead of Completed.
+  /// RentalTab order: requests(0), rejected(1), active(2), overdue(3),
+  /// completed(4).
   int _rentalSubTab(Rental r) {
     if (r.isPending) return 0;
-    if (r.isOverdue) return 2;
-    if (r.isDeclined || r.isCancelled) return 4;
-    if (r.isCompleted) return 3;
-    return 1;
+    if (r.isDeclined || r.isCancelled) return 1;
+    if (r.isOverdue) return 3;
+    if (r.isCompleted) return 4;
+    return 2;
   }
 
   /// Appointment tabs: requests(0), scheduled(1), resolved(2).
