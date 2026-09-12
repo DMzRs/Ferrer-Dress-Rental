@@ -94,7 +94,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
       RentalTab.overdue =>
         vm.allRentals.where((r) => r.isOverdue).toList(),
       RentalTab.completed =>
-        vm.allRentals.where((r) => r.isCompleted).toList(),
+        vm.allRentals.where((r) => r.isCompleted || r.isDeclined || r.isCancelled).toList(),
       RentalTab.active =>
         vm.allRentals.where((r) => r.status == 'active').toList(),
     };

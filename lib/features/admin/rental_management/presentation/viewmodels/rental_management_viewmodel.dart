@@ -42,7 +42,7 @@ class RentalManagementViewModel extends ChangeNotifier {
   int get activeCount =>
       _rentals.where((r) => r.status == 'active' && !r.isOverdue).length;
   int get overdueCount => _rentals.where((r) => r.isOverdue).length;
-  int get completedCount => _rentals.where((r) => r.isCompleted).length;
+  int get completedCount => _rentals.where((r) => r.isCompleted || r.isDeclined || r.isCancelled).length;
 
   List<Rental> get _filtered {
     switch (_tab) {
@@ -51,7 +51,9 @@ class RentalManagementViewModel extends ChangeNotifier {
       case RentalTab.overdue:
         return _rentals.where((r) => r.isOverdue).toList();
       case RentalTab.completed:
-        return _rentals.where((r) => r.isCompleted).toList();
+        return _rentals
+            .where((r) => r.isCompleted || r.isDeclined || r.isCancelled)
+            .toList();
       case RentalTab.active:
         return _rentals.where((r) => r.status == 'active').toList();
     }
