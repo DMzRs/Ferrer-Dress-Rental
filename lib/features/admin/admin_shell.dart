@@ -81,12 +81,14 @@ class _AdminShellViewState extends State<_AdminShellView> {
       child: Scaffold(
         body: IndexedStack(
           index: _index,
-          children: const [
-            AdminDashboardScreen(),
-            AdminAppointmentsScreen(),
-            InventoryManagementScreen(),
-            RentalManagementScreen(),
-            ReportsScreen(),
+          children: [
+            AdminDashboardScreen(
+              onNavigateTo: (tab) => setState(() => _index = tab),
+            ),
+            const AdminAppointmentsScreen(),
+            const InventoryManagementScreen(),
+            const RentalManagementScreen(),
+            const ReportsScreen(),
           ],
         ),
         bottomNavigationBar: NavigationBar(

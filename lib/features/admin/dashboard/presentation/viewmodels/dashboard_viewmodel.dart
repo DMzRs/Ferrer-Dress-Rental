@@ -17,6 +17,9 @@ class ActivityEntry {
   final String trailing;
   final DateTime timestamp;
 
+  /// AdminShell tab to open on tap (1 = Appointments, 3 = Rentals).
+  final int tabIndex;
+
   const ActivityEntry({
     required this.icon,
     required this.color,
@@ -24,6 +27,7 @@ class ActivityEntry {
     required this.subtitle,
     required this.trailing,
     required this.timestamp,
+    required this.tabIndex,
   });
 }
 
@@ -123,6 +127,7 @@ class DashboardViewModel extends ChangeNotifier {
               '${r.isCompleted ? 'Returned' : 'Rented'} · ${r.itemName}',
           trailing: '₱${r.total.toStringAsFixed(0)}',
           timestamp: r.createdAt,
+          tabIndex: 3,
         ),
       for (final a in _appointmentList.take(4))
         ActivityEntry(
@@ -132,6 +137,7 @@ class DashboardViewModel extends ChangeNotifier {
           subtitle: '${a.purpose} appointment',
           trailing: '',
           timestamp: a.createdAt,
+          tabIndex: 1,
         ),
     ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 

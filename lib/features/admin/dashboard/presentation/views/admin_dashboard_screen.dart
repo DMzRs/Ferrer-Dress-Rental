@@ -7,7 +7,10 @@ import 'package:ferrer_rental_shop/features/admin/dashboard/presentation/viewmod
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
-  const AdminDashboardScreen({super.key});
+  /// Opens an AdminShell tab (e.g. from a Recent Activity tap).
+  final void Function(int tabIndex)? onNavigateTo;
+
+  const AdminDashboardScreen({super.key, this.onNavigateTo});
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +110,12 @@ class AdminDashboardScreen extends StatelessWidget {
                       ),
                     )
                   else
-                    ...m.recentActivity.map((entry) => ActivityTile(entry: entry)),
+                    ...m.recentActivity.map((entry) => ActivityTile(
+                          entry: entry,
+                          onTap: onNavigateTo == null
+                              ? null
+                              : () => onNavigateTo!(entry.tabIndex),
+                        )),
                 ],
               ),
             ),
@@ -180,14 +188,16 @@ class SummaryCard extends StatelessWidget {
 
 class ActivityTile extends StatelessWidget {
   final ActivityEntry entry;
+  final VoidCallback? onTap;
 
-  const ActivityTile({super.key, required this.entry});
+  const ActivityTile({super.key, required this.entry, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
+        onTap: onTap,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: Container(
@@ -216,23 +226,33 @@ class ActivityTile extends StatelessWidget {
         ),
         isThreeLine: false,
         dense: true,
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (entry.trailing.isNotEmpty)
-              Text(
-                entry.trailing,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: AppColors.adminInk),
-              ),
-            const SizedBox(height: 3),
-            Text(
-              Formatters.timeAgo(entry.timestamp),
-              style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (entry.trailing.isNotEmpty)
+                  Text(
+                    entry.trailing,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: AppColors.adminInk),
+                  ),
+                const SizedBox(height: 3),
+                Text(
+                  Formatters.timeAgo(entry.timestamp),
+                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+                ),
+              ],
             ),
+            if (onTap != null) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: Colors.grey.shade400),
+            ],
           ],
         ),
       ),
