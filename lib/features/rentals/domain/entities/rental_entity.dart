@@ -15,6 +15,10 @@ class Rental {
   final DateTime createdAt;
   final DateTime? returnedAt;
 
+  /// Last status transition (confirm/decline/cancel/return). Null for
+  /// untouched requests; falls back to [createdAt] for ordering.
+  final DateTime? updatedAt;
+
   /// Admin-provided explanation, present when status == declined.
   final String declineReason;
 
@@ -34,6 +38,7 @@ class Rental {
     this.deliveryAddress = '',
     required this.createdAt,
     this.returnedAt,
+    this.updatedAt,
     this.declineReason = '',
   });
 

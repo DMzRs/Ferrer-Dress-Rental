@@ -60,8 +60,19 @@ class RentalManagementViewModel extends ChangeNotifier {
   RentalTab _tab = RentalTab.active;
   RentalTab get tab => _tab;
 
+  /// Record id to spotlight (from a dashboard deep-link). Cleared whenever
+  /// the tab changes.
+  String? _highlightId;
+  String? get highlightId => _highlightId;
+
   void setTab(RentalTab tab) {
     _tab = tab;
+    _highlightId = null;
+    notifyListeners();
+  }
+
+  void highlight(String rentalId) {
+    _highlightId = rentalId;
     notifyListeners();
   }
 

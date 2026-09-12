@@ -118,7 +118,10 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     final index = _appointments.indexWhere((a) => a.id == appointmentId);
     if (index != -1) {
       _appointments[index] =
-          AppointmentModel.fromEntity(_appointments[index]).copyWith(status: 'cancelled');
+          AppointmentModel.fromEntity(_appointments[index]).copyWith(
+        status: 'cancelled',
+        updatedAt: DateTime.now(),
+      );
       _emit();
     }
   }
@@ -136,7 +139,8 @@ class MockAppointmentDataSource implements AppointmentDataSource {
           .copyWith(
               status: status,
               clearDeclineReason: declineReason == null,
-              declineReason: declineReason);
+              declineReason: declineReason,
+              updatedAt: DateTime.now());
       _emit();
     }
   }

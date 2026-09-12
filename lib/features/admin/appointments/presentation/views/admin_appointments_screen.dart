@@ -7,19 +7,54 @@ import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/viewmodels/appointments_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 
-class AdminAppointmentsScreen extends StatelessWidget {
+class AdminAppointmentsScreen extends StatefulWidget {
   const AdminAppointmentsScreen({super.key});
+
+  @override
+  State<AdminAppointmentsScreen> createState() =>
+      _AdminAppointmentsScreenState();
+}
+
+class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = context.read<AppointmentsViewModel>().tab;
+    _controller = TabController(length: 3, vsync: this, initialIndex: initial);
+    _controller.addListener(_syncToVm);
+  }
+
+  void _syncToVm() {
+    if (_controller.indexIsChanging) return;
+    final vm = context.read<AppointmentsViewModel>();
+    if (_controller.index != vm.tab) vm.setTab(_controller.index);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_syncToVm)
+      ..dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AppointmentsViewModel>();
+    // Deep-links (dashboard) drive the VM tab; mirror it here without
+    // clearing the highlight the link just set.
+    if (_controller.index != vm.tab) {
+      _controller.index = vm.tab;
+    }
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Appointments'),
           bottom: TabBar(
+            controller: _controller,
             labelColor: AppColors.adminPrimary,
             unselectedLabelColor: AppColors.adminMuted,
             indicatorColor: AppColors.adminPrimary,
@@ -38,6 +73,7 @@ class AdminAppointmentsScreen extends StatelessWidget {
                 child:
                     CircularProgressIndicator(color: AppColors.adminPrimary))
             : TabBarView(
+                controller: _controller,
                 children: [
                   _list(
                     context,
@@ -58,8 +94,7 @@ class AdminAppointmentsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-      ),
-    );
+      );
   }
 
   Widget _list(
@@ -109,8 +144,19 @@ class _AppointmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPending = appointment.status == Appointment.statusPending;
+    final highlighted =
+        context.select<AppointmentsViewModel, bool>((vm) => vm.highlightId == appointment.id);
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: highlighted
+              ? AppColors.adminPrimary
+              : AppColors.adminBorder,
+          width: highlighted ? 1.8 : 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
         child: Column(

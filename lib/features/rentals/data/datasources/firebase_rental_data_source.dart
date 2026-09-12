@@ -38,6 +38,7 @@ class FirebaseRentalDataSource implements RentalDataSource {
     return _db.collection(FirestoreCollections.rentals).doc(rentalId).update({
       'status': 'completed',
       'returnedAt': Timestamp.fromDate(returnedAt ?? DateTime.now()),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -46,7 +47,10 @@ class FirebaseRentalDataSource implements RentalDataSource {
     return _db
         .collection(FirestoreCollections.rentals)
         .doc(rentalId)
-        .update({'status': 'cancelled'});
+        .update({
+      'status': 'cancelled',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
@@ -61,6 +65,7 @@ class FirebaseRentalDataSource implements RentalDataSource {
         .update({
       'status': status,
       if (declineReason != null) 'declineReason': declineReason.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 }

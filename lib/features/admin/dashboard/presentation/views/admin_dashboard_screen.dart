@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
+import 'package:ferrer_rental_shop/features/admin/appointments/presentation/viewmodels/appointments_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/dashboard/presentation/viewmodels/dashboard_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/admin/rental_management/presentation/viewmodels/rental_management_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -114,12 +116,29 @@ class AdminDashboardScreen extends StatelessWidget {
                           entry: entry,
                           onTap: onNavigateTo == null
                               ? null
-                              : () => onNavigateTo!(entry.tabIndex),
+                              : () => _openEntry(context, entry),
                         )),
                 ],
               ),
             ),
     );
+  }
+  /// Deep-link: select the exact sub-tab and spotlight the record, then
+  /// switch the shell to the destination tab.
+  void _openEntry(BuildContext context, ActivityEntry entry) {
+    switch (entry.kind) {
+      case ActivityKind.rental:
+        context.read<RentalManagementViewModel>()
+          ..setTab(RentalTab.values[entry.subTab.clamp(0, 3)])
+          ..highlight(entry.recordId);
+        break;
+      case ActivityKind.appointment:
+        context.read<AppointmentsViewModel>()
+          ..setTab(entry.subTab)
+          ..highlight(entry.recordId);
+        break;
+    }
+    onNavigateTo?.call(entry.tabIndex);
   }
 }
 

@@ -19,6 +19,7 @@ class RentalModel extends Rental {
     super.deliveryAddress,
     required super.createdAt,
     super.returnedAt,
+    super.updatedAt,
     super.declineReason,
   });
 
@@ -39,6 +40,7 @@ class RentalModel extends Rental {
       deliveryAddress: (map['deliveryAddress'] ?? '') as String,
       createdAt: _toDate(map['createdAt']),
       returnedAt: map['returnedAt'] == null ? null : _toDate(map['returnedAt']),
+      updatedAt: map['updatedAt'] == null ? null : _toDate(map['updatedAt']),
       declineReason: (map['declineReason'] ?? '') as String,
     );
   }
@@ -60,6 +62,7 @@ class RentalModel extends Rental {
       deliveryAddress: r.deliveryAddress,
       createdAt: r.createdAt,
       returnedAt: r.returnedAt,
+      updatedAt: r.updatedAt,
       declineReason: r.declineReason,
     );
   }
@@ -81,6 +84,7 @@ class RentalModel extends Rental {
     DateTime? createdAt,
     DateTime? returnedAt,
     bool clearReturnedAt = false,
+    DateTime? updatedAt,
     String? declineReason,
   }) {
     return RentalModel(
@@ -99,6 +103,7 @@ class RentalModel extends Rental {
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       createdAt: createdAt ?? this.createdAt,
       returnedAt: clearReturnedAt ? null : (returnedAt ?? this.returnedAt),
+      updatedAt: updatedAt ?? this.updatedAt,
       declineReason: declineReason ?? this.declineReason,
     );
   }
@@ -136,6 +141,9 @@ class RentalModel extends Rental {
     };
     if (declineReason.isNotEmpty) {
       map['declineReason'] = declineReason;
+    }
+    if (updatedAt != null) {
+      map['updatedAt'] = encode(updatedAt!);
     }
     return map;
   }

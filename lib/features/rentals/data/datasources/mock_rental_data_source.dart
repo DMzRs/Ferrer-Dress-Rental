@@ -185,6 +185,7 @@ class MockRentalDataSource implements RentalDataSource {
       _rentals[index] = RentalModel.fromEntity(rental).copyWith(
         status: 'completed',
         returnedAt: returnedAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       _emit();
     }
@@ -196,7 +197,10 @@ class MockRentalDataSource implements RentalDataSource {
     final index = _rentals.indexWhere((r) => r.id == rentalId);
     if (index != -1) {
       final rental = _rentals[index];
-      _rentals[index] = RentalModel.fromEntity(rental).copyWith(status: 'cancelled');
+      _rentals[index] = RentalModel.fromEntity(rental).copyWith(
+        status: 'cancelled',
+        updatedAt: DateTime.now(),
+      );
       _emit();
     }
   }
@@ -213,6 +217,7 @@ class MockRentalDataSource implements RentalDataSource {
       final rental = _rentals[index];
       _rentals[index] = RentalModel.fromEntity(rental).copyWith(
         status: status,
+        updatedAt: DateTime.now(),
         declineReason: declineReason?.trim().isNotEmpty == true
             ? declineReason!.trim()
             : rental.declineReason,

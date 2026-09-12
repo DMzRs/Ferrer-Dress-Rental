@@ -57,7 +57,10 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
     return _db
         .collection(FirestoreCollections.appointments)
         .doc(appointmentId)
-        .update({'status': 'cancelled'});
+        .update({
+      'status': 'cancelled',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
@@ -72,6 +75,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
         .update({
       'status': status,
       if (declineReason != null) 'declineReason': declineReason.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 

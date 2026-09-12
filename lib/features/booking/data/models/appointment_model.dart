@@ -14,6 +14,7 @@ class AppointmentModel extends Appointment {
     required super.status,
     super.declineReason,
     required super.createdAt,
+    super.updatedAt,
   });
 
   factory AppointmentModel.fromMap(String id, Map<String, dynamic> map) {
@@ -28,6 +29,7 @@ class AppointmentModel extends Appointment {
       status: (map['status'] ?? 'scheduled') as String,
       declineReason: (map['declineReason'] ?? '') as String,
       createdAt: _toDate(map['createdAt']),
+      updatedAt: map['updatedAt'] == null ? null : _toDate(map['updatedAt']),
     );
   }
 
@@ -43,6 +45,7 @@ class AppointmentModel extends Appointment {
       status: a.status,
       declineReason: a.declineReason,
       createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
     );
   }
 
@@ -59,6 +62,7 @@ class AppointmentModel extends Appointment {
     String? declineReason,
     bool clearDeclineReason = false,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return AppointmentModel(
       id: id ?? this.id,
@@ -71,6 +75,7 @@ class AppointmentModel extends Appointment {
       status: status ?? this.status,
       declineReason: clearDeclineReason ? '' : (declineReason ?? this.declineReason),
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -84,7 +89,7 @@ class AppointmentModel extends Appointment {
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime date) =>
         forFirestore ? Timestamp.fromDate(date) : date.toIso8601String();
-    return {
+    final map = <String, dynamic>{
       'userId': userId,
       'userName': userName,
       if (itemId != null) 'itemId': itemId,
@@ -95,6 +100,10 @@ class AppointmentModel extends Appointment {
       if (declineReason.isNotEmpty) 'declineReason': declineReason,
       'createdAt': encode(createdAt),
     };
+    if (updatedAt != null) {
+      map['updatedAt'] = encode(updatedAt!);
+    }
+    return map;
   }
 }
 

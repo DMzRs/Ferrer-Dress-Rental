@@ -23,6 +23,27 @@ class AppointmentsViewModel extends ChangeNotifier {
   bool _loading = true;
   String _busyId = '';
 
+  /// Selected tab: 0 requests, 1 scheduled, 2 resolved. Mirrors the
+  /// TabController in the screen so dashboard deep-links can target a tab.
+  int _tab = 0;
+  int get tab => _tab;
+
+  /// Record id to spotlight (from a dashboard deep-link). Cleared whenever
+  /// the tab changes.
+  String? _highlightId;
+  String? get highlightId => _highlightId;
+
+  void setTab(int value) {
+    _tab = value.clamp(0, 2);
+    _highlightId = null;
+    notifyListeners();
+  }
+
+  void highlight(String appointmentId) {
+    _highlightId = appointmentId;
+    notifyListeners();
+  }
+
   List<Appointment> get requests {
     final pending = _appointments
         .where((a) => a.status == Appointment.statusPending)

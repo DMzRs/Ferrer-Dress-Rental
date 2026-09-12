@@ -12,6 +12,9 @@ class Appointment {
   final String declineReason;
   final DateTime createdAt;
 
+  /// Last status transition (confirm/decline/cancel). Null until touched.
+  final DateTime? updatedAt;
+
   const Appointment({
     required this.id,
     required this.userId,
@@ -23,6 +26,7 @@ class Appointment {
     required this.status,
     this.declineReason = '',
     required this.createdAt,
+    this.updatedAt,
   });
 
   static const List<String> purposes = ['Measuring', 'Trying On'];

@@ -9,6 +9,8 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 
+enum ActivityKind { rental, appointment }
+
 class ActivityEntry {
   final IconData icon;
   final Color color;
@@ -20,6 +22,11 @@ class ActivityEntry {
   /// AdminShell tab to open on tap (1 = Appointments, 3 = Rentals).
   final int tabIndex;
 
+  /// Sub-tab inside the destination screen + the exact record to highlight.
+  final ActivityKind kind;
+  final int subTab;
+  final String recordId;
+
   const ActivityEntry({
     required this.icon,
     required this.color,
@@ -28,6 +35,9 @@ class ActivityEntry {
     required this.trailing,
     required this.timestamp,
     required this.tabIndex,
+    required this.kind,
+    required this.subTab,
+    required this.recordId,
   });
 }
 
@@ -118,27 +128,8 @@ class DashboardViewModel extends ChangeNotifier {
     final available = _itemList.where((i) => i.isAvailable).length;
 
     final activities = <ActivityEntry>[
-      for (final r in _rentalList.take(6))
-        ActivityEntry(
-          icon: Icons.local_mall_rounded,
-          color: r.isOverdue ? const Color(0xFFAF3F30) : const Color(0xFF0D5C50),
-          title: r.userName,
-          subtitle:
-              '${r.isCompleted ? 'Returned' : 'Rented'} · ${r.itemName}',
-          trailing: '₱${r.total.toStringAsFixed(0)}',
-          timestamp: r.createdAt,
-          tabIndex: 3,
-        ),
-      for (final a in _appointmentList.take(4))
-        ActivityEntry(
-          icon: Icons.event_available_rounded,
-          color: const Color(0xFFB27A22),
-          title: a.userName,
-          subtitle: '${a.purpose} appointment',
-          trailing: '',
-          timestamp: a.createdAt,
-          tabIndex: 1,
-        ),
+      for (final r in _rentalList) _rentalEntry(r),
+      for (final a in _appointmentList) _appointmentEntry(a),
     ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     _metrics = DashboardMetrics(
@@ -150,6 +141,124 @@ class DashboardViewModel extends ChangeNotifier {
       isLoading: !_hasData,
     );
     notifyListeners();
+  }
+
+  DateTime _rentalActionTime(Rental r) {
+    if (r.isCompleted) return r.returnedAt ?? r.updatedAt ?? r.createdAt;
+    return r.updatedAt ?? r.createdAt;
+  }
+
+  ActivityEntry _rentalEntry(Rental r) {
+    final time = _rentalActionTime(r);
+    if (r.isCompleted) {
+      return ActivityEntry(
+        icon: Icons.check_circle_rounded,
+        color: const Color(0xFF0D5C50),
+        title: r.userName,
+        subtitle: 'Marked returned · ${r.itemName}',
+        trailing: '₱${r.total.toStringAsFixed(0)}',
+        timestamp: time,
+        tabIndex: 3,
+        kind: ActivityKind.rental,
+        subTab: 3,
+        recordId: r.id,
+      );
+    }
+    if (r.isDeclined) {
+      return ActivityEntry(
+        icon: Icons.cancel_rounded,
+        color: const Color(0xFFAF3F30),
+        title: r.userName,
+        subtitle: 'Request declined · ${r.itemName}',
+        trailing: '',
+        timestamp: time,
+        tabIndex: 3,
+        kind: ActivityKind.rental,
+        subTab: 3,
+        recordId: r.id,
+      );
+    }
+    if (r.isCancelled) {
+      return ActivityEntry(
+        icon: Icons.remove_circle_rounded,
+        color: Colors.grey.shade600,
+        title: r.userName,
+        subtitle: 'Rental cancelled · ${r.itemName}',
+        trailing: '',
+        timestamp: time,
+        tabIndex: 3,
+        kind: ActivityKind.rental,
+        subTab: 3,
+        recordId: r.id,
+      );
+    }
+    return ActivityEntry(
+      icon: Icons.local_mall_rounded,
+      color: r.isOverdue ? const Color(0xFFAF3F30) : const Color(0xFF0D5C50),
+      title: r.userName,
+      subtitle: '${r.isPending ? 'New request' : 'Rented'} · ${r.itemName}',
+      trailing: '₱${r.total.toStringAsFixed(0)}',
+      timestamp: time,
+      tabIndex: 3,
+      kind: ActivityKind.rental,
+      subTab: _rentalSubTab(r),
+      recordId: r.id,
+    );
+  }
+
+  DateTime _appointmentActionTime(Appointment a) =>
+      a.updatedAt ?? a.createdAt;
+
+  ActivityEntry _appointmentEntry(Appointment a) {
+    final time = _appointmentActionTime(a);
+    final resolved = a.status == Appointment.statusDeclined ||
+        a.status == Appointment.statusCancelled;
+    final confirmed = a.status == Appointment.statusConfirmed ||
+        a.status == 'scheduled';
+    final action = a.status == Appointment.statusDeclined
+        ? 'Declined'
+        : a.status == Appointment.statusCancelled
+            ? 'Cancelled'
+            : confirmed
+                ? 'Confirmed'
+                : 'New request';
+    return ActivityEntry(
+      icon: resolved
+          ? Icons.event_busy_rounded
+          : confirmed
+              ? Icons.event_available_rounded
+              : Icons.event_note_rounded,
+      color: resolved
+          ? const Color(0xFFAF3F30)
+          : confirmed
+              ? const Color(0xFF0D5C50)
+              : const Color(0xFFB27A22),
+      title: a.userName,
+      subtitle: '$action · ${a.purpose} appointment',
+      trailing: '',
+      timestamp: time,
+      tabIndex: 1,
+      kind: ActivityKind.appointment,
+      subTab: _appointmentSubTab(a),
+      recordId: a.id,
+    );
+  }
+
+  /// RentalTab order: requests(0), active(1), overdue(2), completed(3).
+  int _rentalSubTab(Rental r) {
+    if (r.isPending) return 0;
+    if (r.isOverdue) return 2;
+    if (r.isCompleted || r.isCancelled || r.isDeclined) return 3;
+    return 1;
+  }
+
+  /// Appointment tabs: requests(0), scheduled(1), resolved(2).
+  int _appointmentSubTab(Appointment a) {
+    if (a.status == Appointment.statusPending) return 0;
+    if (a.status == Appointment.statusConfirmed || a.status == 'scheduled') {
+      return 1;
+    }
+    return 2;
   }
 
   @override

@@ -8,19 +8,54 @@ import 'package:ferrer_rental_shop/features/admin/rental_management/presentation
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
 
-class RentalManagementScreen extends StatelessWidget {
+class RentalManagementScreen extends StatefulWidget {
   const RentalManagementScreen({super.key});
+
+  @override
+  State<RentalManagementScreen> createState() => _RentalManagementScreenState();
+}
+
+class _RentalManagementScreenState extends State<RentalManagementScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = context.read<RentalManagementViewModel>().tab.index;
+    _controller = TabController(length: 4, vsync: this, initialIndex: initial);
+    _controller.addListener(_syncToVm);
+  }
+
+  void _syncToVm() {
+    if (_controller.indexIsChanging) return;
+    final vm = context.read<RentalManagementViewModel>();
+    final tab = RentalTab.values[_controller.index];
+    if (tab != vm.tab) vm.setTab(tab);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_syncToVm)
+      ..dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RentalManagementViewModel>();
+    // Deep-links (dashboard) drive the VM tab; mirror it here without
+    // clearing the highlight the link just set.
+    if (_controller.index != vm.tab.index) {
+      _controller.index = vm.tab.index;
+    }
 
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Rental Management'),
           bottom: TabBar(
+            controller: _controller,
             isScrollable: true,
             labelColor: AppColors.adminPrimary,
             unselectedLabelColor: AppColors.adminMuted,
@@ -41,6 +76,7 @@ class RentalManagementScreen extends StatelessWidget {
                 child:
                     CircularProgressIndicator(color: AppColors.adminPrimary))
             : TabBarView(
+                controller: _controller,
                 children: [
                   _list(context, vm, RentalTab.requests),
                   _list(context, vm, RentalTab.active),
@@ -48,8 +84,7 @@ class RentalManagementScreen extends StatelessWidget {
                   _list(context, vm, RentalTab.completed),
                 ],
               ),
-      ),
-    );
+      );
   }
 
   Widget _list(BuildContext context, RentalManagementViewModel vm, RentalTab tab) {
@@ -115,8 +150,19 @@ class _RentalRow extends StatelessWidget {
     final vm = showDecisionButtons ? context.watch<RentalManagementViewModel>() : null;
     final busy = vm?.isProcessing ?? false;
     final processingThis = vm?.processingRentalId == rental.id && busy;
+    final highlighted =
+        context.select<RentalManagementViewModel, bool>((m) => m.highlightId == rental.id);
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: highlighted
+              ? AppColors.adminPrimary
+              : AppColors.adminBorder,
+          width: highlighted ? 1.8 : 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
         child: Column(

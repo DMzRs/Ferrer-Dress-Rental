@@ -81,14 +81,15 @@ service cloud.firestore {
 
       // Admins manage every rental (confirm/decline requests, returns,
       // cancellations, edits). Customers may only cancel their own pending
-      // or active rental.
+      // or active rental. `updatedAt` is stamped by the cancel flow for the
+      // activity feed; it carries no privileges.
       allow update: if isAdmin()
         || (isSignedIn()
             && resource.data.userId == request.auth.uid
             && resource.data.status in ['pending', 'active']
             && request.resource.data.status == 'cancelled'
             && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly(['status']));
+                  .affectedKeys().hasOnly(['status', 'updatedAt']));
 
       allow delete: if isAdmin();
     }
@@ -109,7 +110,7 @@ service cloud.firestore {
             && resource.data.userId == request.auth.uid
             && request.resource.data.status == 'cancelled'
             && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly(['status']));
+                  .affectedKeys().hasOnly(['status', 'updatedAt']));
 
       allow delete: if isAdmin();
     }
