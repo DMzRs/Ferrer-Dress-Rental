@@ -343,6 +343,28 @@ class _RentalRow extends StatelessWidget {
                   ),
               ],
             ),
+            if (rental.isDeclined &&
+                rental.declineReason.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.feedback_outlined,
+                      size: 13.5, color: AppColors.adminRed),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Reason: ${rental.declineReason.trim()}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11.5,
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.adminRed),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (rental.deliveryAddress.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
