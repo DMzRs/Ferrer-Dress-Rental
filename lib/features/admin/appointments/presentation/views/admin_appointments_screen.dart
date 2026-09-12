@@ -219,13 +219,25 @@ class _AppointmentTile extends StatelessWidget {
                 ],
               ],
             ),
-            if (appointment.declineReason.isNotEmpty) ...[
+            if (appointment.declineReason.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                'Declined: ${appointment.declineReason}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+              Row(
+                children: [
+                  const Icon(Icons.feedback_outlined,
+                      size: 13.5, color: AppColors.adminRed),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Reason: ${appointment.declineReason.trim()}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11.5,
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.adminRed),
+                    ),
+                  ),
+                ],
               ),
             ],
             if (isPending) ...[
