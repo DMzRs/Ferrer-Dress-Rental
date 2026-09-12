@@ -57,6 +57,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
           bottom: TabBar(
             controller: _controller,
             isScrollable: true,
+            tabAlignment: TabAlignment.start,
             labelColor: AppColors.adminPrimary,
             unselectedLabelColor: AppColors.adminMuted,
             indicatorColor: AppColors.adminPrimary,
