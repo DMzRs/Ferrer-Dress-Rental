@@ -23,7 +23,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
   void initState() {
     super.initState();
     final initial = context.read<RentalManagementViewModel>().tab.index;
-    _controller = TabController(length: 4, vsync: this, initialIndex: initial);
+    _controller = TabController(length: 5, vsync: this, initialIndex: initial);
     _controller.addListener(_syncToVm);
   }
 
@@ -68,6 +68,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
               Tab(text: 'Active (${vm.activeCount})'),
               Tab(text: 'Overdue (${vm.overdueCount})'),
               Tab(text: 'Completed (${vm.completedCount})'),
+              Tab(text: 'Rejected (${vm.rejectedCount})'),
             ],
           ),
         ),
@@ -82,6 +83,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
                   _list(context, vm, RentalTab.active),
                   _list(context, vm, RentalTab.overdue),
                   _list(context, vm, RentalTab.completed),
+                  _list(context, vm, RentalTab.rejected),
                 ],
               ),
       );
@@ -94,7 +96,9 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
       RentalTab.overdue =>
         vm.allRentals.where((r) => r.isOverdue).toList(),
       RentalTab.completed =>
-        vm.allRentals.where((r) => r.isCompleted || r.isDeclined || r.isCancelled).toList(),
+        vm.allRentals.where((r) => r.isCompleted).toList(),
+      RentalTab.rejected =>
+        vm.allRentals.where((r) => r.isDeclined || r.isCancelled).toList(),
       RentalTab.active =>
         vm.allRentals.where((r) => r.status == 'active').toList(),
     };

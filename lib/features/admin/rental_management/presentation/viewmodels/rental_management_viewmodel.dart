@@ -8,7 +8,7 @@ import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rent
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/decline_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
 
-enum RentalTab { requests, active, overdue, completed }
+enum RentalTab { requests, active, overdue, completed, rejected }
 
 class RentalManagementViewModel extends ChangeNotifier {
   RentalManagementViewModel(
@@ -42,7 +42,9 @@ class RentalManagementViewModel extends ChangeNotifier {
   int get activeCount =>
       _rentals.where((r) => r.status == 'active' && !r.isOverdue).length;
   int get overdueCount => _rentals.where((r) => r.isOverdue).length;
-  int get completedCount => _rentals.where((r) => r.isCompleted || r.isDeclined || r.isCancelled).length;
+  int get completedCount => _rentals.where((r) => r.isCompleted).length;
+  int get rejectedCount =>
+      _rentals.where((r) => r.isDeclined || r.isCancelled).length;
 
   List<Rental> get _filtered {
     switch (_tab) {
@@ -51,8 +53,10 @@ class RentalManagementViewModel extends ChangeNotifier {
       case RentalTab.overdue:
         return _rentals.where((r) => r.isOverdue).toList();
       case RentalTab.completed:
+        return _rentals.where((r) => r.isCompleted).toList();
+      case RentalTab.rejected:
         return _rentals
-            .where((r) => r.isCompleted || r.isDeclined || r.isCancelled)
+            .where((r) => r.isDeclined || r.isCancelled)
             .toList();
       case RentalTab.active:
         return _rentals.where((r) => r.status == 'active').toList();

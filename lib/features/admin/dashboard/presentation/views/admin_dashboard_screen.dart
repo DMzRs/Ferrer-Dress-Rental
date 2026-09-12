@@ -129,7 +129,7 @@ class AdminDashboardScreen extends StatelessWidget {
     switch (entry.kind) {
       case ActivityKind.rental:
         context.read<RentalManagementViewModel>()
-          ..setTab(RentalTab.values[entry.subTab.clamp(0, 3)])
+          ..setTab(RentalTab.values[entry.subTab.clamp(0, 4)])
           ..highlight(entry.recordId);
         break;
       case ActivityKind.appointment:
