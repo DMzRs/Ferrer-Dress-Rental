@@ -33,10 +33,13 @@ class Appointment {
 
   // Lifecycle: pending (customer request) -> confirmed | declined; the
   // customer may cancel a request. 'scheduled' is the legacy confirmed value.
+  // A confirmed visit ends as completed (showed up) or no_show.
   static const String statusPending = 'pending';
   static const String statusConfirmed = 'confirmed';
   static const String statusDeclined = 'declined';
   static const String statusCancelled = 'cancelled';
+  static const String statusCompleted = 'completed';
+  static const String statusNoShow = 'no_show';
 
   bool get isUpcoming =>
       (status == statusPending ||
@@ -57,6 +60,10 @@ class Appointment {
         return 'Declined';
       case statusCancelled:
         return 'Cancelled';
+      case statusCompleted:
+        return 'Completed';
+      case statusNoShow:
+        return 'No-Show';
       default:
         return status;
     }

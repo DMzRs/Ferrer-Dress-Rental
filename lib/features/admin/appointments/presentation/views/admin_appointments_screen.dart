@@ -144,8 +144,12 @@ class _AppointmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPending = appointment.status == Appointment.statusPending;
+    final isScheduled = appointment.status == Appointment.statusConfirmed ||
+        appointment.status == 'scheduled';
     final highlighted =
         context.select<AppointmentsViewModel, bool>((vm) => vm.highlightId == appointment.id);
+    final busy =
+        context.select<AppointmentsViewModel, bool>((vm) => vm.isBusyFor(appointment.id));
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -272,6 +276,53 @@ class _AppointmentTile extends StatelessWidget {
                   ),
                 ],
               ),
+            ] else if (isScheduled) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.adminMuted,
+                        side: BorderSide(
+                            color: AppColors.adminBorder.withValues(alpha: .8)),
+                        minimumSize: const Size(0, 40),
+                      ),
+                      onPressed:
+                          _verdict(context, Appointment.statusNoShow),
+                      icon: busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.adminMuted))
+                          : const Icon(Icons.person_off_outlined, size: 17),
+                      label: const Text('No-Show'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.adminPrimary,
+                        minimumSize: const Size(0, 40),
+                      ),
+                      onPressed:
+                          _verdict(context, Appointment.statusCompleted),
+                      icon: busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.check_rounded, size: 17),
+                      label: const Text('Done'),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ],
         ),
@@ -279,10 +330,29 @@ class _AppointmentTile extends StatelessWidget {
     );
   }
 
+  /// Records a visit verdict (Done / No-Show) for a scheduled appointment.
+  /// Null while a verdict is saving, disabling both buttons.
+  VoidCallback? _verdict(BuildContext context, String status) {
+    final vm = context.read<AppointmentsViewModel>();
+    if (vm.isBusyFor(appointment.id)) return null;
+    return () async {
+      final ok = status == Appointment.statusCompleted
+          ? await vm.complete(appointment.id)
+          : await vm.markNoShow(appointment.id);
+      if (!context.mounted || ok) return;
+      showTopSnackBar(
+        context,
+        'Could not record the verdict. Please try again.',
+        backgroundColor: AppColors.adminRed,
+      );
+    };
+  }
+
   Widget _statusChip(Appointment appointment) {
     final color = appointment.status == Appointment.statusDeclined
         ? AppColors.adminRed
-        : appointment.status == Appointment.statusCancelled
+        : appointment.status == Appointment.statusCancelled ||
+                appointment.status == Appointment.statusNoShow
             ? AppColors.adminMuted
             : AppColors.adminPrimary;
     return Container(

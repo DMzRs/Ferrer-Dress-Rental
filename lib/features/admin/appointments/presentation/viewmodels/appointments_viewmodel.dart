@@ -65,7 +65,9 @@ class AppointmentsViewModel extends ChangeNotifier {
     final done = _appointments
         .where((a) =>
             a.status == Appointment.statusDeclined ||
-            a.status == Appointment.statusCancelled)
+            a.status == Appointment.statusCancelled ||
+            a.status == Appointment.statusCompleted ||
+            a.status == Appointment.statusNoShow)
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return done;
@@ -105,6 +107,43 @@ class AppointmentsViewModel extends ChangeNotifier {
       _busyId = '';
       notifyListeners();
     }
+  }
+
+  /// Records the visit verdict for a scheduled appointment and frees the
+  /// product back to available so it can be rented again.
+  Future<bool> complete(String appointmentId) =>
+      _finish(appointmentId, Appointment.statusCompleted);
+
+  /// Records a no-show and frees the product back to available.
+  Future<bool> markNoShow(String appointmentId) =>
+      _finish(appointmentId, Appointment.statusNoShow);
+
+  Future<bool> _finish(String appointmentId, String status) async {
+    _busyId = appointmentId;
+    notifyListeners();
+    try {
+      await _appointmentRepository.updateStatus(appointmentId, status);
+      await _freeItemIfScheduled(appointmentId);
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      _busyId = '';
+      notifyListeners();
+    }
+  }
+
+  Future<void> _freeItemIfScheduled(String appointmentId) async {
+    final match = _appointments.where((a) => a.id == appointmentId).toList();
+    if (match.isEmpty) return;
+    final itemId = match.first.itemId;
+    if (itemId == null || itemId.isEmpty) return;
+    final items = await _inventoryRepository.itemsStream().first;
+    final item = items.where((i) => i.id == itemId).toList();
+    if (item.isEmpty || item.first.status != 'scheduled_for_appointment') {
+      return;
+    }
+    await _inventoryRepository.updateStatus(itemId, 'available');
   }
 
   /// Declines the request with the admin's reason; the user sees it.
