@@ -16,5 +16,8 @@ abstract class ReviewRepository {
 
   Stream<RatingSummary> ratingSummaryStream(String itemId);
 
+  /// Every review, newest first (admin feed).
+  Stream<List<Review>> allReviewsStream();
+
   Future<void> saveReview(Review review);
 }

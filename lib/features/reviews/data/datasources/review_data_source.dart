@@ -8,5 +8,7 @@ abstract class ReviewDataSource {
 
   Stream<RatingSummary> ratingSummaryStream(String itemId);
 
+  Stream<List<Review>> allReviewsStream();
+
   Future<void> saveReview(Review review);
 }

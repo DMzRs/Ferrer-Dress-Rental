@@ -29,4 +29,15 @@ void main() {
     expect(summary.count, 1);
     expect(summary.avg, 5.0);
   });
+
+  test('allReviewsStream returns newest first', () async {
+    final repo = ReviewRepositoryImpl(MockReviewDataSource());
+    final all = await repo.allReviewsStream().first;
+    expect(all.length, 2);
+    expect(
+      all[0].createdAt.isAfter(all[1].createdAt) ||
+          all[0].createdAt.isAtSameMomentAs(all[1].createdAt),
+      isTrue,
+    );
+  });
 }

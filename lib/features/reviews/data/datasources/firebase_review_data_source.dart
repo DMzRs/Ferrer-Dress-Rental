@@ -53,6 +53,17 @@ class FirebaseReviewDataSource implements ReviewDataSource {
   }
 
   @override
+  Stream<List<Review>> allReviewsStream() {
+    return _db
+        .collection(FirestoreCollections.reviews)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) => ReviewModel.fromMap(d.id, d.data())).toList(),
+        );
+  }
+
+  @override
   Future<void> saveReview(Review review) async {
     final ref = _db
         .collection(FirestoreCollections.reviews)

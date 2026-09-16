@@ -12,10 +12,13 @@ import 'package:ferrer_rental_shop/features/admin/rental_management/presentation
 import 'package:ferrer_rental_shop/features/admin/rental_management/presentation/views/rental_management_screen.dart';
 import 'package:ferrer_rental_shop/features/admin/reports/presentation/viewmodels/reports_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/reports/presentation/views/reports_screen.dart';
+import 'package:ferrer_rental_shop/features/admin/reviews/presentation/viewmodels/admin_reviews_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/admin/reviews/presentation/views/admin_reviews_screen.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
+import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/decline_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
@@ -55,6 +58,10 @@ class AdminShell extends StatelessWidget {
         ChangeNotifierProvider<ReportsViewModel>(
           create: (_) => ReportsViewModel(context.read<RentalRepository>()),
         ),
+        ChangeNotifierProvider<AdminReviewsViewModel>(
+          create: (_) =>
+              AdminReviewsViewModel(context.read<ReviewRepository>()),
+        ),
       ],
       child: Theme(
         data: AppTheme.admin,
@@ -89,6 +96,7 @@ class _AdminShellViewState extends State<_AdminShellView> {
             const InventoryManagementScreen(),
             const RentalManagementScreen(),
             const ReportsScreen(),
+            const AdminReviewsScreen(),
           ],
         ),
         bottomNavigationBar: NavigationBar(
@@ -119,6 +127,11 @@ class _AdminShellViewState extends State<_AdminShellView> {
               icon: Icon(Icons.bar_chart_outlined),
               selectedIcon: Icon(Icons.bar_chart_rounded),
               label: 'Reports',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.rate_review_outlined),
+              selectedIcon: Icon(Icons.rate_review_rounded),
+              label: 'Reviews',
             ),
           ],
         ),

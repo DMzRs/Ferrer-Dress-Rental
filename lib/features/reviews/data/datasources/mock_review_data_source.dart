@@ -50,6 +50,14 @@ class MockReviewDataSource implements ReviewDataSource {
   }
 
   @override
+  Stream<List<Review>> allReviewsStream() async* {
+    yield _all();
+    await for (final _ in _tick.stream) {
+      yield _all();
+    }
+  }
+
+  @override
   Stream<RatingSummary> ratingSummaryStream(String itemId) async* {
     yield _summary(itemId);
     await for (final _ in _tick.stream) {
@@ -76,6 +84,12 @@ class MockReviewDataSource implements ReviewDataSource {
 
   List<Review> _forItem(String itemId) {
     final list = _reviews.values.where((r) => r.itemId == itemId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  List<Review> _all() {
+    final list = _reviews.values.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }

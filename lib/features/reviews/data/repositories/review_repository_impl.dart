@@ -28,5 +28,8 @@ class ReviewRepositoryImpl implements ReviewRepository {
       _dataSource.ratingSummaryStream(itemId);
 
   @override
+  Stream<List<Review>> allReviewsStream() => _dataSource.allReviewsStream();
+
+  @override
   Future<void> saveReview(Review review) => _dataSource.saveReview(review);
 }
