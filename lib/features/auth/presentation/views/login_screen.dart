@@ -24,6 +24,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   AuthMode _mode = AuthMode.login;
   bool _obscure = true;
+  bool _obscureConfirm = true;
   bool _resetBusy = false;
   bool _canSubmit = false;
 
@@ -312,9 +313,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 nameController: _nameController,
                                 phoneController: _phoneController,
                                 obscure: _obscure,
+                                confirmObscure: _obscureConfirm,
                                 canSubmit: _canSubmit,
                                 onToggleObscure: () =>
                                     setState(() => _obscure = !_obscure),
+                                onToggleConfirmObscure: () => setState(
+                                    () => _obscureConfirm = !_obscureConfirm),
                                 busy: vm.busy ||
                                     vm.linkState ==
                                         EmailLinkState.sending,
@@ -326,12 +330,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _switchMode(AuthMode.login),
                               ),
                         const SizedBox(height: 22),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          child: _mode == AuthMode.login
-                              ? _CreateAccountLink(onTap: () => _switchMode(AuthMode.signup))
-                              : _BackToLoginLink(onTap: () => _switchMode(AuthMode.login)),
-                        ),
                         if (!AppConfig.firebaseEnabled) ...[
                           const SizedBox(height: 26),
                           _DemoCredentialsCard(),
@@ -403,7 +401,7 @@ class _LinkSentCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
           ),
           const SizedBox(height: 22),
-          if (waiting) ...[
+          if (waiting || linkState == EmailLinkState.verifying) ...[
             const Center(
               child: SizedBox(
                 width: 26,
@@ -415,32 +413,12 @@ class _LinkSentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Waiting for you to tap the link…',
+            Text(
+              waiting
+                  ? 'Waiting for you to tap the link…'
+                  : 'Link received — finishing signup…',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.inkSoft,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (linkState == EmailLinkState.verifying) ...[
-            const Center(
-              child: SizedBox(
-                width: 26,
-                height: 26,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: AppColors.roseDark,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Link received — finishing signup…',
-              textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.inkSoft,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -517,6 +495,36 @@ class _LinkSentCard extends StatelessWidget {
   }
 }
 
+class _Reveal extends StatelessWidget {
+  final bool visible;
+  final LocalKey paddingKey;
+  final Widget child;
+
+  const _Reveal({
+    required this.visible,
+    required this.paddingKey,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) => SizeTransition(
+        sizeFactor: animation,
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+      child: visible
+          ? Padding(
+              key: paddingKey,
+              padding: const EdgeInsets.only(bottom: 16),
+              child: child,
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
 class _AuthCard extends StatelessWidget {
   final AuthMode mode;
   final GlobalKey<FormState> formKey;
@@ -526,8 +534,10 @@ class _AuthCard extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController phoneController;
   final bool obscure;
+  final bool confirmObscure;
   final bool canSubmit;
   final VoidCallback onToggleObscure;
+  final VoidCallback onToggleConfirmObscure;
   final bool busy;
   final VoidCallback onSubmit;
   final VoidCallback onForgotPassword;
@@ -543,8 +553,10 @@ class _AuthCard extends StatelessWidget {
     required this.nameController,
     required this.phoneController,
     required this.obscure,
+    required this.confirmObscure,
     required this.canSubmit,
     required this.onToggleObscure,
+    required this.onToggleConfirmObscure,
     required this.busy,
     required this.onSubmit,
     required this.onForgotPassword,
@@ -588,25 +600,16 @@ class _AuthCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
             ),
             const SizedBox(height: 26),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) => SizeTransition(
-                sizeFactor: animation,
-                child: FadeTransition(opacity: animation, child: child),
+            _Reveal(
+              visible: !isLogin,
+              paddingKey: const ValueKey('signup-fields'),
+              child: ElegantTextField(
+                controller: nameController,
+                hint: 'Maria Santos',
+                label: 'FULL NAME',
+                prefixIcon: Icons.person_outline_rounded,
+                validator: Validators.fullName,
               ),
-              child: isLogin
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      key: const ValueKey('signup-fields'),
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ElegantTextField(
-                        controller: nameController,
-                        hint: 'Maria Santos',
-                        label: 'FULL NAME',
-                        prefixIcon: Icons.person_outline_rounded,
-                        validator: Validators.fullName,
-                      ),
-                    ),
             ),
             ElegantTextField(
               controller: emailController,
@@ -617,26 +620,17 @@ class _AuthCard extends StatelessWidget {
               validator: Validators.email,
             ),
             const SizedBox(height: 16),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) => SizeTransition(
-                sizeFactor: animation,
-                child: FadeTransition(opacity: animation, child: child),
+            _Reveal(
+              visible: !isLogin,
+              paddingKey: const ValueKey('phone-field'),
+              child: ElegantTextField(
+                controller: phoneController,
+                hint: '0917 123 4567',
+                label: 'PHONE NUMBER',
+                prefixIcon: Icons.phone_iphone_rounded,
+                keyboardType: TextInputType.phone,
+                validator: Validators.phone,
               ),
-              child: isLogin
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      key: const ValueKey('phone-field'),
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ElegantTextField(
-                        controller: phoneController,
-                        hint: '0917 123 4567',
-                        label: 'PHONE NUMBER',
-                        prefixIcon: Icons.phone_iphone_rounded,
-                        keyboardType: TextInputType.phone,
-                        validator: Validators.phone,
-                      ),
-                    ),
             ),
             ElegantTextField(
               controller: passwordController,
@@ -651,54 +645,49 @@ class _AuthCard extends StatelessWidget {
               validator: Validators.password,
             ),
             const SizedBox(height: 16),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) => SizeTransition(
-                sizeFactor: animation,
-                child: FadeTransition(opacity: animation, child: child),
+            _Reveal(
+              visible: !isLogin,
+              paddingKey: const ValueKey('confirm-password-field'),
+              child: ElegantTextField(
+                controller: confirmPasswordController,
+                hint: '••••••••',
+                label: 'CONFIRM PASSWORD',
+                prefixIcon: Icons.lock_reset_rounded,
+                obscureText: confirmObscure,
+                onSuffixTap: onToggleConfirmObscure,
+                suffixIcon: confirmObscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => onSubmit(),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
               ),
-              child: isLogin
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      key: const ValueKey('confirm-password-field'),
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ElegantTextField(
-                        controller: confirmPasswordController,
-                        hint: '••••••••',
-                        label: 'CONFIRM PASSWORD',
-                        prefixIcon: Icons.lock_reset_rounded,
-                        obscureText: obscure,
-                        onSuffixTap: onToggleObscure,
-                        suffixIcon:
-                            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => onSubmit(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
             ),
             const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: isLogin ? onForgotPassword : null,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.roseDark,
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            if (isLogin) ...[
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: onForgotPassword,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.roseDark,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  child: const Text('Forgot Password?'),
                 ),
-                child: const Text('Forgot Password?'),
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 14),
+            ] else
+              const SizedBox(height: 14),
             GradientButton(
               label: isLogin ? 'Log In' : 'Create Account',
               busy: busy,
@@ -728,60 +717,6 @@ class _AuthCard extends StatelessWidget {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CreateAccountLink extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _CreateAccountLink({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: const TextSpan(
-          style: TextStyle(color: AppColors.inkSoft, fontSize: 13.5),
-          children: [
-            TextSpan(text: "Don't have an account? "),
-            TextSpan(
-              text: 'Join us',
-              style: TextStyle(
-                color: AppColors.roseDark,
-                fontWeight: FontWeight.w700,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BackToLoginLink extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _BackToLoginLink({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: const Text(
-        'Back to Sign In',
-        style: TextStyle(
-          color: AppColors.roseDark,
-          fontSize: 13.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: .3,
         ),
       ),
     );
