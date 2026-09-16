@@ -14,6 +14,10 @@ class CatalogItem {
   final String status;
   final DateTime createdAt;
 
+  /// Denormalized public rating aggregate, maintained by review writes.
+  final double avgRating;
+  final int ratingCount;
+
   const CatalogItem({
     required this.id,
     required this.name,
@@ -26,6 +30,8 @@ class CatalogItem {
     this.thumbnail = '',
     this.status = 'available',
     required this.createdAt,
+    this.avgRating = 0,
+    this.ratingCount = 0,
   });
 
   bool get isAvailable => status == 'available';
@@ -75,6 +81,8 @@ class CatalogItem {
     String? thumbnail,
     String? status,
     DateTime? createdAt,
+    double? avgRating,
+    int? ratingCount,
   }) {
     return CatalogItem(
       id: id ?? this.id,
@@ -88,6 +96,8 @@ class CatalogItem {
       thumbnail: thumbnail ?? this.thumbnail,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
+      avgRating: avgRating ?? this.avgRating,
+      ratingCount: ratingCount ?? this.ratingCount,
     );
   }
 }

@@ -15,6 +15,8 @@ class CatalogItemModel extends CatalogItem {
     super.thumbnail,
     super.status,
     required super.createdAt,
+    super.avgRating,
+    super.ratingCount,
   });
 
   factory CatalogItemModel.fromMap(String id, Map<String, dynamic> map) {
@@ -31,6 +33,8 @@ class CatalogItemModel extends CatalogItem {
       thumbnail: (map['thumbnail'] ?? '') as String,
       status: (map['status'] ?? 'available') as String,
       createdAt: _toDate(map['createdAt']),
+      avgRating: _toDouble(map['avgRating']),
+      ratingCount: _toInt(map['ratingCount']),
     );
   }
 
@@ -47,6 +51,8 @@ class CatalogItemModel extends CatalogItem {
       thumbnail: entity.thumbnail,
       status: entity.status,
       createdAt: entity.createdAt,
+      avgRating: entity.avgRating,
+      ratingCount: entity.ratingCount,
     );
   }
 
@@ -74,7 +80,15 @@ class CatalogItemModel extends CatalogItem {
       'thumbnail': thumbnail,
       'status': status,
       'createdAt': forFirestore ? Timestamp.fromDate(createdAt) : createdAt.toIso8601String(),
+      'avgRating': avgRating,
+      'ratingCount': ratingCount,
     };
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
 
