@@ -33,7 +33,7 @@ void main() {
   testWidgets('5-star filter narrows the list', (t) async {
     await t.pumpWidget(_harness());
     await t.pumpAndSettle();
-    await t.tap(find.text('5★'));
+    await t.tap(find.text('5'));
     await t.pumpAndSettle();
     expect(find.text('Perfect fit, on time.'), findsOneWidget);
     expect(find.textContaining('Ivory Lace'), findsOneWidget);
@@ -42,7 +42,7 @@ void main() {
   testWidgets('1-star filter shows empty state with seeds', (t) async {
     await t.pumpWidget(_harness());
     await t.pumpAndSettle();
-    await t.tap(find.text('1★'));
+    await t.tap(find.text('1'));
     await t.pumpAndSettle();
     expect(find.text('Nothing in this filter'), findsOneWidget);
   });

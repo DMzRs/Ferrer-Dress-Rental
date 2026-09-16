@@ -107,20 +107,26 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const options = {
-      0: 'All',
-      5: '5★',
-      4: '4★',
-      3: '3★',
-      2: '2★',
-      1: '1★',
-    };
+    const options = {0: 'All', 5: '5', 4: '4', 3: '3', 2: '2', 1: '1'};
     return Wrap(
       spacing: 8,
       children: [
         for (final entry in options.entries)
           ChoiceChip(
-            label: Text(entry.value),
+            label: entry.key == 0
+                ? Text(entry.value)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 14,
+                        color: AppColors.adminAmber,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(entry.value),
+                    ],
+                  ),
             selected: selected == entry.key,
             onSelected: (_) => onSelect(entry.key),
           ),
