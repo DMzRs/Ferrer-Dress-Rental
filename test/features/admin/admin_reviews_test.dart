@@ -38,4 +38,12 @@ void main() {
     expect(find.text('Perfect fit, on time.'), findsOneWidget);
     expect(find.textContaining('Ivory Lace'), findsOneWidget);
   });
+
+  testWidgets('1-star filter shows empty state with seeds', (t) async {
+    await t.pumpWidget(_harness());
+    await t.pumpAndSettle();
+    await t.tap(find.text('1★'));
+    await t.pumpAndSettle();
+    expect(find.text('Nothing in this filter'), findsOneWidget);
+  });
 }

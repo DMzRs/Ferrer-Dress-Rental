@@ -107,7 +107,14 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const options = {0: 'All', 5: '5★', 4: '4★', 3: '≤3★'};
+    const options = {
+      0: 'All',
+      5: '5★',
+      4: '4★',
+      3: '3★',
+      2: '2★',
+      1: '1★',
+    };
     return Wrap(
       spacing: 8,
       children: [

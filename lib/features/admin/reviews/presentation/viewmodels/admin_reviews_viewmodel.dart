@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/entities/review_entity.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
 
-/// Filter values: 0 = all, 5 = five-star, 4 = four-star, 3 = three and below.
+/// Filter values: 0 = all, otherwise exact star count (5, 4, 3, 2, 1).
 class AdminReviewsViewModel extends ChangeNotifier {
   AdminReviewsViewModel(this._reviews);
 
@@ -22,9 +22,6 @@ class AdminReviewsViewModel extends ChangeNotifier {
 
   List<Review> applyFilter(List<Review> reviews) {
     if (_filter == 0) return reviews;
-    if (_filter == 3) {
-      return reviews.where((r) => r.stars <= 3).toList();
-    }
     return reviews.where((r) => r.stars == _filter).toList();
   }
 
