@@ -5,6 +5,7 @@ import 'package:ferrer_rental_shop/core/router/app_router.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
+import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/rate_pill.dart';
 
 class RentalCard extends StatelessWidget {
   final Rental rental;
@@ -195,6 +196,30 @@ class RentalCard extends StatelessWidget {
                       ),
                       Icon(Icons.arrow_forward_ios_rounded,
                           size: 10, color: AppColors.roseDark.withValues(alpha: .7)),
+                    ],
+                  ),
+                ],
+              ),
+            ] else if (rental.isCompleted) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  RatePill(rental: rental),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Details',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.roseDark.withValues(alpha: .95),
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          size: 10,
+                          color: AppColors.roseDark.withValues(alpha: .7)),
                     ],
                   ),
                 ],

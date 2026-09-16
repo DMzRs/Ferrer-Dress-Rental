@@ -8,6 +8,7 @@ import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/cancel_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/rental_details_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/rate_pill.dart';
 
 class RentalDetailsScreen extends StatelessWidget {
   final Rental rental;
@@ -152,6 +153,8 @@ class _Body extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _Timeline(rental: rental),
+                    if (rental.isCompleted)
+                      YourRatingTile(rental: rental),
                   ],
                 ),
               ),

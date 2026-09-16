@@ -20,6 +20,9 @@ import 'features/rentals/domain/usecases/confirm_rental_usecase.dart';
 import 'features/rentals/domain/usecases/create_rental_usecase.dart';
 import 'features/rentals/domain/usecases/decline_rental_usecase.dart';
 import 'features/rentals/domain/usecases/process_return_usecase.dart';
+import 'features/reviews/data/repositories/review_repository_impl.dart';
+import 'features/reviews/domain/repositories/review_repository.dart';
+import 'features/reviews/domain/usecases/submit_review_usecase.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +44,13 @@ Future<void> main() async {
       Provider<InventoryRepository>.value(value: inventoryRepository),
       Provider<RentalRepository>.value(value: rentalRepository),
       Provider<AppointmentRepository>.value(value: appointmentRepository),
+      Provider<ReviewRepository>.value(
+        value: ReviewRepositoryImpl(ReviewRepositoryImpl.defaultDataSource()),
+      ),
+      Provider<SubmitReviewUseCase>(
+        create: (context) =>
+            SubmitReviewUseCase(context.read<ReviewRepository>()),
+      ),
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => AuthViewModel(authRepository),
       ),
