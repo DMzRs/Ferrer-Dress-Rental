@@ -8,6 +8,7 @@ import 'package:ferrer_rental_shop/core/router/app_router.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/item_rating_widgets.dart';
 import 'package:ferrer_rental_shop/features/booking/presentation/views/booking_screen.dart';
 import 'package:ferrer_rental_shop/features/item_details/presentation/viewmodels/item_details_viewmodel.dart';
 
@@ -71,6 +72,8 @@ class _Body extends StatelessWidget {
                             _CategoryChip(label: item.categoryLabel),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        ItemRatingHeader(itemId: item.id),
                         if (!item.isAvailable) ...[
                           const SizedBox(height: 10),
                           StatusBadge(
@@ -131,6 +134,11 @@ class _Body extends StatelessWidget {
                                 ?.copyWith(color: AppColors.inkSoft, height: 1.55),
                           ),
                         ],
+                        const SizedBox(height: 20),
+                        Text('Reviews',
+                            style: Theme.of(context).textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        ItemReviewList(itemId: item.id),
                         if (item.sizes.isNotEmpty) ...[
                           const SizedBox(height: 22),
                           Row(

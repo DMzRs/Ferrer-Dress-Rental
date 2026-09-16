@@ -7,6 +7,8 @@ import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/rental_management/presentation/viewmodels/rental_management_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
+import 'package:ferrer_rental_shop/features/reviews/domain/entities/review_entity.dart';
+import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
 
 class RentalManagementScreen extends StatefulWidget {
   const RentalManagementScreen({super.key});
@@ -363,6 +365,38 @@ class _RentalRow extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ],
+            if (rental.isCompleted) ...[
+              const SizedBox(height: 8),
+              StreamBuilder<Review?>(
+                stream: context
+                    .read<ReviewRepository>()
+                    .reviewForRentalStream(rental.id),
+                builder: (context, snapshot) {
+                  final review = snapshot.data;
+                  return Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          size: 13.5, color: AppColors.adminAmber),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          review == null
+                              ? 'Not rated yet'
+                              : '★ ${review.stars.toDouble().toStringAsFixed(1)}'
+                                  '${review.hasComment ? ' · ${review.comment.trim()}' : ''}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 11.5,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey.shade600),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
             if (rental.deliveryAddress.isNotEmpty) ...[
