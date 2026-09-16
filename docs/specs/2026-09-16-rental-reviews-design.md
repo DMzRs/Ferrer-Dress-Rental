@@ -51,8 +51,10 @@ Clean-architecture split per existing convention:
 
 Public item aggregate (no Cloud Function, keeps the no-backend pattern): two new
 optional fields on `items/{id}` — `avgRating` (double, default 0) and
-`ratingCount` (int, default 0) — recomputed in a Firestore transaction on every
-submit/edit: read all `reviews where itemId == X`, compute, write. `CatalogItem`
+`ratingCount` (int, default 0) — bumped in a Firestore transaction from the
+previous star value (delta: new reviews increment the count, overwrites adjust
+the sum; `Transaction.get` in this SDK only takes single docs, so no
+re-read-all). `CatalogItem`
 / `CatalogItemModel` gain the two fields with `0` defaults so old docs parse.
 
 ## 4. Rules, indexes, offline (§2 approved)

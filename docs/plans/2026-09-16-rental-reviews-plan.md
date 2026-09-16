@@ -4,7 +4,7 @@
 
 **Goal:** Customers rate completed rentals (stars + comment, editable) and shoppers see item ratings.
 
-**Architecture:** New `reviews` feature mirroring the rentals clean-architecture split (`domain/entities`, `data/models`, `data/datasources` Firebase+Mock, `data/repositories`, `domain/usecases`, `presentation`). One doc per rental (`reviews/{rentalId}`); item aggregates recomputed client-side in a Firestore transaction. UI hooks into existing completed surfaces only.
+**Architecture:** New `reviews` feature mirroring the rentals clean-architecture split (`domain/entities`, `data/models`, `data/datasources` Firebase+Mock, `data/repositories`, `domain/usecases`, `presentation`). One doc per rental (`reviews/{rentalId}`); item aggregates bumped transactionally from the star delta. UI hooks into existing completed surfaces only.
 
 **Tech Stack:** Flutter 3.47 / Dart 3.13, cloud_firestore, provider (ChangeNotifier), flutter_test.
 
@@ -355,20 +355,36 @@ class FirebaseReviewDataSource implements ReviewDataSource {
     final ref = _db.collection(FirestoreCollections.reviews).doc(review.rentalId);
     final data = ReviewModel.fromEntity(review).toMap(forFirestore: true);
     final existing = await ref.get();
+    final int? oldStars = existing.exists
+        ? (existing.data()!['stars'] as num?)?.toInt()
+        : null;
     if (existing.exists) data['createdAt'] = existing.data()!['createdAt'];
     data['updatedAt'] = FieldValue.serverTimestamp();
     await ref.set(data, SetOptions(merge: true));
+    // NOTE: Transaction.get in cloud_firestore 6.x only accepts a
+    // DocumentReference (no queries in transactions), so the aggregate is a
+    // delta off the previous star value instead of a re-read-all.
+    final itemRef =
+        _db.collection(FirestoreCollections.items).doc(review.itemId);
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         await _db.runTransaction((tx) async {
-          final snap = await tx.get(_db
-              .collection(FirestoreCollections.reviews)
-              .where('itemId', isEqualTo: review.itemId));
-          final stars = snap.docs.map((d) => (d.data()['stars'] as num?)?.toInt() ?? 0).toList();
-          final count = stars.length;
-          final avg = count == 0 ? 0.0 : stars.reduce((a, b) => a + b) / count;
-          tx.update(_db.collection(FirestoreCollections.items).doc(review.itemId),
-              {'avgRating': avg, 'ratingCount': count});
+          final itemSnap = await tx.get(itemRef);
+          final item = itemSnap.data();
+          final count = (item?['ratingCount'] as num?)?.toInt() ?? 0;
+          final avg = (item?['avgRating'] as num?)?.toDouble() ?? 0.0;
+          var sum = avg * count;
+          var newCount = count;
+          if (oldStars == null) {
+            newCount = count + 1;
+            sum += review.stars;
+          } else {
+            sum += review.stars - oldStars;
+          }
+          tx.update(itemRef, {
+            'avgRating': newCount == 0 ? 0.0 : sum / newCount,
+            'ratingCount': newCount,
+          });
         });
         return;
       } catch (_) {
