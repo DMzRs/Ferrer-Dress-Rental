@@ -171,7 +171,13 @@ class _Body extends StatelessWidget {
                             ],
                           ),
                         ],
-                        const SizedBox(height: 30),
+                        // Clearance for the overlaid bottom bar: without it
+                        // the last content (sizes) slides underneath the bar
+                        // at max scroll extent and renders half-covered.
+                        SizedBox(
+                          height:
+                              MediaQuery.of(context).padding.bottom + 120,
+                        ),
                       ],
                     ),
                   ),
@@ -497,6 +503,7 @@ class _BottomBar extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
+        key: const ValueKey('detailsBottomBar'),
         padding: EdgeInsets.fromLTRB(
           20,
           14,
