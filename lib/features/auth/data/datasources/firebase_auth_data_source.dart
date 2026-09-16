@@ -4,6 +4,7 @@ import 'package:ferrer_rental_shop/core/services/app_firestore.dart';
 import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:ferrer_rental_shop/core/constants/firestore_collections.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
@@ -183,16 +184,35 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
     return user;
   }
 
+  /// Redacted link probe: never prints the oobCode or email, only the
+  /// shape Firebase needs (mode present, code present + length). If the OS
+  /// or link handler strips query parameters, oobLen comes back 0 and the
+  /// backend answers invalid-action-code.
+  void _logLink(String tag, String link) {
+    final uri = Uri.tryParse(link);
+    final oob = uri?.queryParameters['oobCode'] ?? '';
+    debugPrint(
+      'LINKDBG $tag mode=${uri?.queryParameters['mode']} '
+      'oobLen=${oob.length} '
+      'apiKey=${(uri?.queryParameters['apiKey'] ?? '').isNotEmpty} '
+      'len=${link.length}',
+    );
+  }
+
   @override
   Stream<String> get emailLinkStream async* {
     final initial = await _appLinks.getInitialLink();
     if (initial != null &&
         _auth.isSignInWithEmailLink(initial.toString())) {
+      _logLink('initial', initial.toString());
       yield initial.toString();
     }
     await for (final uri in _appLinks.uriLinkStream) {
       final link = uri.toString();
-      if (_auth.isSignInWithEmailLink(link)) yield link;
+      if (_auth.isSignInWithEmailLink(link)) {
+        _logLink('stream', link);
+        yield link;
+      }
     }
   }
 
