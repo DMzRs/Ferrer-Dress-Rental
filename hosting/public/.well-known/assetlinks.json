@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.example.ferrer_rental_shop",
+      "sha256_cert_fingerprints": [
+        "3D:F6:91:A9:2A:FF:53:4A:FB:6E:87:3A:88:4D:5A:4A:4A:9E:22:9A:87:44:87:13:E8:86:35:A3:A8:F9:35:B4"
+      ]
+    }
+  }
+]
