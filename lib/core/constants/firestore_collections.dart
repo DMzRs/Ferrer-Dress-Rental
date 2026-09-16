@@ -6,4 +6,5 @@ class FirestoreCollections {
   static const itemPhotos = 'itemPhotos';
   static const rentals = 'rentals';
   static const appointments = 'appointments';
+  static const reviews = 'reviews';
 }
