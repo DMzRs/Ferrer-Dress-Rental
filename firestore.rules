@@ -55,10 +55,14 @@ service cloud.firestore {
 
       // Admin edits freely. Customers may only flip the `status` field
       // (available <-> rented) as part of checkout / cancel / return flows.
+      // The review flow may only bump the public rating aggregate.
       allow update: if isAdmin()
         || (isSignedIn()
             && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly(['status']));
+                  .affectedKeys().hasOnly(['status']))
+        || (isSignedIn()
+            && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(['avgRating', 'ratingCount']));
     }
 
     // Full-size item photos (data URIs) kept out of the items stream so
@@ -111,6 +115,34 @@ service cloud.firestore {
             && request.resource.data.status == 'cancelled'
             && request.resource.data.diff(resource.data)
                   .affectedKeys().hasOnly(['status', 'updatedAt']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // reviews (one doc per completed rental, id = rentalId)
+    // ------------------------------------------------------------------
+    match /reviews/{rentalId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.stars is int
+        && request.resource.data.stars >= 1
+        && request.resource.data.stars <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 500
+        && exists(/databases/$(database)/documents/rentals/$(rentalId))
+        && get(/databases/$(database)/documents/rentals/$(rentalId)).data.status == 'completed'
+        && get(/databases/$(database)/documents/rentals/$(rentalId)).data.userId == request.auth.uid;
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['stars', 'comment', 'updatedAt'])
+        && request.resource.data.stars is int
+        && request.resource.data.stars >= 1
+        && request.resource.data.stars <= 5;
 
       allow delete: if isAdmin();
     }
