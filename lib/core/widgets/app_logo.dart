@@ -24,10 +24,13 @@ class AppLogo extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        Icons.local_mall_rounded,
-        color: Colors.white,
-        size: size * .46,
+      child: ClipOval(
+        child: Image.asset(
+          'assets/icon/app_icon.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
