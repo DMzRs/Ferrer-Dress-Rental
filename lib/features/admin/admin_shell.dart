@@ -95,8 +95,8 @@ class _AdminShellViewState extends State<_AdminShellView> {
             const AdminAppointmentsScreen(),
             const InventoryManagementScreen(),
             const RentalManagementScreen(),
-            const ReportsScreen(),
             const AdminReviewsScreen(),
+            const ReportsScreen(),
           ],
         ),
         bottomNavigationBar: NavigationBar(
@@ -124,14 +124,14 @@ class _AdminShellViewState extends State<_AdminShellView> {
               label: 'Rentals',
             ),
             NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart_rounded),
-              label: 'Reports',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.rate_review_outlined),
               selectedIcon: Icon(Icons.rate_review_rounded),
               label: 'Reviews',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bar_chart_outlined),
+              selectedIcon: Icon(Icons.bar_chart_rounded),
+              label: 'Reports',
             ),
           ],
         ),
