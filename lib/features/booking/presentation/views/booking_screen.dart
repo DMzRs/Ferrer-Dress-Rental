@@ -192,7 +192,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 onPressed: vm.canConfirm
                     ? _confirm
                     : () {
-                        showTopSnackBar(
+                        showAppSnackBar(
                           context,
                           'Please choose a date and time slot first.',
                           backgroundColor: AppColors.danger,

@@ -309,7 +309,7 @@ Future<void> _showEditProfileSheet(BuildContext context) async {
                   busy: busy,
                   onPressed: () async {
                     if (nameController.text.trim().isEmpty) {
-                      showTopSnackBar(
+                      showAppSnackBar(
                           context, 'Please enter your full name.');
                       return;
                     }
@@ -322,7 +322,7 @@ Future<void> _showEditProfileSheet(BuildContext context) async {
                     if (!sheetContext.mounted) return;
                     setSheetState(() => busy = false);
                     Navigator.pop(sheetContext);
-                    showTopSnackBar(
+                    showAppSnackBar(
                       context,
                       ok
                           ? 'Profile updated.'

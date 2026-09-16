@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
     if (!success) {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         _vm.error ?? 'Something went wrong',
         backgroundColor: AppColors.danger,
@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _linkStep = true;
       });
     } else {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         _vm.linkError ?? 'Something went wrong',
         backgroundColor: AppColors.danger,
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
     if (!mounted || sent) return;
-    showTopSnackBar(
+    showAppSnackBar(
       context,
       _vm.linkError ?? 'Something went wrong',
       backgroundColor: AppColors.danger,
@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _simulateLinkTap() async {
     final done = await _vm.completeWithLink('demo-link');
     if (!mounted || done) return;
-    showTopSnackBar(
+    showAppSnackBar(
       context,
       _vm.linkError ?? 'Something went wrong',
       backgroundColor: AppColors.danger,
@@ -237,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   busy: _resetBusy,
                   onPressed: () async {
                     if (Validators.email(emailController.text) != null) {
-                      showTopSnackBar(
+                      showAppSnackBar(
                         context,
                         'Enter a valid email address',
                       );
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     setSheetState(() => _resetBusy = false);
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
-                    showTopSnackBar(
+                    showAppSnackBar(
                       context,
                       ok
                           ? 'Reset link sent. Check your inbox.'

@@ -124,7 +124,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
     try {
       final remaining = _maxImages - _totalPhotos;
       if (remaining <= 0) {
-        showTopSnackBar(context, 'Up to $_maxImages photos per item.');
+        showAppSnackBar(context, 'Up to $_maxImages photos per item.');
         return;
       }
       final picked = await _picker.pickMultiImage(
@@ -139,7 +139,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
       });
     } catch (_) {
       if (!mounted) return;
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'Could not open your photos. Please try again.',
         backgroundColor: AppColors.adminRed,
@@ -187,7 +187,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_sizes.isEmpty) {
-      showTopSnackBar(context, 'Select at least one available size');
+      showAppSnackBar(context, 'Select at least one available size');
       return;
     }
     setState(() => _saving = true);
@@ -226,7 +226,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
     } on PhotoTooLargeException {
       if (!mounted) return;
       setState(() => _saving = false);
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'These photos are too large to store. Remove one or two and try again.',
         backgroundColor: AppColors.adminRed,
@@ -240,13 +240,13 @@ class _AddItemSheetState extends State<AddItemSheet> {
     setState(() => _saving = false);
     if (ok) {
       Navigator.pop(context);
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         _isEdit ? '$name updated' : '$name added to inventory',
         backgroundColor: AppColors.adminPrimary,
       );
     } else {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'Could not save item. Please try again.',
         backgroundColor: AppColors.adminRed,

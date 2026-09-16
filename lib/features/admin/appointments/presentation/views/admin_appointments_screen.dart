@@ -340,7 +340,7 @@ class _AppointmentTile extends StatelessWidget {
           ? await vm.complete(appointment.id)
           : await vm.markNoShow(appointment.id);
       if (!context.mounted || ok) return;
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'Could not record the verdict. Please try again.',
         backgroundColor: AppColors.adminRed,
@@ -441,7 +441,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     final ok = await widget.vm.confirm(widget.appointment);
     if (!mounted) return;
     Navigator.pop(context);
-    showTopSnackBar(
+    showAppSnackBar(
       context,
       ok
           ? 'Appointment confirmed.'
@@ -452,7 +452,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
 
   Future<void> _decline() async {
     if (_reasonController.text.trim().isEmpty) {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'Please write the reason for declining.',
         backgroundColor: AppColors.adminRed,
@@ -464,7 +464,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         await widget.vm.decline(widget.appointment, _reasonController.text);
     if (!mounted) return;
     Navigator.pop(context);
-    showTopSnackBar(
+    showAppSnackBar(
       context,
       ok
           ? 'Request declined — the customer will see your reason.'

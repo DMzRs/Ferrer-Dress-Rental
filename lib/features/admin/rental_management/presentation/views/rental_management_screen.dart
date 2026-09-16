@@ -492,7 +492,7 @@ class _RentalRow extends StatelessWidget {
       final error = await vm.confirmRental(rental);
       if (error == null) return;
       if (context.mounted) {
-        showTopSnackBar(context, error, backgroundColor: AppColors.adminRed);
+        showAppSnackBar(context, error, backgroundColor: AppColors.adminRed);
       }
       return;
     }
@@ -563,7 +563,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
     if (!mounted) return;
     Navigator.pop(context);
     if (error != null && widget.pageContext.mounted) {
-      showTopSnackBar(
+      showAppSnackBar(
         widget.pageContext,
         error,
         backgroundColor: AppColors.adminRed,

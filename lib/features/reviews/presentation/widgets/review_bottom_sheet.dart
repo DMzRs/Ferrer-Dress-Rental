@@ -38,7 +38,7 @@ Future<bool> showReviewSheet({
     ),
   );
   if (result != null && context.mounted) {
-    await showTopSnackBar(
+    await showAppSnackBar(
       context,
       result == 'pending'
           ? 'Rating saved, count updating shortly.'

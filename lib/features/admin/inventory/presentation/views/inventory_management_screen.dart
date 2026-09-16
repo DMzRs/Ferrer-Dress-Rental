@@ -224,7 +224,7 @@ class _InventoryTile extends StatelessWidget {
                 .read<InventoryViewModel>()
                 .changeStatus(item, value);
             if (error != null && context.mounted) {
-              showTopSnackBar(
+              showAppSnackBar(
                 context,
                 error,
                 backgroundColor: AppColors.danger,

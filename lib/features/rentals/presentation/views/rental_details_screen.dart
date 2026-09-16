@@ -63,7 +63,7 @@ class _Body extends StatelessWidget {
     final vm = context.read<RentalDetailsViewModel>();
     final ok = await vm.cancel(rental);
     if (!context.mounted) return;
-    showTopSnackBar(
+    showAppSnackBar(
       context,
       ok
           ? 'Rental cancelled. Refund is on its way.'

@@ -77,7 +77,7 @@ class _BodyState extends State<_Body> {
 
     final address = _addressController.text.trim();
     if (address.isEmpty) {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         'Please enter your address so we know where to bring the item.',
         backgroundColor: AppColors.danger,
@@ -88,7 +88,7 @@ class _BodyState extends State<_Body> {
     final ok = await vm.confirm(user, address: address);
     if (!mounted) return;
     if (!ok) {
-      showTopSnackBar(
+      showAppSnackBar(
         context,
         vm.error ?? 'Something went wrong.',
         backgroundColor: AppColors.danger,
@@ -179,7 +179,7 @@ class _BodyState extends State<_Body> {
                       dateText: Formatters.date(vm.endDate),
                       icon: Icons.event_available_outlined,
                       onTap: () {
-                        showTopSnackBar(
+                        showAppSnackBar(
                           context,
                           'Rental period is fixed to 5 days.',
                           backgroundColor: AppColors.roseDark,

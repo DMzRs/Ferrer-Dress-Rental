@@ -549,7 +549,7 @@ class _BottomBar extends StatelessWidget {
                     ? () => context.pushNamed(AppRoutes.checkout,
                         arguments: vm.item)
                     : () {
-                        showTopSnackBar(
+                        showAppSnackBar(
                           context,
                           !vm.item.isAvailable
                               ? 'This piece is currently ${vm.item.statusLabel.toLowerCase()}.'
