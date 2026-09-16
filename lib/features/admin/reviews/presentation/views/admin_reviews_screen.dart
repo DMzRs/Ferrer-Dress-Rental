@@ -89,7 +89,7 @@ class _SummaryCard extends StatelessWidget {
               ),
             ),
             const Text(
-              'all time',
+              'All Time',
               style: TextStyle(fontSize: 12, color: AppColors.adminMuted),
             ),
           ],
