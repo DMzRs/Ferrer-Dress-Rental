@@ -10,8 +10,28 @@ import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/data/models/app_user_model.dart';
 import 'auth_data_source.dart';
 
-class FirebaseAuthDataSource implements AuthDataSource {
-  FirebaseAuth get _auth => FirebaseAuth.instance;
+/// Profile write for email-link sign-up. Always fills in whatever identity
+/// the link flow proved (name/phone/email) but only assigns `role` when the
+/// doc is being created, so a backfilled stub gains its name without ever
+/// clobbering an existing role (e.g. admin).
+Map<String, dynamic> buildLinkSignupWrite({
+  required bool exists,
+  required String email,
+  required String fullName,
+  required String phone,
+}) {
+  return {
+    'email': email,
+    if (fullName.isNotEmpty) 'fullName': fullName,
+    if (phone.isNotEmpty) 'phone': phone,
+    if (!exists) ...{
+      'role': 'customer',
+      'createdAt': FieldValue.serverTimestamp(),
+    },
+  };
+}
+
+class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth => FirebaseAuth.instance;
   FirebaseFirestore get _db => AppFirestore.instance;
   final AppLinks _appLinks = AppLinks();
 
@@ -146,15 +166,18 @@ class FirebaseAuthDataSource implements AuthDataSource {
     }
     final ref = _db.collection(FirestoreCollections.users).doc(firebaseUser.uid);
     final doc = await ref.get();
-    if (!doc.exists) {
-      await ref.set(AppUserModel(
-        uid: firebaseUser.uid,
-        fullName: name,
+    // Merge, don't gate on existence: the auth-state listener can backfill a
+    // nameless stub doc before this write runs; a conditional create would
+    // then skip the real profile forever.
+    await ref.set(
+      buildLinkSignupWrite(
+        exists: doc.exists,
         email: normalizedEmail,
+        fullName: name,
         phone: phoneNumber,
-        role: UserRole.customer,
-      ).toMap());
-    }
+      ),
+      SetOptions(merge: true),
+    );
     final user = await _resolveUser(firebaseUser);
     if (user == null) throw Exception('Account not found');
     return user;
