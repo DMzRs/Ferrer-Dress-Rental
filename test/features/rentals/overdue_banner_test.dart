@@ -129,7 +129,7 @@ void main() {
     await t.tap(find.text('Completed').first);
     await t.pumpAndSettle();
     expect(
-      find.text('Some items are overdue — please return them ASAP.'),
+      find.text('1 item overdue — please return it ASAP.'),
       findsOneWidget,
     );
   });
@@ -141,7 +141,7 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Completed').first);
     await t.pumpAndSettle();
-    await t.tap(find.text('Some items are overdue — please return them ASAP.'));
+    await t.tap(find.text('1 item overdue — please return it ASAP.'));
     await t.pumpAndSettle();
     expect(vm.filter, 'active');
     expect(find.textContaining('Gown over-1'), findsOneWidget);

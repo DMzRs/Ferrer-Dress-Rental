@@ -47,11 +47,19 @@ class MyRentalsViewModel extends ChangeNotifier {
   int get dueSoonCount => _rentals.where((r) => r.isDueSoon).length;
 
   String? get firstOverdueId {
-    for (final rental in _rentals) {
-      if (rental.isOverdue) return rental.id;
-    }
-    return null;
+    final ids = overdueIds;
+    return ids.isEmpty ? null : ids.first;
   }
+
+  List<String> get overdueIds {
+    final ids = <String>[];
+    for (final rental in _rentals) {
+      if (rental.isOverdue) ids.add(rental.id);
+    }
+    return ids;
+  }
+
+  int get overdueCount => overdueIds.length;
 
   List<Rental> get _filtered {
     switch (_filter) {

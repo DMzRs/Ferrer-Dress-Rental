@@ -23,7 +23,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _cardKeys = {};
   Timer? _highlightTimer;
-  String? _highlightId;
+  final Set<String> _highlightIds = {};
 
   @override
   void dispose() {
@@ -35,13 +35,18 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   GlobalKey _keyFor(String id) =>
       _cardKeys.putIfAbsent(id, () => GlobalKey());
 
-  /// Jumps to the first overdue rental: Active filter, scroll, flash ring.
+  /// Jumps to the overdue rentals: Active filter, scroll to the first one,
+  /// flash a ring on all of them.
   void _goToOverdue(MyRentalsViewModel vm) {
     final targetId = vm.firstOverdueId;
     if (targetId == null) return;
     _highlightTimer?.cancel();
     vm.setFilter('active');
-    setState(() => _highlightId = targetId);
+    setState(() {
+      _highlightIds
+        ..clear()
+        ..addAll(vm.overdueIds);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final target = _cardKeys[targetId]?.currentContext;
       if (target != null) {
@@ -55,7 +60,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
     });
     _highlightTimer = Timer(const Duration(seconds: 2, milliseconds: 500),
         () {
-      if (mounted) setState(() => _highlightId = null);
+      if (mounted) setState(() => _highlightIds.clear());
     });
   }
 
@@ -119,7 +124,9 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                         Expanded(
                           child: Text(
                             vm.hasOverdue
-                                ? 'Some items are overdue — please return them ASAP.'
+                                ? (vm.overdueCount == 1
+                                    ? '1 item overdue — please return it ASAP.'
+                                    : '${vm.overdueCount} items overdue — please return them ASAP.')
                                 : 'Reminder: ${vm.dueSoonCount} item(s) due within 2 days.',
                             style: const TextStyle(
                               fontSize: 12.5,
@@ -184,7 +191,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                               return RentalCard(
                                 key: _keyFor(rental.id),
                                 rental: rental,
-                                highlight: _highlightId == rental.id,
+                                highlight: _highlightIds.contains(rental.id),
                               );
                             },
                           ),

@@ -129,6 +129,8 @@ void main() {
     expect(vm.rentals.map((r) => r.id), ['done-1']);
     expect(vm.hasOverdue, isTrue);
     expect(vm.firstOverdueId, 'over-1');
+    expect(vm.overdueIds, ['over-1']);
+    expect(vm.overdueCount, 1);
     vm.dispose();
   });
 
