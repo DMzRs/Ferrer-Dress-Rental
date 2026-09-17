@@ -60,7 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: Theme.of(context).textTheme.headlineMedium),
                               const SizedBox(height: 3),
                               Text(
-                                '${vm.availableCount} exquisite pieces ready for you today',
+                                vm.availableCount == 1
+                                    ? '1 item available today'
+                                    : '${vm.availableCount} items available today',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -94,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 hasScrollBody: false,
                 child: Center(
                   child: Text(
-                    'No gowns match your search yet.\nTry another keyword or category.',
+                    'No items match your search.\nTry another keyword or category.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         color: AppColors.inkSoft, fontSize: 14, height: 1.5),
@@ -194,7 +196,7 @@ class _SearchBar extends StatelessWidget {
         textInputAction: TextInputAction.search,
         style: const TextStyle(fontSize: 14.5, color: AppColors.ink),
         decoration: const InputDecoration(
-          hintText: 'Search dresses & kiddie costumes...',
+          hintText: 'Search dresses and costumes',
           hintStyle: TextStyle(color: AppColors.inkSoft, fontSize: 13.5),
           prefixIcon: Icon(Icons.search_rounded, color: AppColors.rose),
           border: InputBorder.none,

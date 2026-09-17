@@ -56,7 +56,7 @@ class ItemReviewList extends StatelessWidget {
         final reviews = (snapshot.data ?? []).take(5).toList();
         if (reviews.isEmpty) {
           return const Text(
-            'Be the first to review this piece after your rental.',
+            'Be the first to review this item.',
             style: TextStyle(
               fontSize: 12.5,
               color: AppColors.inkSoft,

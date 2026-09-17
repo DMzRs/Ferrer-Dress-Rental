@@ -41,8 +41,8 @@ Future<bool> showReviewSheet({
     await showAppSnackBar(
       context,
       result == 'pending'
-          ? 'Rating saved, count updating shortly.'
-          : 'Thanks for your feedback!',
+          ? 'Your rating was saved.'
+          : 'Thank you for your feedback.',
       backgroundColor:
           result == 'pending' ? AppColors.gold : AppColors.success,
     );
@@ -101,7 +101,7 @@ class _ReviewSheetBodyState extends State<_ReviewSheetBody> {
             ),
             const SizedBox(height: 16),
             Text(
-              vm.existing == null ? 'Rate your rental' : 'Update your rating',
+              vm.existing == null ? 'Rate Your Rental' : 'Update Your Rating',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 4),
@@ -136,7 +136,7 @@ class _ReviewSheetBodyState extends State<_ReviewSheetBody> {
               maxLength: 500,
               enabled: !vm.submitting,
               decoration: const InputDecoration(
-                hintText: 'Tell us about the fit, quality, service… (optional)',
+                hintText: 'How was the fit and quality? (optional)',
               ),
             ),
             if (vm.error != null) ...[
@@ -176,7 +176,7 @@ class _ReviewSheetBodyState extends State<_ReviewSheetBody> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(vm.existing == null ? 'Submit' : 'Update'),
+                    : Text(vm.existing == null ? 'Submit Rating' : 'Update Rating'),
               ),
             ),
           ],

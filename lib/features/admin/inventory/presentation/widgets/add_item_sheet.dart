@@ -187,7 +187,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_sizes.isEmpty) {
-      showAppSnackBar(context, 'Select at least one available size');
+      showAppSnackBar(context, 'Select at least one available size.');
       return;
     }
     setState(() => _saving = true);
@@ -228,7 +228,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
       setState(() => _saving = false);
       showAppSnackBar(
         context,
-        'These photos are too large to store. Remove one or two and try again.',
+        'Some photos exceed the size limit. Please choose smaller images and try again.',
         backgroundColor: AppColors.adminRed,
       );
       return;
@@ -242,7 +242,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
       Navigator.pop(context);
       showAppSnackBar(
         context,
-        _isEdit ? '$name updated' : '$name added to inventory',
+        _isEdit ? '$name updated.' : '$name added to inventory.',
         backgroundColor: AppColors.adminPrimary,
       );
     } else {
@@ -282,7 +282,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(_isEdit ? 'Edit Item' : 'Add New Item',
+                  child: Text(_isEdit ? 'Edit Item' : 'Add Item',
                       style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -315,8 +315,8 @@ class _AddItemSheetState extends State<AddItemSheet> {
                       DropdownButtonFormField<String>(
                         initialValue: _category,
                         items: const [
-                          DropdownMenuItem(value: 'dress', child: Text('Dress')),
-                          DropdownMenuItem(value: 'kiddie', child: Text('Kiddie')),
+                          DropdownMenuItem(value: 'dress', child: Text('Adult Dress')),
+                          DropdownMenuItem(value: 'kiddie', child: Text('Kiddie Costume')),
                         ],
                         onChanged: (v) {
                           if (v != null) _switchCategory(v);
@@ -360,7 +360,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
               maxLines: 2,
               minLines: 1,
               decoration: const InputDecoration(
-                  hintText: 'Fabric, cut, and details customers should know...'),
+                  hintText: 'Fabric, cut, and details customers should know.'),
             ),
             const SizedBox(height: 16),
             _label('AVAILABLE SIZES'),
@@ -458,8 +458,8 @@ class _AddItemSheetState extends State<AddItemSheet> {
               onTap: _saving ? null : _pickImages,
               child: DashedUploadPlaceholder(
                 onTapHint: _totalPhotos == 0
-                    ? 'Tap to add photos'
-                    : 'Tap to add more photos',
+                    ? 'Add photos'
+                    : 'Add more photos',
               ),
             ),
             const SizedBox(height: 22),

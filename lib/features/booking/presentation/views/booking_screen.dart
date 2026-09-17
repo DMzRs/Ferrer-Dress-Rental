@@ -78,7 +78,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: Text(itemName == null ? 'Book an Appointment' : 'Book a Fitting'),
+        title: const Text('Book a Fitting'),
         centerTitle: true,
       ),
       body: Container(
@@ -126,7 +126,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             ),
                             const SizedBox(height: 2),
                             const Text(
-                              'Fitting appointment for this piece',
+                              'Fitting appointment for this item',
                               style: TextStyle(
                                   fontSize: 12, color: AppColors.inkSoft),
                             ),
@@ -375,7 +375,7 @@ class _ResultSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             success
-                ? "We can't wait to see you! A reminder will be sent before your visit."
+                ? 'We look forward to seeing you. A reminder will be sent before your visit.'
                 : (errorMessage ?? 'Please check your connection and try again.'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.inkSoft, fontSize: 13.5, height: 1.5),

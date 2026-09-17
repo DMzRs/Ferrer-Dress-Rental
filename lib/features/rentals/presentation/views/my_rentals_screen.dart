@@ -86,7 +86,9 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
               child: Text(
-                '${vm.activeCount} active piece${vm.activeCount == 1 ? '' : 's'} in your wardrobe',
+                vm.activeCount == 1
+                    ? '1 active rental right now'
+                    : '${vm.activeCount} active rentals right now',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -125,9 +127,11 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                           child: Text(
                             vm.hasOverdue
                                 ? (vm.overdueCount == 1
-                                    ? '1 item overdue — please return it ASAP.'
-                                    : '${vm.overdueCount} items overdue — please return them ASAP.')
-                                : 'Reminder: ${vm.dueSoonCount} item(s) due within 2 days.',
+                                    ? '1 item overdue — please return it immediately.'
+                                    : '${vm.overdueCount} items overdue — please return them immediately.')
+                                : (vm.dueSoonCount == 1
+                                    ? 'Reminder: 1 item due within 2 days.'
+                                    : 'Reminder: ${vm.dueSoonCount} items due within 2 days.'),
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -174,7 +178,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                   : vm.rentals.isEmpty
                       ? EmptyState(
                           icon: Icons.local_mall_outlined,
-                          title: 'Nothing here yet',
+                          title: 'No rentals yet',
                           subtitle:
                               'Discover our collection and your rentals will appear here.',
                         )

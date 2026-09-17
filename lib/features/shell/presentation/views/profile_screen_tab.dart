@@ -57,7 +57,7 @@ class ProfileScreenTab extends StatelessWidget {
                   Text(
                     (user?.fullName.trim().isNotEmpty ?? false)
                         ? user!.fullName
-                        : 'Welcome!',
+                        : 'Welcome',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 3),
@@ -82,13 +82,13 @@ class ProfileScreenTab extends StatelessWidget {
               ),
               _MenuItem(
                 icon: Icons.local_mall_outlined,
-                title: 'Rental History',
+                title: 'My Rentals',
                 subtitle: 'View your past and active rentals',
                 onTap: () => onNavigateTo(2),
               ),
               _MenuItem(
                 icon: Icons.favorite_border_rounded,
-                title: 'Saved Places',
+                title: 'Saved Addresses',
                 subtitle: _savedPlacesSubtitle(user),
                 onTap: () => _showSavedPlacesSheet(context),
               ),
@@ -216,7 +216,7 @@ class _CompleteProfileBanner extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Your profile is almost empty — add your name and details.',
+                  'Add your name and details to complete your profile.',
                   style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
@@ -325,7 +325,7 @@ Future<void> _showEditProfileSheet(BuildContext context) async {
                     showAppSnackBar(
                       context,
                       ok
-                          ? 'Profile updated.'
+                          ? 'Your profile has been updated.'
                           : (vm.error ?? 'Could not save your profile.'),
                       backgroundColor:
                           ok ? AppColors.success : AppColors.danger,
@@ -380,7 +380,7 @@ Future<void> _showSavedPlacesSheet(BuildContext context) async {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text('Saved Places',
+                const Text('Saved Addresses',
                     style: TextStyle(
                         fontFamily: 'serif',
                         fontSize: 20,
@@ -388,14 +388,14 @@ Future<void> _showSavedPlacesSheet(BuildContext context) async {
                         color: AppColors.ink)),
                 const SizedBox(height: 4),
                 const Text(
-                    'Addresses you rent to often — tap one at checkout to fill '
-                    'the delivery address instantly.',
+                    'Your saved addresses. Choose one at checkout to fill '
+                    'the delivery address.',
                     style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft)),
                 const SizedBox(height: 16),
                 if (places.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Text('No saved places yet.',
+                    child: Text('No saved addresses yet.',
                         style: TextStyle(
                             fontSize: 13, color: AppColors.inkSoft)),
                   ),
@@ -607,14 +607,14 @@ class _LogoutButton extends StatelessWidget {
             builder: (dialogContext) => AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text('Sign out?',
+              title: const Text('Sign Out?',
                   style: TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w700)),
-              content: const Text('You will be missed. See you soon!',
+              content: const Text('You will be signed out on this device.',
                   style: TextStyle(fontSize: 13.5)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Stay', style: TextStyle(color: AppColors.inkSoft)),
+                  child: const Text('Cancel', style: TextStyle(color: AppColors.inkSoft)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, true),

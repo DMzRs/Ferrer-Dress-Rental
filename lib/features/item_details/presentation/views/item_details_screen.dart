@@ -123,8 +123,8 @@ class _Body extends StatelessWidget {
                         _DepositInfoBox(amount: item.securityDeposit),
                         if (item.description.isNotEmpty) ...[
                           const SizedBox(height: 20),
-                          Text('About this piece',
-                              style: Theme.of(context).textTheme.titleLarge),
+                        Text('About this item',
+                            style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
                           Text(
                             item.description,
@@ -148,7 +148,7 @@ class _Body extends StatelessWidget {
                                   style: Theme.of(context).textTheme.titleLarge),
                               if (!vm.canRent)
                                 const Text(
-                                  'Select a size first',
+                                  'Please select a size to continue.',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.danger,
@@ -552,7 +552,7 @@ class _BottomBar extends StatelessWidget {
                         showAppSnackBar(
                           context,
                           !vm.item.isAvailable
-                              ? 'This piece is currently ${vm.item.statusLabel.toLowerCase()}.'
+                              ? 'This item is currently ${vm.item.statusLabel.toLowerCase()}.'
                               : 'Please select your size to continue.',
                           backgroundColor: AppColors.danger,
                         );

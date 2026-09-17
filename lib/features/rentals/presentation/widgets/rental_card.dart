@@ -183,7 +183,7 @@ class RentalCard extends StatelessWidget {
                 children: [
                   Text(
                     overdue
-                        ? 'Overdue — please return ASAP'
+                        ? 'Overdue — please return immediately.'
                         : rental.daysRemaining > 0
                             ? '${rental.daysRemaining} day${rental.daysRemaining == 1 ? '' : 's'} remaining'
                             : 'Due back today',
@@ -197,7 +197,7 @@ class RentalCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'View Details',
+                        'View details',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -220,7 +220,7 @@ class RentalCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'View Details',
+                        'View details',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,

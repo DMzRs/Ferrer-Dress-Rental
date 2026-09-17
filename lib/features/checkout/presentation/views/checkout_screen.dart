@@ -79,7 +79,7 @@ class _BodyState extends State<_Body> {
     if (address.isEmpty) {
       showAppSnackBar(
         context,
-        'Please enter your address so we know where to bring the item.',
+        'Please enter your address so we know where to deliver the item.',
         backgroundColor: AppColors.danger,
       );
       return;
@@ -90,7 +90,7 @@ class _BodyState extends State<_Body> {
     if (!ok) {
       showAppSnackBar(
         context,
-        vm.error ?? 'Something went wrong.',
+        vm.error ?? 'Something went wrong. Please try again.',
         backgroundColor: AppColors.danger,
       );
       return;
@@ -148,11 +148,11 @@ class _BodyState extends State<_Body> {
             children: [
               _OrderSummaryCard(item: vm.item),
               const SizedBox(height: 18),
-              Text('Rental Period (fixed 5 days)',
+              Text('Rental Period (Fixed 5 Days)',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               const Text(
-                'Step 1 — tap the start date to choose when your 5-day rental begins.',
+                'Choose the start date — your 5-day rental begins then.',
                 style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
               ),
               const SizedBox(height: 12),
@@ -160,10 +160,9 @@ class _BodyState extends State<_Body> {
                 children: [
                   Expanded(
                     child: _DateField(
-                      label: 'START DATE — TAP TO SELECT',
+                      label: 'START DATE',
                       dateText: Formatters.date(vm.startDate),
                       icon: Icons.event_outlined,
-                      hint: 'Tap to choose date',
                       emphasized: true,
                       onTap: () => _pickDate(isStart: true),
                     ),
@@ -175,7 +174,7 @@ class _BodyState extends State<_Body> {
                   ),
                   Expanded(
                     child: _DateField(
-                      label: 'RETURN DATE (AUTO)',
+                      label: 'RETURN DATE (AUTOMATIC)',
                       dateText: Formatters.date(vm.endDate),
                       icon: Icons.event_available_outlined,
                       onTap: () {
@@ -200,7 +199,7 @@ class _BodyState extends State<_Body> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${vm.rentalDays} day${vm.rentalDays > 1 ? 's' : ''} of rental',
+                    '${vm.rentalDays}-day rental',
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
@@ -214,7 +213,7 @@ class _BodyState extends State<_Body> {
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                'Where should we bring the item? Saved for your next rental.',
+                'Where should we deliver the item? We will save it for your next rental.',
                 style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
               ),
               const SizedBox(height: 12),
@@ -282,7 +281,7 @@ class _BodyState extends State<_Body> {
               _PriceBreakdownCard(vm: vm),
               const SizedBox(height: 26),
               GradientButton(
-                label: 'Pay & Confirm Rental',
+                label: 'Pay and Confirm Rental',
                 icon: Icons.verified_user_rounded,
                 busy: vm.isConfirming,
                 onPressed: _payAndConfirm,
@@ -296,7 +295,7 @@ class _BodyState extends State<_Body> {
                         size: 13, color: AppColors.inkSoft.withValues(alpha: .7)),
                     const SizedBox(width: 6),
                     Text(
-                      'Secured payment · Deposit fully refundable',
+                      'Secure payment · Fully refundable deposit',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: AppColors.inkSoft.withValues(alpha: .85),
@@ -386,7 +385,6 @@ class _DateField extends StatelessWidget {
   final String dateText;
   final IconData icon;
   final VoidCallback onTap;
-  final String? hint;
   final bool emphasized;
 
   const _DateField({
@@ -394,7 +392,6 @@ class _DateField extends StatelessWidget {
     required this.dateText,
     required this.icon,
     required this.onTap,
-    this.hint,
     this.emphasized = false,
   });
 
@@ -455,17 +452,6 @@ class _DateField extends StatelessWidget {
                     color: AppColors.ink,
                   ),
                 ),
-                if (hint != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    hint!,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.roseDark,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -577,7 +563,7 @@ class _SuccessSheet extends StatelessWidget {
             child: const Icon(Icons.check_rounded, color: Colors.white, size: 40),
           ),
           const SizedBox(height: 20),
-          Text('Rental Requested!',
+          Text('Rental Requested',
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           const Text(

@@ -35,7 +35,7 @@ class RatePill extends StatelessWidget {
               rental: rental,
               userId: rental.userId,
             ),
-            child: const _PillShell(label: 'Rate', rated: false),
+            child: const _PillShell(label: 'Rate Item', rated: false),
           );
           if (!firstTime) return pill;
           // One-time entrance pulse the first time an unrated pill renders.
@@ -101,7 +101,7 @@ class YourRatingTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     review == null
-                        ? 'Tap to rate your experience'
+                        ? 'Rate your experience'
                         : '★ ${review.stars.toDouble().toStringAsFixed(1)}'
                             '${review.hasComment ? ' · ${review.comment}' : ''}',
                     maxLines: 1,

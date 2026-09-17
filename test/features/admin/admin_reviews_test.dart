@@ -44,6 +44,6 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('1'));
     await t.pumpAndSettle();
-    expect(find.text('Nothing in this filter'), findsOneWidget);
+    expect(find.text('No reviews match this filter'), findsOneWidget);
   });
 }

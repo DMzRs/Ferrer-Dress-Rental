@@ -47,11 +47,11 @@ class _Body extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child:
-                const Text('Keep Rental', style: TextStyle(color: AppColors.inkSoft)),
+                const Text('Keep rental', style: TextStyle(color: AppColors.inkSoft)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Yes, Cancel',
+            child: const Text('Cancel rental',
                 style: TextStyle(
                     color: AppColors.danger, fontWeight: FontWeight.w700)),
           ),
@@ -66,7 +66,7 @@ class _Body extends StatelessWidget {
     showAppSnackBar(
       context,
       ok
-          ? 'Rental cancelled. Refund is on its way.'
+          ? 'Rental cancelled. Your refund will arrive within 3-5 banking days.'
           : 'Could not cancel right now. Please try again.',
       backgroundColor: ok ? AppColors.success : AppColors.danger,
     );
@@ -226,7 +226,7 @@ class _Body extends StatelessWidget {
                                     ? 'This rental request was declined by the shop: "${rental.declineReason.trim()}". Your full payment will be refunded within 3-5 banking days.'
                                     : 'This rental request was declined by the shop. Your full payment will be refunded within 3-5 banking days.')
                                 : rental.isOverdue
-                                    ? 'This rental is past its due date. A late fee may apply to your deposit refund - please visit the shop or contact us right away.'
+                                    ? 'This rental is past its due date. A late fee may apply to your deposit refund — please visit the shop or contact us as soon as possible.'
                                     : 'Please return the item clean and on time so your full security deposit can be refunded.',
                         style: TextStyle(
                           fontSize: 12,
@@ -298,7 +298,7 @@ class _Timeline extends StatelessWidget {
         _milestone(Icons.event_available_rounded, 'Booked on',
             Formatters.date(rental.createdAt)),
         _divider(),
-        _milestone(Icons.play_circle_outline_rounded, 'Rental start',
+        _milestone(Icons.play_circle_outline_rounded, 'Rental Start',
             Formatters.date(rental.startDate)),
         _divider(),
         _milestone(Icons.flag_rounded, 'Return by', Formatters.date(rental.endDate),

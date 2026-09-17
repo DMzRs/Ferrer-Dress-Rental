@@ -116,7 +116,7 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
             Text(
                 tab == RentalTab.requests
                     ? 'No pending rental requests'
-                    : 'Nothing in this tab',
+                    : 'No rentals here',
                 style: TextStyle(fontSize: 13.5, color: Colors.grey.shade500)),
           ],
         ),
@@ -476,7 +476,7 @@ class _RentalRow extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Go Back'),
+              child: const Text('Back'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
@@ -551,7 +551,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
   Future<void> _decline() async {
     final reason = _reasonController.text.trim();
     if (reason.isEmpty) {
-      setState(() => _fieldError = 'Please write the reason for declining.');
+      setState(() => _fieldError = 'Please enter the reason for declining.');
       return;
     }
     setState(() {
@@ -607,7 +607,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 hintText:
-                    'Tell the customer why this request is declined...',
+                    'Tell the customer why this request is being declined.',
                 errorText: _fieldError,
               ),
             ),
@@ -625,7 +625,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
                     onPressed: _busy
                         ? null
                         : () => Navigator.pop(context),
-                    child: const Text('Go Back'),
+                    child: const Text('Back'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -644,7 +644,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.send_rounded, size: 18),
-                    label: const Text('Decline & Notify'),
+                    label: const Text('Decline and Notify'),
                   ),
                 ),
               ],
@@ -758,7 +758,7 @@ class _ReturnConfirmationSheetState extends State<_ReturnConfirmationSheet> {
             const SizedBox(width: 13),
             const Expanded(
               child: Text(
-                'Return Processed',
+                'Return processed',
                 style: TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
@@ -812,7 +812,7 @@ class _ReturnConfirmationSheetState extends State<_ReturnConfirmationSheet> {
                     else
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Text('Full refund — on time',
+                        child: Text('Full refund · Returned on time',
                             style: TextStyle(
                                 fontSize: 11.5, color: Colors.grey.shade600)),
                       ),
@@ -848,7 +848,7 @@ class _ReturnConfirmationSheetState extends State<_ReturnConfirmationSheet> {
           child: ElevatedButton.icon(
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.done_all_rounded, size: 18),
-            label: const Text('Done'),
+            label: const Text('Close'),
           ),
         ),
       ],

@@ -46,7 +46,7 @@ class AdminReviewsScreen extends StatelessWidget {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.only(top: 24),
-                    child: Text('Nothing in this filter'),
+                    child: Text('No reviews match this filter'),
                   ),
                 )
               else
@@ -89,7 +89,7 @@ class _SummaryCard extends StatelessWidget {
               ),
             ),
             const Text(
-              'All Time',
+              'All time',
               style: TextStyle(fontSize: 12, color: AppColors.adminMuted),
             ),
           ],
@@ -154,7 +154,7 @@ class _ReviewTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    review.itemName.isEmpty ? 'Rental' : review.itemName,
+                    review.itemName.isEmpty ? 'Rental item' : review.itemName,
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,

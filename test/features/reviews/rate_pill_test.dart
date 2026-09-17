@@ -40,7 +40,7 @@ void main() {
   testWidgets('completed unrated rental shows Rate pill', (t) async {
     await t.pumpWidget(_harness(_rental(id: 'rnt-fresh')));
     await t.pumpAndSettle();
-    expect(find.text('Rate'), findsOneWidget);
+    expect(find.text('Rate Item'), findsOneWidget);
   });
 
   testWidgets('completed rated rental shows stars', (t) async {
@@ -52,6 +52,6 @@ void main() {
   testWidgets('active rental shows no Rate pill', (t) async {
     await t.pumpWidget(_harness(_rental(id: 'rnt-fresh', status: 'active')));
     await t.pumpAndSettle();
-    expect(find.text('Rate'), findsNothing);
+    expect(find.text('Rate Item'), findsNothing);
   });
 }

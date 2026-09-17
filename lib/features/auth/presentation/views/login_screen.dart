@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!success) {
       showAppSnackBar(
         context,
-        _vm.error ?? 'Something went wrong',
+        _vm.error ?? 'Something went wrong. Please try again.',
         backgroundColor: AppColors.danger,
       );
     }
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       showAppSnackBar(
         context,
-        _vm.linkError ?? 'Something went wrong',
+        _vm.linkError ?? 'Something went wrong. Please try again.',
         backgroundColor: AppColors.danger,
       );
     }
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted || sent) return;
     showAppSnackBar(
       context,
-      _vm.linkError ?? 'Something went wrong',
+      _vm.linkError ?? 'Something went wrong. Please try again.',
       backgroundColor: AppColors.danger,
     );
   }
@@ -169,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted || done) return;
     showAppSnackBar(
       context,
-      _vm.linkError ?? 'Something went wrong',
+      _vm.linkError ?? 'Something went wrong. Please try again.',
       backgroundColor: AppColors.danger,
     );
   }
@@ -396,7 +396,7 @@ class _LinkSentCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'We sent a sign-in link to $email. Tap it and you will be signed straight in — no password needed.',
+            'We sent a sign-in link to $email. Open it to sign in instantly — no password needed.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
           ),
@@ -415,8 +415,8 @@ class _LinkSentCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               waiting
-                  ? 'Waiting for you to tap the link…'
-                  : 'Link received — finishing signup…',
+                  ? 'Waiting for you to open the link'
+                  : 'Link received — completing signup',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.inkSoft,
@@ -463,7 +463,7 @@ class _LinkSentCard extends StatelessWidget {
                   ),
                   child: linkState == EmailLinkState.sending
                       ? const Text('Sending…')
-                      : const Text('Resend link'),
+                      : const Text('Resend Link'),
                 ),
             ],
           ),
@@ -486,7 +486,7 @@ class _LinkSentCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              child: const Text('Back to details'),
+              child: const Text('Back to Details'),
             ),
           ),
         ],
@@ -701,8 +701,7 @@ class _AuthCard extends StatelessWidget {
                   child: Text(
                     isLogin
                         ? 'New to Ferrer Clothing Rental?'
-                        : 'Already have an account?',
-                    style: const TextStyle(color: AppColors.inkSoft, fontSize: 13),
+                        : 'Already have an account?',                    style: const TextStyle(color: AppColors.inkSoft, fontSize: 13),
                   ),
                 ),
                 TextButton(
@@ -712,7 +711,7 @@ class _AuthCard extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 6),
                     textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
-                  child: Text(isLogin ? 'Create an Account' : 'Sign In'),
+                  child: Text(isLogin ? 'Create Account' : 'Log In'),
                 ),
               ],
             ),
