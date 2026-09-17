@@ -38,6 +38,21 @@ class MyRentalsViewModel extends ChangeNotifier {
   int get activeCount =>
       _rentals.where((r) => r.isActive || r.isOverdue).length;
 
+  /// Warning signals computed over ALL rentals so the banner reads the same
+  /// under every filter.
+  bool get hasOverdue => _rentals.any((r) => r.isOverdue);
+
+  bool get hasDueSoon => _rentals.any((r) => r.isDueSoon);
+
+  int get dueSoonCount => _rentals.where((r) => r.isDueSoon).length;
+
+  String? get firstOverdueId {
+    for (final rental in _rentals) {
+      if (rental.isOverdue) return rental.id;
+    }
+    return null;
+  }
+
   List<Rental> get _filtered {
     switch (_filter) {
       case 'pending':

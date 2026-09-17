@@ -10,7 +10,10 @@ import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/rate_pi
 class RentalCard extends StatelessWidget {
   final Rental rental;
 
-  const RentalCard({super.key, required this.rental});
+  /// Flashes an attention ring (used when jumping from the overdue banner).
+  final bool highlight;
+
+  const RentalCard({super.key, required this.rental, this.highlight = false});
 
   Color get _statusColor {
     final (_, color) =
@@ -30,11 +33,18 @@ class RentalCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: .95),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.champagne.withValues(alpha: .8)),
+          border: Border.all(
+            color: highlight
+                ? AppColors.danger
+                : AppColors.champagne.withValues(alpha: .8),
+            width: highlight ? 1.8 : 1,
+          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.blush.withValues(alpha: .22),
-              blurRadius: 18,
+              color: highlight
+                  ? AppColors.danger.withValues(alpha: .35)
+                  : AppColors.blush.withValues(alpha: .22),
+              blurRadius: highlight ? 22 : 18,
               offset: const Offset(0, 8),
             ),
           ],
