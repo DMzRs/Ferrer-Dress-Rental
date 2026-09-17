@@ -39,6 +39,10 @@ class AuthRepositoryImpl implements AuthRepository {
     if (message.contains('expired-action-code')) {
       return 'This sign-in link expired. Request a new one.';
     }
+    if (message.contains('too-many-requests') ||
+        message.contains('quota-exceeded')) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    }
     if (message.contains('invalid-action-code')) {
       return 'This sign-in link is invalid. Request a new one.';
     }
