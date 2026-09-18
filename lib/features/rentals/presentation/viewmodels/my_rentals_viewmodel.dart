@@ -33,6 +33,10 @@ class MyRentalsViewModel extends ChangeNotifier {
   bool get isLoading => _loading;
   String get filter => _filter;
 
+  /// Unfiltered list for the notifications feed.
+  List<Rental> get allRentalsForNotifications =>
+      List.unmodifiable(_rentals);
+
   int get pendingCount => _rentals.where((r) => r.isPending).length;
 
   int get activeCount =>

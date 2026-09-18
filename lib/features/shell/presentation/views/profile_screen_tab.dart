@@ -149,7 +149,9 @@ class ProfileScreenTab extends StatelessWidget {
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0)
               Divider(height: 1, indent: 58, color: AppColors.champagne.withValues(alpha: .8)),
-            ListTile(
+            Material(
+              color: Colors.transparent,
+              child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
               leading: Container(
                 padding: const EdgeInsets.all(8),
@@ -169,6 +171,7 @@ class ProfileScreenTab extends StatelessWidget {
               trailing:
                   const Icon(Icons.chevron_right_rounded, color: AppColors.champagne),
               onTap: items[i].onTap,
+              ),
             ),
           ],
         ],

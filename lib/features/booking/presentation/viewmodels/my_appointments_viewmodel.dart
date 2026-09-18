@@ -34,6 +34,10 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       _sorted.where((a) => !a.isUpcoming).toList();
   bool get isLoading => _loading;
 
+  /// Unfiltered list for the notifications feed.
+  List<Appointment> get allAppointmentsForNotifications =>
+      List.unmodifiable(_appointments);
+
   bool get isCancelling => _cancellingId;
 
   Iterable<Appointment> get _sorted {

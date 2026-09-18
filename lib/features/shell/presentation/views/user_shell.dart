@@ -9,6 +9,8 @@ import 'package:ferrer_rental_shop/features/booking/presentation/views/my_appoin
 import 'package:ferrer_rental_shop/features/home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/home/presentation/views/home_screen.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:ferrer_rental_shop/features/notifications/domain/notifications_builder.dart';
+import 'package:ferrer_rental_shop/features/notifications/presentation/views/notifications_screen.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/views/my_rentals_screen.dart';
@@ -56,14 +58,21 @@ class _UserShellViewState extends State<_UserShellView> {
 
   @override
   Widget build(BuildContext context) {
+    final notificationsCount = attentionCount(buildNotifications(
+      context.watch<MyRentalsViewModel>().allRentalsForNotifications,
+      context.watch<MyAppointmentsViewModel>().allAppointmentsForNotifications,
+    ));
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
         index: _index,
         children: [
-          HomeScreen(onAvatarTap: () => setState(() => _index = 3)),
+          HomeScreen(onAvatarTap: () => setState(() => _index = 4)),
           const MyAppointmentsScreen(),
           const MyRentalsScreen(),
+          NotificationsScreen(
+            onNavigateTo: (tab) => setState(() => _index = tab),
+          ),
           ProfileScreenTab(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),
@@ -108,23 +117,37 @@ class _UserShellViewState extends State<_UserShellView> {
           child: NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
-              NavigationDestination(
+            destinations: [
+              const NavigationDestination(
                 icon: Icon(Icons.explore_outlined),
                 selectedIcon: Icon(Icons.explore_rounded),
                 label: 'Discover',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.event_note_outlined),
                 selectedIcon: Icon(Icons.event_note_rounded),
                 label: 'Bookings',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.local_mall_outlined),
                 selectedIcon: Icon(Icons.local_mall_rounded),
                 label: 'Rentals',
               ),
               NavigationDestination(
+                icon: _NavIcon(
+                  icon: Icons.notifications_outlined,
+                  selectedIcon: Icons.notifications_rounded,
+                  badgeCount: notificationsCount,
+                ),
+                selectedIcon: _NavIcon(
+                  icon: Icons.notifications_outlined,
+                  selectedIcon: Icons.notifications_rounded,
+                  badgeCount: notificationsCount,
+                  selected: true,
+                ),
+                label: 'Notifications',
+              ),
+              const NavigationDestination(
                 icon: Icon(Icons.person_outline_rounded),
                 selectedIcon: Icon(Icons.person_rounded),
                 label: 'Profile',
@@ -133,6 +156,34 @@ class _UserShellViewState extends State<_UserShellView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Nav icon with an attention-count bubble. Plain icon when zero.
+class _NavIcon extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final int badgeCount;
+  final bool selected;
+
+  const _NavIcon({
+    required this.icon,
+    required this.selectedIcon,
+    required this.badgeCount,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconWidget =
+        Icon(selected ? selectedIcon : icon);
+    if (badgeCount <= 0) return iconWidget;
+    return Badge(
+      backgroundColor: AppColors.roseDark,
+      textColor: Colors.white,
+      label: Text(badgeCount > 9 ? '9+' : '$badgeCount'),
+      child: iconWidget,
     );
   }
 }
