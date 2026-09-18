@@ -80,44 +80,12 @@ class AdminDashboardScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 22),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Recent Activity',
-                          style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.adminInk)),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('View all'),
-                      ),
-                    ],
+                  RecentActivitySection(
+                    entries: m.recentActivity,
+                    onNavigateTo: onNavigateTo == null
+                        ? null
+                        : (entry) => _openEntry(context, entry),
                   ),
-                  const SizedBox(height: 6),
-                  if (m.recentActivity.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(28),
-                        child: Column(
-                          children: [
-                            Icon(Icons.hourglass_empty_rounded,
-                                size: 30, color: Colors.grey.shade400),
-                            const SizedBox(height: 10),
-                            const Text('No activity yet',
-                                style: TextStyle(
-                                    fontSize: 13.5, color: AppColors.adminMuted)),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    ...m.recentActivity.map((entry) => ActivityTile(
-                          entry: entry,
-                          onTap: onNavigateTo == null
-                              ? null
-                              : () => _openEntry(context, entry),
-                        )),
                 ],
               ),
             ),
@@ -142,7 +110,81 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 }
 
+/// Recent activity with a working View all: first 5 entries inline,
+/// the rest behind an expand toggle.
+class RecentActivitySection extends StatefulWidget {
+  final List<ActivityEntry> entries;
+  final ValueChanged<ActivityEntry>? onNavigateTo;
+
+  const RecentActivitySection({
+    super.key,
+    required this.entries,
+    this.onNavigateTo,
+  });
+
+  @override
+  State<RecentActivitySection> createState() => _RecentActivitySectionState();
+}
+
+class _RecentActivitySectionState extends State<RecentActivitySection> {
+  static const int _collapsedCount = 5;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = _expanded
+        ? widget.entries
+        : widget.entries.take(_collapsedCount).toList();
+    final canExpand = widget.entries.length > _collapsedCount;
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Recent Activity',
+                style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.adminInk)),
+            if (canExpand)
+              TextButton(
+                onPressed: () =>
+                    setState(() => _expanded = !_expanded),
+                child: Text(_expanded ? 'Show less' : 'View all'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        if (widget.entries.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                children: [
+                  Icon(Icons.hourglass_empty_rounded,
+                      size: 30, color: Colors.grey.shade400),
+                  const SizedBox(height: 10),
+                  const Text('No activity yet',
+                      style: TextStyle(
+                          fontSize: 13.5, color: AppColors.adminMuted)),
+                ],
+              ),
+            ),
+          )
+        else
+          ...entries.map((entry) => ActivityTile(
+                entry: entry,
+                onTap: widget.onNavigateTo == null
+                    ? null
+                    : () => widget.onNavigateTo!(entry),
+              )),
+      ],
+    );
+  }
+}
+
 class SummaryCard extends StatelessWidget {
+
   final String label;
   final String value;
   final IconData icon;
