@@ -152,7 +152,7 @@ void main() {
       final ok = await vm.confirm(_user, address: 'QC');
 
       expect(ok, isFalse);
-      expect(vm.error, contains('Payment could not be completed'));
+      expect(vm.error, contains('Request could not be completed'));
       expect(vm.isConfirming, isFalse);
     });
   });

@@ -69,7 +69,7 @@ class _BodyState extends State<_Body> {
     }
   }
 
-  Future<void> _payAndConfirm() async {
+  Future<void> _confirmRental() async {
     final vm = context.read<CheckoutViewModel>();
     final auth = context.read<AuthViewModel>();
     final user = auth.user;
@@ -281,10 +281,10 @@ class _BodyState extends State<_Body> {
               _PriceBreakdownCard(vm: vm),
               const SizedBox(height: 26),
               GradientButton(
-                label: 'Pay and Confirm Rental',
+                label: 'Confirm Rental',
                 icon: Icons.verified_user_rounded,
                 busy: vm.isConfirming,
-                onPressed: _payAndConfirm,
+                onPressed: _confirmRental,
               ),
               const SizedBox(height: 14),
               Center(
@@ -295,7 +295,7 @@ class _BodyState extends State<_Body> {
                         size: 13, color: AppColors.inkSoft.withValues(alpha: .7)),
                     const SizedBox(width: 6),
                     Text(
-                      'Secure payment · Fully refundable deposit',
+                      'Pay in store on pickup · Fully refundable deposit',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: AppColors.inkSoft.withValues(alpha: .85),
@@ -567,7 +567,7 @@ class _SuccessSheet extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           const Text(
-            'Payment received. The shop will review and confirm your rental shortly — track its status anytime under My Rentals.',
+            'Request received. Pay at the shop when you pick up your item — the shop will review and confirm your rental shortly. Track its status anytime under My Rentals.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.inkSoft, fontSize: 13.5, height: 1.55),
           ),

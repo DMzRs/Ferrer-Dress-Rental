@@ -109,7 +109,7 @@ class CheckoutViewModel extends ChangeNotifier {
       // Surface the underlying cause (e.g. permission-denied, not-found,
       // network) so the UI/snackbar and logs show WHY it failed instead of
       // a generic message. Keep the friendly prefix for users.
-      _error = 'Payment could not be completed. Details: $e';
+      _error = 'Request could not be completed. Details: $e';
       return false;
     } finally {
       _confirming = false;

@@ -220,7 +220,7 @@ class _Body extends StatelessWidget {
                     Expanded(
                       child: Text(
                         rental.isPending
-                            ? 'We received your payment and the shop is reviewing your rental. You will see it as Active once confirmed — you can still cancel for a full refund in the meantime.'
+                            ? 'We received your rental request and the shop is reviewing it. You will see it as Active once confirmed — you can still cancel in the meantime.'
                             : rental.isDeclined
                                 ? (rental.declineReason.trim().isNotEmpty
                                     ? 'This rental request was declined by the shop: "${rental.declineReason.trim()}". Your full payment will be refunded within 3-5 banking days.'
