@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/router/app_router.dart';
+import 'package:ferrer_rental_shop/features/home/presentation/utils/column_distribution.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/home/presentation/widgets/item_card.dart';
-import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Tapping the greeting avatar jumps to the Profile tab in [UserShell].
@@ -114,11 +114,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Builder(builder: (context) {
                     final screenWidth = MediaQuery.sizeOf(context).width;
                     final crossAxisCount = screenWidth > 600 ? 4 : 2;
-                    final columns = List.generate(
-                        crossAxisCount, (_) => <(CatalogItem, int)>[]);
-                    for (var i = 0; i < vm.items.length; i++) {
-                      columns[i % crossAxisCount].add((vm.items[i], i));
-                    }
+                    final columns = distributeIntoColumns(
+                        vm.items.length, crossAxisCount);
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -127,15 +124,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                for (final (item, index) in columns[c])
+                                for (var p = 0;
+                                    p < columns[c].length;
+                                    p++)
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 14),
+                                    padding:
+                                        const EdgeInsets.only(bottom: 14),
                                     child: ItemCard(
-                                      item: item,
-                                      index: index,
+                                      item: vm.items[
+                                          p * crossAxisCount + c],
+                                      index: columns[c][p],
                                       onTap: () => context.pushNamed(
                                           AppRoutes.itemDetails,
-                                          arguments: item),
+                                          arguments: vm.items[
+                                              p * crossAxisCount + c]),
                                     ),
                                   ),
                               ],
