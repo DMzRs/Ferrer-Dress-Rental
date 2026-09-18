@@ -210,13 +210,13 @@ class SummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .09),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(icon, size: 17, color: color),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: .09),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(icon, size: 24, color: color),
                 ),
               ],
             ),
@@ -227,7 +227,7 @@ class SummaryCard extends StatelessWidget {
                 value,
                 maxLines: 1,
                 style: const TextStyle(
-                  fontSize: 19.5,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -.5,
                   color: AppColors.adminInk,
@@ -238,7 +238,7 @@ class SummaryCard extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
             ),
           ],
         ),
