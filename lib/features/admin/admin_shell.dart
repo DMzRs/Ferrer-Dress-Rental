@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/theme/app_theme.dart';
+import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/viewmodels/appointments_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/views/admin_appointments_screen.dart';
 import 'package:ferrer_rental_shop/features/admin/dashboard/presentation/viewmodels/dashboard_viewmodel.dart';
@@ -83,6 +84,14 @@ class _AdminShellViewState extends State<_AdminShellView> {
 
   @override
   Widget build(BuildContext context) {
+    final appointmentQueue =
+        context.watch<AppointmentsViewModel>().pendingCount;
+    final rentalQueue = context
+            .watch<RentalManagementViewModel>()
+            .pendingCount +
+        context.watch<RentalManagementViewModel>().overdueCount;
+    final rentalUrgent =
+        context.watch<RentalManagementViewModel>().overdueCount > 0;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -102,33 +111,59 @@ class _AdminShellViewState extends State<_AdminShellView> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
-            NavigationDestination(
+          destinations: [
+            const NavigationDestination(
               icon: Icon(Icons.dashboard_outlined),
               selectedIcon: Icon(Icons.dashboard_rounded),
               label: 'Dashboard',
             ),
             NavigationDestination(
-              icon: Icon(Icons.event_note_outlined),
-              selectedIcon: Icon(Icons.event_note_rounded),
+              icon: _QueueIcon(
+                icon: Icons.event_note_outlined,
+                selectedIcon: Icons.event_note_rounded,
+                count: appointmentQueue,
+                color: AppColors.adminPrimary,
+              ),
+              selectedIcon: _QueueIcon(
+                icon: Icons.event_note_outlined,
+                selectedIcon: Icons.event_note_rounded,
+                count: appointmentQueue,
+                color: AppColors.adminPrimary,
+                selected: true,
+              ),
               label: 'Appointments',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.checkroom_outlined),
               selectedIcon: Icon(Icons.checkroom_rounded),
               label: 'Inventory',
             ),
             NavigationDestination(
-              icon: Icon(Icons.assignment_outlined),
-              selectedIcon: Icon(Icons.assignment_rounded),
+              icon: _QueueIcon(
+                icon: Icons.assignment_outlined,
+                selectedIcon: Icons.assignment_rounded,
+                count: rentalQueue,
+                color: rentalUrgent
+                    ? AppColors.adminRed
+                    : AppColors.adminPrimary,
+              ),
+              selectedIcon: _QueueIcon(
+                icon: Icons.assignment_outlined,
+                selectedIcon: Icons.assignment_rounded,
+                count: rentalQueue,
+                color: rentalUrgent
+                    ? AppColors.adminRed
+                    : AppColors.adminPrimary,
+                selected: true,
+              ),
               label: 'Rentals',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.rate_review_outlined),
               selectedIcon: Icon(Icons.rate_review_rounded),
               label: 'Reviews',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),
               selectedIcon: Icon(Icons.bar_chart_rounded),
               label: 'Reports',
@@ -136,6 +171,35 @@ class _AdminShellViewState extends State<_AdminShellView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Queue badge for a nav icon. Plain icon when the queue is empty.
+class _QueueIcon extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final int count;
+  final Color color;
+  final bool selected;
+
+  const _QueueIcon({
+    required this.icon,
+    required this.selectedIcon,
+    required this.count,
+    required this.color,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconWidget = Icon(selected ? selectedIcon : icon);
+    if (count <= 0) return iconWidget;
+    return Badge(
+      backgroundColor: color,
+      textColor: Colors.white,
+      label: Text(count > 9 ? '9+' : '$count'),
+      child: iconWidget,
     );
   }
 }
