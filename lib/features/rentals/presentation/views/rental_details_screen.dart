@@ -40,7 +40,7 @@ class _Body extends StatelessWidget {
         title: const Text('Cancel this rental?',
             style: TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w700)),
           content: const Text(
-            'Cancelling releases this item. No payment is due — payment happens at pickup.',
+            'This will release the item and cancel your request. You won\'t be charged.',
             style: TextStyle(fontSize: 13.5, height: 1.5),
           ),
         actions: [
