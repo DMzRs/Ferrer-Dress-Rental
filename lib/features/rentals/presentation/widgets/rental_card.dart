@@ -13,7 +13,14 @@ class RentalCard extends StatelessWidget {
   /// Flashes an attention ring (used when jumping from the overdue banner).
   final bool highlight;
 
-  const RentalCard({super.key, required this.rental, this.highlight = false});
+  /// Ring color: danger for warnings (overdue), success for fresh arrivals.
+  final Color highlightColor;
+
+  const RentalCard(
+      {super.key,
+      required this.rental,
+      this.highlight = false,
+      this.highlightColor = AppColors.danger});
 
   Color get _statusColor {
     final (_, color) =
@@ -35,14 +42,14 @@ class RentalCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: highlight
-                ? AppColors.danger
+                ? highlightColor
                 : AppColors.champagne.withValues(alpha: .8),
             width: highlight ? 1.8 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: highlight
-                  ? AppColors.danger.withValues(alpha: .35)
+                  ? highlightColor.withValues(alpha: .35)
                   : AppColors.blush.withValues(alpha: .22),
               blurRadius: highlight ? 22 : 18,
               offset: const Offset(0, 8),

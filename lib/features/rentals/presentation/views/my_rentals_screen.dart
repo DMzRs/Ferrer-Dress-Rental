@@ -30,14 +30,19 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   final Set<String> _highlightIds = {};
   bool _initialHighlightArmed = false;
 
+  /// Ring color for the current flash: green for fresh arrivals, red for
+  /// overdue warnings.
+  Color _highlightColor = AppColors.danger;
+
   @override
   void initState() {
     super.initState();
     final incoming = widget.highlightRentalId;
     if (incoming != null && incoming.isNotEmpty) {
       _highlightIds.add(incoming);
+      _highlightColor = AppColors.success;
       _initialHighlightArmed = true;
-      _scheduleHighlightClear();
+      _scheduleHighlightClear(const Duration(seconds: 5));
     }
   }
 
@@ -51,10 +56,9 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   GlobalKey _keyFor(String id) =>
       _cardKeys.putIfAbsent(id, () => GlobalKey());
 
-  void _scheduleHighlightClear() {
+  void _scheduleHighlightClear([Duration after = const Duration(seconds: 2, milliseconds: 500)]) {
     _highlightTimer?.cancel();
-    _highlightTimer = Timer(const Duration(seconds: 2, milliseconds: 500),
-        () {
+    _highlightTimer = Timer(after, () {
       if (mounted) setState(() => _highlightIds.clear());
     });
   }
@@ -80,6 +84,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
     if (targetId == null) return;
     vm.setFilter('active');
     setState(() {
+      _highlightColor = AppColors.danger;
       _highlightIds
         ..clear()
         ..addAll(vm.overdueIds);
@@ -229,6 +234,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                                 key: _keyFor(rental.id),
                                 rental: rental,
                                 highlight: _highlightIds.contains(rental.id),
+                                highlightColor: _highlightColor,
                               );
                             },
                           ),
