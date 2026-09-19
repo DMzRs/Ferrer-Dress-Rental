@@ -17,7 +17,7 @@ class RentalManagementViewModel extends ChangeNotifier {
     this._confirmRental,
     this._declineRental,
   ) {
-    _subscription = _repository.allRentalsStream().listen(_onRentals);
+    _subscribe();
   }
 
   final RentalRepository _repository;
@@ -26,6 +26,27 @@ class RentalManagementViewModel extends ChangeNotifier {
   final DeclineRentalUseCase _declineRental;
 
   StreamSubscription<List<Rental>>? _subscription;
+
+  static const int pageStep = 20;
+  int _pageSize = pageStep;
+
+  int get pageSize => _pageSize;
+
+  /// True when the server may hold more than the loaded page.
+  bool get hasMore => _rentals.length >= _pageSize;
+
+  void _subscribe() {
+    _subscription?.cancel();
+    _subscription = _repository
+        .pagedRentalsStream(limit: _pageSize)
+        .listen(_onRentals);
+  }
+
+  /// Loads the next page of the admin feed.
+  void loadMore() {
+    _pageSize += pageStep;
+    _subscribe();
+  }
 
   List<Rental> _rentals = [];
   bool _loading = true;

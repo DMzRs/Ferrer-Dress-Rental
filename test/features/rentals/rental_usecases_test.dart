@@ -26,6 +26,10 @@ class FakeRentalRepository implements RentalRepository {
   }
 
   @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) =>
+      allRentalsStream();
+
+  @override
   Future<void> completeRental(String id, {DateTime? returnedAt}) async {
     completeCalls++;
     lastReturnedAt = returnedAt;

@@ -166,6 +166,16 @@ class MockRentalDataSource implements RentalDataSource {
   }
 
   @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) async* {
+    _ensureSeed();
+    await Future.delayed(const Duration(milliseconds: 300));
+    yield _rentals.take(limit).toList();
+    await for (final list in _controller.stream) {
+      yield list.take(limit).toList();
+    }
+  }
+
+  @override
   Future<String> createRental(Rental rental) async {
     _ensureSeed();
     await Future.delayed(const Duration(milliseconds: 600));

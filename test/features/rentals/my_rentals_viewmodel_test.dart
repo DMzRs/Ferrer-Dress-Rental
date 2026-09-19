@@ -38,6 +38,11 @@ class _FakeRentalRepository implements RentalRepository {
   Stream<List<Rental>> allRentalsStream() => const Stream.empty();
 
   @override
+  @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) =>
+      allRentalsStream();
+
+  @override
   Future<String> createRental(Rental rental) async => 'new-id';
 
   @override

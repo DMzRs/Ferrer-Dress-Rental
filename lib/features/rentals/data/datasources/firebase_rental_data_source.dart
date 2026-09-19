@@ -28,6 +28,14 @@ class FirebaseRentalDataSource implements RentalDataSource {
   }
 
   @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) {
+    return _base
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map((d) => RentalModel.fromMap(d.id, d.data())).toList());
+  }
+
+  @override
   Future<String> createRental(Rental rental) async {
     final doc = _db.collection(FirestoreCollections.rentals).doc();
     await doc.set(RentalModel.fromEntity(rental).toMap(forFirestore: true));

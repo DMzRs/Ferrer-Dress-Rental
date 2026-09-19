@@ -128,14 +128,22 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
       onRefresh: () async {},
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-        itemCount: items.length,
+        itemCount: items.length + (vm.hasMore ? 1 : 0),
         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) => _RentalRow(
-                          rental: items[index],
-                          showReturnButton: tab == RentalTab.active ||
-                              tab == RentalTab.overdue,
-                          showDecisionButtons: tab == RentalTab.requests,
-                        ),
+        itemBuilder: (context, index) {
+          if (index >= items.length) {
+            return OutlinedButton(
+              onPressed: vm.loadMore,
+              child: const Text('Load more'),
+            );
+          }
+          return _RentalRow(
+            rental: items[index],
+            showReturnButton: tab == RentalTab.active ||
+                tab == RentalTab.overdue,
+            showDecisionButtons: tab == RentalTab.requests,
+          );
+        },
       ),
     );
   }

@@ -23,6 +23,10 @@ class RentalRepositoryImpl implements RentalRepository {
   Stream<List<Rental>> allRentalsStream() => _dataSource.allRentalsStream();
 
   @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) =>
+      _dataSource.pagedRentalsStream(limit: limit);
+
+  @override
   Future<String> createRental(Rental rental) =>
       _dataSource.createRental(rental);
 
