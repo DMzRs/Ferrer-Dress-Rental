@@ -244,9 +244,26 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
   }
 
   @override
-  Stream<int> usersCountStream() => _db
-      .collection(FirestoreCollections.users)
-      .snapshots()
-      .map((s) => s.docs.length);
+  Stream<int> usersCountStream() async* {
+    // Aggregate count query instead of streaming the whole collection:
+    // one tiny read per refresh rather than N document reads on every
+    // user change. Failures are skipped so a blip never zeroes the tile.
+    final first = await _usersCountOrNull();
+    if (first != null) yield first;
+    await for (final _ in Stream.periodic(const Duration(seconds: 30))) {
+      final count = await _usersCountOrNull();
+      if (count != null) yield count;
+    }
+  }
+
+  Future<int?> _usersCountOrNull() async {
+    try {
+      final aggregate =
+          await _db.collection(FirestoreCollections.users).count().get();
+      return aggregate.count;
+    } on Object {
+      return null;
+    }
+  }
 }
 
