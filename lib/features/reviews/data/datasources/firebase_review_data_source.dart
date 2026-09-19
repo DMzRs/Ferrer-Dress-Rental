@@ -33,6 +33,7 @@ class FirebaseReviewDataSource implements ReviewDataSource {
         .collection(FirestoreCollections.reviews)
         .where('itemId', isEqualTo: itemId)
         .orderBy('createdAt', descending: true)
+        .limit(5)
         .snapshots()
         .map(
           (s) => s.docs.map((d) => ReviewModel.fromMap(d.id, d.data())).toList(),

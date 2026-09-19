@@ -30,6 +30,15 @@ void main() {
     expect(summary.avg, 5.0);
   });
 
+  test('item stream is capped at 5 newest server-side', () async {
+    final repo = ReviewRepositoryImpl(MockReviewDataSource());
+    for (var i = 0; i < 7; i++) {
+      await repo.saveReview(_r('rx$i', 'i9', 5 - (i % 5)));
+    }
+    final list = await repo.itemReviewsStream('i9').first;
+    expect(list.length, 5);
+  });
+
   test('allReviewsStream returns newest first', () async {
     final repo = ReviewRepositoryImpl(MockReviewDataSource());
     final all = await repo.allReviewsStream().first;

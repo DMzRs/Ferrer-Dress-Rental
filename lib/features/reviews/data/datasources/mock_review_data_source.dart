@@ -85,6 +85,12 @@ class MockReviewDataSource implements ReviewDataSource {
   List<Review> _forItem(String itemId) {
     final list = _reviews.values.where((r) => r.itemId == itemId).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list.take(5).toList();
+  }
+
+  List<Review> _allForItem(String itemId) {
+    final list = _reviews.values.where((r) => r.itemId == itemId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
 
@@ -95,7 +101,7 @@ class MockReviewDataSource implements ReviewDataSource {
   }
 
   RatingSummary _summary(String itemId) {
-    final list = _forItem(itemId);
+    final list = _allForItem(itemId);
     if (list.isEmpty) return RatingSummary.empty;
     return RatingSummary(
       list.map((r) => r.stars).reduce((a, b) => a + b) / list.length,
