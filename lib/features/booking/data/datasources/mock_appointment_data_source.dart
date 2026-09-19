@@ -82,6 +82,16 @@ class MockAppointmentDataSource implements AppointmentDataSource {
   }
 
   @override
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) async* {
+    _ensureSeed();
+    await Future.delayed(const Duration(milliseconds: 250));
+    yield _appointments.take(limit).toList();
+    await for (final list in _controller.stream) {
+      yield list.take(limit).toList();
+    }
+  }
+
+  @override
   Future<List<String>> bookedSlotsFor(DateTime day) async {
     _ensureSeed();
     await Future.delayed(const Duration(milliseconds: 200));

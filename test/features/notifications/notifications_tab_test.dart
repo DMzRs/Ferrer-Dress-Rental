@@ -72,6 +72,10 @@ class _FakeAppointmentRepository implements AppointmentRepository {
       Stream<List<Appointment>>.empty();
 
   @override
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) =>
+      allAppointmentsStream();
+
+  @override
   Future<List<String>> bookedSlotsFor(DateTime day) async => [];
 
   @override

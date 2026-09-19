@@ -31,6 +31,15 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
   }
 
   @override
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) {
+    return _base
+        .limit(limit)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => AppointmentModel.fromMap(d.id, d.data())).toList());
+  }
+
+  @override
   Future<List<String>> bookedSlotsFor(DateTime day) async {
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));

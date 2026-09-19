@@ -10,14 +10,34 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 /// product also flips that product to 'scheduled_for_appointment'.
 class AppointmentsViewModel extends ChangeNotifier {
   AppointmentsViewModel(this._appointmentRepository, this._inventoryRepository) {
-    _subscription =
-        _appointmentRepository.allAppointmentsStream().listen(_onAppointments);
+    _subscribe();
   }
 
   final AppointmentRepository _appointmentRepository;
   final InventoryRepository _inventoryRepository;
 
   StreamSubscription<List<Appointment>>? _subscription;
+
+  static const int pageStep = 20;
+  int _pageSize = pageStep;
+
+  int get pageSize => _pageSize;
+
+  /// True when the server may hold more than the loaded page.
+  bool get hasMore => _appointments.length >= _pageSize;
+
+  void _subscribe() {
+    _subscription?.cancel();
+    _subscription = _appointmentRepository
+        .pagedAppointmentsStream(limit: _pageSize)
+        .listen(_onAppointments);
+  }
+
+  /// Loads the next page of the admin feed.
+  void loadMore() {
+    _pageSize += pageStep;
+    _subscribe();
+  }
 
   List<Appointment> _appointments = [];
   bool _loading = true;

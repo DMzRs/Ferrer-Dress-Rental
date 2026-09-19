@@ -18,6 +18,10 @@ class FakeAppointmentRepository implements AppointmentRepository {
   }
 
   @override
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) =>
+      allAppointmentsStream();
+
+  @override
   Future<void> createAppointment(Appointment a) async {
     if (throwFailureOnCreate) throw const NetworkFailure('slot taken');
     if (throwUnknownOnCreate) throw Exception('boom');

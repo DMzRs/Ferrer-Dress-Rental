@@ -5,6 +5,11 @@ abstract class AppointmentDataSource {
 
   Stream<List<Appointment>> allAppointmentsStream();
 
+  /// Paged admin feed, newest first. Defaults to the full stream; remote
+  /// sources override with a server-side limit.
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) =>
+      allAppointmentsStream();
+
   Future<List<String>> bookedSlotsFor(DateTime day);
 
   Future<void> createAppointment(Appointment appointment);

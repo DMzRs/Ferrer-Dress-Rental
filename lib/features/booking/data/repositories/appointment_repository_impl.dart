@@ -23,6 +23,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       _dataSource.allAppointmentsStream();
 
   @override
+  Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) =>
+      _dataSource.pagedAppointmentsStream(limit: limit);
+
+  @override
   Future<List<String>> bookedSlotsFor(DateTime day) =>
       _dataSource.bookedSlotsFor(day);
 

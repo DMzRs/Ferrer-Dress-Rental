@@ -79,18 +79,21 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen>
                     context,
                     vm.requests,
                     emptyText: 'No pending requests right now.',
+                    onLoadMore: vm.hasMore ? vm.loadMore : null,
                   ),
                   _list(
                     context,
                     vm.scheduled,
                     emptyText: 'No confirmed appointments yet.',
                     showStatus: true,
+                    onLoadMore: vm.hasMore ? vm.loadMore : null,
                   ),
                   _list(
                     context,
                     vm.resolved,
                     emptyText: 'Nothing here yet.',
                     showStatus: true,
+                    onLoadMore: vm.hasMore ? vm.loadMore : null,
                   ),
                 ],
               ),
@@ -102,6 +105,7 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen>
     List<Appointment> items, {
     required String emptyText,
     bool showStatus = false,
+    VoidCallback? onLoadMore,
   }) {
     if (items.isEmpty) {
       return Center(
@@ -121,12 +125,20 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen>
       onRefresh: () async {},
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-        itemCount: items.length,
+        itemCount: items.length + (onLoadMore == null ? 0 : 1),
         separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, index) => _AppointmentTile(
-          appointment: items[index],
-          showStatus: showStatus,
-        ),
+        itemBuilder: (context, index) {
+          if (index >= items.length) {
+            return OutlinedButton(
+              onPressed: onLoadMore,
+              child: const Text('Load more'),
+            );
+          }
+          return _AppointmentTile(
+            appointment: items[index],
+            showStatus: showStatus,
+          );
+        },
       ),
     );
   }
