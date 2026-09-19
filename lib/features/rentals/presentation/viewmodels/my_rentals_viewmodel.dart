@@ -37,8 +37,6 @@ class MyRentalsViewModel extends ChangeNotifier {
   List<Rental> get allRentalsForNotifications =>
       List.unmodifiable(_rentals);
 
-  int get pendingCount => _rentals.where((r) => r.isPending).length;
-
   int get activeCount =>
       _rentals.where((r) => r.isActive || r.isOverdue).length;
 

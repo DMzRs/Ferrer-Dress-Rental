@@ -4,9 +4,8 @@ import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 
 class AppLogo extends StatelessWidget {
   final double size;
-  final Color color;
 
-  const AppLogo({super.key, this.size = 72, this.color = AppColors.rose});
+  const AppLogo({super.key, this.size = 72});
 
   @override
   Widget build(BuildContext context) {
