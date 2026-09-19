@@ -594,7 +594,7 @@ class _DeclineRentalSheetState extends State<_DeclineRentalSheet> {
             Text(
               '${widget.rental.userName} requested "${widget.rental.itemName}" '
               '(${Formatters.shortDate(widget.rental.startDate)} → ${Formatters.shortDate(widget.rental.endDate)}). '
-              'They will see your reason and get a full refund.',
+              'They will see your reason. No payment was collected.',
               style: TextStyle(
                   fontSize: 12.5, color: Colors.grey.shade600),
             ),

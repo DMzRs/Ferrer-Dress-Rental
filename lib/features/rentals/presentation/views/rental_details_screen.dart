@@ -39,10 +39,10 @@ class _Body extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Cancel this rental?',
             style: TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w700)),
-        content: const Text(
-          'Your full payment including the security deposit will be refunded within 3-5 banking days.',
-          style: TextStyle(fontSize: 13.5, height: 1.5),
-        ),
+          content: const Text(
+            'Cancelling releases this item. No payment is due — payment happens at pickup.',
+            style: TextStyle(fontSize: 13.5, height: 1.5),
+          ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -66,7 +66,7 @@ class _Body extends StatelessWidget {
     showAppSnackBar(
       context,
       ok
-          ? 'Rental cancelled. Your refund will arrive within 3-5 banking days.'
+          ? 'Rental cancelled. No charges were made.'
           : 'Could not cancel right now. Please try again.',
       backgroundColor: ok ? AppColors.success : AppColors.danger,
     );
@@ -159,7 +159,7 @@ class _Body extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              Text('Payment Summary',
+              Text('Price Summary',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               Container(
@@ -176,7 +176,11 @@ class _Body extends StatelessWidget {
                     _row(
                       'Security Deposit',
                       '₱${rental.securityDeposit.toStringAsFixed(0)}',
-                      note: rental.isCompleted ? 'Refunded' : 'Held',
+                      note: rental.isCompleted
+                          ? 'Refunded'
+                          : (rental.isPending
+                              ? 'Due at pickup'
+                              : 'Held'),
                       noteColor:
                           rental.isCompleted ? AppColors.success : AppColors.gold,
                     ),
@@ -186,8 +190,8 @@ class _Body extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Paid',
-                            style: TextStyle(
+                        Text(rental.isCompleted ? 'Total Paid' : 'Total Due',
+                            style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.ink)),
@@ -221,10 +225,10 @@ class _Body extends StatelessWidget {
                       child: Text(
                         rental.isPending
                             ? 'We received your rental request and the shop is reviewing it. You will see it as Active once confirmed — you can still cancel in the meantime.'
-                            : rental.isDeclined
-                                ? (rental.declineReason.trim().isNotEmpty
-                                    ? 'This rental request was declined by the shop: "${rental.declineReason.trim()}". Your full payment will be refunded within 3-5 banking days.'
-                                    : 'This rental request was declined by the shop. Your full payment will be refunded within 3-5 banking days.')
+                                : rental.isDeclined
+                                    ? (rental.declineReason.trim().isNotEmpty
+                                        ? 'This rental request was declined by the shop: "${rental.declineReason.trim()}". No payment is due.'
+                                        : 'This rental request was declined by the shop. No payment is due.')
                                 : rental.isOverdue
                                     ? 'This rental is past its due date. A late fee may apply to your deposit refund — please visit the shop or contact us as soon as possible.'
                                     : 'Please return the item clean and on time so your full security deposit can be refunded.',

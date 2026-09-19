@@ -62,7 +62,7 @@ List<AppNotification> buildNotifications(
         title: 'Request declined',
         subtitle: rental.declineReason.trim().isNotEmpty
             ? '${rental.itemName}: ${rental.declineReason.trim()}'
-            : '${rental.itemName} was declined. Your payment will be refunded.',
+            : '${rental.itemName} was declined. No payment is due.',
         at: rental.updatedAt ?? rental.createdAt,
         kind: NotificationKind.rentalUpdate,
         attention: false,
