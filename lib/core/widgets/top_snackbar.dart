@@ -9,8 +9,14 @@ import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 /// behind it. When the keyboard is up it floats just above the keyboard
 /// instead.
 ///
+/// Only one toast is ever visible: showing a new one dismisses the previous
+/// immediately, so messages never stack.
+///
 /// Usage: `showAppSnackBar(context, 'Saved.', backgroundColor: AppColors.success)`
 /// instead of `ScaffoldMessenger.of(context).showSnackBar(...)`.
+OverlayEntry? _activeEntry;
+int _sequence = 0;
+
 Future<void> showAppSnackBar(
   BuildContext context,
   String message, {
@@ -19,6 +25,11 @@ Future<void> showAppSnackBar(
 }) async {
   final overlay = Overlay.maybeOf(context);
   if (overlay == null) return;
+
+  // Never stack: the newcomer evicts whatever is showing.
+  _activeEntry?.remove();
+  _activeEntry = null;
+  final mySequence = ++_sequence;
 
   // The nav bar lives in the caller's Scaffold (body context can see it).
   final hasNavBar =
@@ -45,8 +56,14 @@ Future<void> showAppSnackBar(
     },
   );
   overlay.insert(entry);
+  _activeEntry = entry;
   await Future.delayed(duration + const Duration(milliseconds: 350));
-  entry.remove();
+  // Only the latest toast may remove itself; superseded ones were already
+  // removed above, and removing twice would throw.
+  if (_sequence == mySequence && identical(_activeEntry, entry)) {
+    _activeEntry = null;
+    entry.remove();
+  }
 }
 
 class _BottomToast extends StatefulWidget {

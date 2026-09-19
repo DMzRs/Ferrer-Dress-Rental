@@ -63,4 +63,38 @@ void main() {
     expect(toast.bottom, greaterThan(_screen.height - 80));
     await _settle(t);
   });
+
+  testWidgets('a new toast dismisses the previous one immediately', (t) async {
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Column(
+              children: [
+                TextButton(
+                  onPressed: () => showAppSnackBar(context, 'First.'),
+                  child: const Text('go-first'),
+                ),
+                TextButton(
+                  onPressed: () => showAppSnackBar(context, 'Second.'),
+                  child: const Text('go-second'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await t.tap(find.text('go-first'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.text('First.'), findsOneWidget);
+    await t.tap(find.text('go-second'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.text('First.'), findsNothing);
+    expect(find.text('Second.'), findsOneWidget);
+    await _settle(t);
+    expect(find.text('Second.'), findsNothing);
+  });
 }
