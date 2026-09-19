@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/booking/presentation/views/booking_screen.dart';
 import 'package:ferrer_rental_shop/features/checkout/presentation/views/checkout_screen.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/item_details/presentation/views/item_details_screen.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
-import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
-import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
-import 'package:ferrer_rental_shop/features/rentals/presentation/views/my_rentals_screen.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/views/rental_details_screen.dart';
+import 'package:ferrer_rental_shop/features/shell/presentation/views/user_shell.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -46,16 +42,13 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
         builder: (_) => BookingScreen(args: args ?? const BookingScreenArgs()),
       );
     case AppRoutes.myRentals:
-      // MyRentalsScreen needs MyRentalsViewModel above it. Inside UserShell
-      // it comes from UserShell's MultiProvider, but checkout pushes this as
-      // a standalone route (pushNamedAndRemoveUntil), so provide it here too.
+      // Lands on the shell's Rentals tab (keeps the bottom nav bar) and
+      // optionally flashes the just-created rental. Arguments: rental id?
+      final highlightId = settings.arguments as String?;
       return MaterialPageRoute(
-        builder: (context) => ChangeNotifierProvider(
-          create: (_) => MyRentalsViewModel(
-            context.read<RentalRepository>(),
-            context.read<AuthRepository>(),
-          ),
-          child: const MyRentalsScreen(),
+        builder: (_) => UserShell(
+          initialTab: 2,
+          highlightRentalId: highlightId,
         ),
       );
     case AppRoutes.rentalDetails:

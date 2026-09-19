@@ -12,9 +12,10 @@ class _FakeRentals implements RentalRepository {
   bool shouldThrow = false;
 
   @override
-  Future<void> createRental(Rental rental) async {
+  Future<String> createRental(Rental rental) async {
     if (shouldThrow) throw Exception('payment failed');
     lastCreated = rental;
+    return 'new-id';
   }
 
   @override
@@ -134,9 +135,9 @@ void main() {
       final inventory = _FakeInventory();
       final vm = _vm(rentals, inventory);
 
-      final ok = await vm.confirm(_user, address: '  QC  ');
+      final id = await vm.confirm(_user, address: '  QC  ');
 
-      expect(ok, isTrue);
+      expect(id, 'new-id');
       expect(vm.error, isNull);
       expect(vm.isConfirming, isFalse);
       expect(rentals.lastCreated!.deliveryAddress, 'QC');
@@ -149,9 +150,9 @@ void main() {
       final rentals = _FakeRentals()..shouldThrow = true;
       final vm = _vm(rentals, _FakeInventory());
 
-      final ok = await vm.confirm(_user, address: 'QC');
+      final id = await vm.confirm(_user, address: 'QC');
 
-      expect(ok, isFalse);
+      expect(id, isNull);
       expect(vm.error, contains('Request could not be completed'));
       expect(vm.isConfirming, isFalse);
     });

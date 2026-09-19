@@ -181,16 +181,20 @@ class RentalCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    overdue
-                        ? 'Overdue — please return immediately.'
-                        : rental.daysRemaining > 0
-                            ? '${rental.daysRemaining} day${rental.daysRemaining == 1 ? '' : 's'} remaining'
-                            : 'Due back today',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: overdue ? AppColors.danger : AppColors.success,
+                  Expanded(
+                    child: Text(
+                      overdue
+                          ? 'Overdue — please return immediately.'
+                          : rental.daysRemaining > 0
+                              ? '${rental.daysRemaining} day${rental.daysRemaining == 1 ? '' : 's'} remaining'
+                              : 'Due back today',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: overdue ? AppColors.danger : AppColors.success,
+                      ),
                     ),
                   ),
                   Row(

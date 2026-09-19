@@ -17,7 +17,14 @@ import 'package:ferrer_rental_shop/features/rentals/presentation/views/my_rental
 import 'profile_screen_tab.dart';
 
 class UserShell extends StatelessWidget {
-  const UserShell({super.key});
+  /// Tab to open first (0 = Discover, 2 = Rentals). Deep links like the
+  /// post-checkout "View My Rentals" route land directly on Rentals.
+  final int initialTab;
+
+  /// Rental id to flash-highlight once it appears in the list (post-checkout).
+  final String? highlightRentalId;
+
+  const UserShell({super.key, this.initialTab = 0, this.highlightRentalId});
 
   @override
   Widget build(BuildContext context) {
@@ -41,20 +48,32 @@ class UserShell extends StatelessWidget {
           ),
         ),
       ],
-      child: const _UserShellView(),
+      child: _UserShellView(
+        initialTab: initialTab,
+        highlightRentalId: highlightRentalId,
+      ),
     );
   }
 }
 
 class _UserShellView extends StatefulWidget {
-  const _UserShellView();
+  final int initialTab;
+  final String? highlightRentalId;
+
+  const _UserShellView({this.initialTab = 0, this.highlightRentalId});
 
   @override
   State<_UserShellView> createState() => _UserShellViewState();
 }
 
 class _UserShellViewState extends State<_UserShellView> {
-  int _index = 0;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialTab;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +88,7 @@ class _UserShellViewState extends State<_UserShellView> {
         children: [
           HomeScreen(onAvatarTap: () => setState(() => _index = 4)),
           const MyAppointmentsScreen(),
-          const MyRentalsScreen(),
+          MyRentalsScreen(highlightRentalId: widget.highlightRentalId),
           NotificationsScreen(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),

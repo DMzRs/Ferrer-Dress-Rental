@@ -8,7 +8,8 @@ class CreateRentalUseCase {
   final RentalRepository _rentalRepository;
   final InventoryRepository _inventoryRepository;
 
-  Future<void> execute(Rental rental) async {
+  /// Creates the rental, marks the item rented, and returns the new id.
+  Future<String> execute(Rental rental) async {
     if (!rental.endDate.isAfter(rental.startDate)) {
       throw const FormatException('Return date must be after the start date.');
     }
@@ -45,8 +46,9 @@ class CreateRentalUseCase {
       throw const FormatException(
           'This piece was just rented by someone else.');
     }
-    await _rentalRepository.createRental(rental);
+    final rentalId = await _rentalRepository.createRental(rental);
     await _inventoryRepository.updateStatus(rental.itemId, 'rented');
+    return rentalId;
   }
 }
 

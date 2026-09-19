@@ -1,14 +1,18 @@
+import 'package:ferrer_rental_shop/core/router/app_router.dart';
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
-import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
-import 'package:ferrer_rental_shop/features/shell/presentation/views/user_shell.dart';
+import 'package:ferrer_rental_shop/features/reviews/data/datasources/mock_review_data_source.dart';
+import 'package:ferrer_rental_shop/features/reviews/data/repositories/review_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
+import 'package:ferrer_rental_shop/features/reviews/domain/usecases/submit_review_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -21,27 +25,29 @@ const _user = AppUser(
     role: UserRole.customer);
 
 Rental _rental() => Rental(
-      id: 'over-1',
+      id: 'r1',
       userId: 'u1',
-      userName: 'Maria',
+      userName: 'Maria Santos Dela Cruz',
       itemId: 'i1',
-      itemName: 'Gown',
-      startDate: DateTime.now().subtract(const Duration(days: 6)),
-      endDate: DateTime.now().subtract(const Duration(days: 1)),
+      itemName:
+          'Ivory Lace Wedding Gown With An Extremely Long Name That Wraps',
+      startDate: DateTime.now().subtract(const Duration(days: 2)),
+      endDate: DateTime.now().add(const Duration(days: 3)),
       rentalFee: 500,
       securityDeposit: 200,
       total: 700,
-      status: 'active',
-      createdAt: DateTime(2026, 8, 1),
+      status: 'pending',
+      createdAt: DateTime.now(),
     );
 
 class _FakeRentalRepository implements RentalRepository {
   @override
   Stream<List<Rental>> userRentalsStream(String userId) =>
-      Stream.value([_rental()]);
+      Stream<List<Rental>>.value([_rental()]);
 
   @override
-  Stream<List<Rental>> allRentalsStream() => const Stream.empty();
+  Stream<List<Rental>> allRentalsStream() =>
+      Stream<List<Rental>>.empty();
 
   @override
   Future<String> createRental(Rental rental) async => 'new-id';
@@ -136,7 +142,7 @@ class _FakeAuthRepository implements AuthRepository {
       throw UnimplementedError();
 
   @override
-  Stream<String> emailLinkStream() => const Stream.empty();
+  Stream<String> emailLinkStream() => Stream<String>.empty();
 
   @override
   Future<void> signOut() async {}
@@ -153,46 +159,51 @@ class _FakeAuthRepository implements AuthRepository {
   Stream<int> usersCountStream() => Stream<int>.empty();
 }
 
-Widget _harness() {
-  return MultiProvider(
-    providers: [
-      Provider<AuthRepository>.value(value: _FakeAuthRepository()),
-      ChangeNotifierProvider<AuthViewModel>(
-        create: (c) => AuthViewModel(c.read<AuthRepository>()),
-      ),
-      Provider<InventoryRepository>.value(
-          value: _FakeInventoryRepository()),
-      Provider<RentalRepository>.value(value: _FakeRentalRepository()),
-      Provider<AppointmentRepository>.value(
-          value: _FakeAppointmentRepository()),
-    ],
-    child: MaterialApp(
-      home: const UserShell(),
-      onGenerateRoute: (settings) => MaterialPageRoute(
-        builder: (_) =>
-            const Scaffold(body: Text('routed')),
+Future<void> _pumpShell(WidgetTester t) async {
+  t.view.physicalSize = const Size(360, 640);
+  t.view.devicePixelRatio = 1.0;
+  addTearDown(t.view.reset);
+  await t.pumpWidget(
+    MultiProvider(
+      providers: [
+        Provider<AuthRepository>.value(value: _FakeAuthRepository()),
+        ChangeNotifierProvider<AuthViewModel>(
+          create: (c) => AuthViewModel(c.read<AuthRepository>()),
+        ),
+        Provider<InventoryRepository>.value(
+            value: _FakeInventoryRepository()),
+        Provider<RentalRepository>.value(value: _FakeRentalRepository()),
+        Provider<AppointmentRepository>.value(
+            value: _FakeAppointmentRepository()),
+        Provider<ReviewRepository>.value(
+            value: ReviewRepositoryImpl(MockReviewDataSource())),
+        Provider<SubmitReviewUseCase>(
+            create: (c) =>
+                SubmitReviewUseCase(c.read<ReviewRepository>())),
+      ],
+      child: MaterialApp(
+        home: const Scaffold(body: Text('home')),
+        onGenerateRoute: onGenerateRoute,
       ),
     ),
   );
+  await t.pumpAndSettle();
 }
 
 void main() {
-  testWidgets('Notifications tab shows feed with bubble', (t) async {
-    await t.pumpWidget(_harness());
+  testWidgets('my-rentals route lands on Rentals tab with nav bar',
+      (t) async {
+    await _pumpShell(t);
+    final nav = Navigator.of(t.element(find.text('home')));
+    nav.pushNamedAndRemoveUntil(
+      AppRoutes.myRentals,
+      (route) => route.isFirst,
+      arguments: 'r1',
+    );
     await t.pumpAndSettle();
-    expect(find.text('Notifications'), findsWidgets);
-    await t.tap(find.text('Notifications').last);
-    await t.pumpAndSettle();
-    expect(find.text('Overdue — Gown'), findsOneWidget);
-  });
-
-  testWidgets('tapping overdue row routes to details', (t) async {
-    await t.pumpWidget(_harness());
-    await t.pumpAndSettle();
-    await t.tap(find.text('Notifications').last);
-    await t.pumpAndSettle();
-    await t.tap(find.text('Overdue — Gown'));
-    await t.pumpAndSettle();
-    expect(find.text('routed'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('My Rentals'), findsOneWidget);
+    expect(find.textContaining('Ivory Lace'), findsOneWidget);
+    expect(t.takeException(), isNull);
   });
 }

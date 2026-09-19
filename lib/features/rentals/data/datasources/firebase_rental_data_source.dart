@@ -28,9 +28,10 @@ class FirebaseRentalDataSource implements RentalDataSource {
   }
 
   @override
-  Future<void> createRental(Rental rental) async {
+  Future<String> createRental(Rental rental) async {
     final doc = _db.collection(FirestoreCollections.rentals).doc();
     await doc.set(RentalModel.fromEntity(rental).toMap(forFirestore: true));
+    return doc.id;
   }
 
   @override

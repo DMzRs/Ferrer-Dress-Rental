@@ -9,7 +9,11 @@ import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_r
 import 'package:ferrer_rental_shop/features/rentals/presentation/widgets/rental_card.dart';
 
 class MyRentalsScreen extends StatefulWidget {
-  const MyRentalsScreen({super.key});
+  /// Rental id to flash once it appears (e.g. the one just created at
+  /// checkout). Ignored when the id never shows up in the list.
+  final String? highlightRentalId;
+
+  const MyRentalsScreen({super.key, this.highlightRentalId});
 
   @override
   State<MyRentalsScreen> createState() => _MyRentalsScreenState();
@@ -24,6 +28,18 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   final Map<String, GlobalKey> _cardKeys = {};
   Timer? _highlightTimer;
   final Set<String> _highlightIds = {};
+  bool _initialHighlightArmed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final incoming = widget.highlightRentalId;
+    if (incoming != null && incoming.isNotEmpty) {
+      _highlightIds.add(incoming);
+      _initialHighlightArmed = true;
+      _scheduleHighlightClear();
+    }
+  }
 
   @override
   void dispose() {
@@ -35,21 +51,18 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
   GlobalKey _keyFor(String id) =>
       _cardKeys.putIfAbsent(id, () => GlobalKey());
 
-  /// Jumps to the overdue rentals: Active filter, scroll to the first one,
-  /// flash a ring on all of them.
-  void _goToOverdue(MyRentalsViewModel vm) {
-    final targetId = vm.firstOverdueId;
-    if (targetId == null) return;
+  void _scheduleHighlightClear() {
     _highlightTimer?.cancel();
-    vm.setFilter('active');
-    setState(() {
-      _highlightIds
-        ..clear()
-        ..addAll(vm.overdueIds);
+    _highlightTimer = Timer(const Duration(seconds: 2, milliseconds: 500),
+        () {
+      if (mounted) setState(() => _highlightIds.clear());
     });
+  }
+
+  void _scrollTo(String targetId) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final target = _cardKeys[targetId]?.currentContext;
-      if (target != null) {
+      if (target != null && mounted) {
         Scrollable.ensureVisible(
           target,
           duration: const Duration(milliseconds: 450),
@@ -58,16 +71,36 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
         );
       }
     });
-    _highlightTimer = Timer(const Duration(seconds: 2, milliseconds: 500),
-        () {
-      if (mounted) setState(() => _highlightIds.clear());
+  }
+
+  /// Jumps to the overdue rentals: Active filter, scroll to the first one,
+  /// flash a ring on all of them.
+  void _goToOverdue(MyRentalsViewModel vm) {
+    final targetId = vm.firstOverdueId;
+    if (targetId == null) return;
+    vm.setFilter('active');
+    setState(() {
+      _highlightIds
+        ..clear()
+        ..addAll(vm.overdueIds);
     });
+    _scrollTo(targetId);
+    _scheduleHighlightClear();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final vm = context.watch<MyRentalsViewModel>();
+
+    // Post-checkout arrival: scroll once the new rental streams in.
+    final incoming = widget.highlightRentalId;
+    if (_initialHighlightArmed &&
+        incoming != null &&
+        vm.rentals.any((r) => r.id == incoming)) {
+      _initialHighlightArmed = false;
+      _scrollTo(incoming);
+    }
 
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.creamGradient),

@@ -43,7 +43,7 @@ class _FakeRentalRepository implements RentalRepository {
   Stream<List<Rental>> allRentalsStream() => const Stream.empty();
 
   @override
-  Future<void> createRental(Rental rental) async {}
+  Future<String> createRental(Rental rental) async => 'new-id';
 
   @override
   Future<void> completeRental(String id, {DateTime? returnedAt}) async {}

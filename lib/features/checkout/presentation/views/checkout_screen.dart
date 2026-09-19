@@ -85,9 +85,9 @@ class _BodyState extends State<_Body> {
       return;
     }
 
-    final ok = await vm.confirm(user, address: address);
+    final rentalId = await vm.confirm(user, address: address);
     if (!mounted) return;
-    if (!ok) {
+    if (rentalId == null) {
       showAppSnackBar(
         context,
         vm.error ?? 'Something went wrong. Please try again.',
@@ -127,8 +127,11 @@ class _BodyState extends State<_Body> {
       ),
     );
     if (mounted) {
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil(AppRoutes.myRentals, (route) => route.isFirst);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.myRentals,
+        (route) => route.isFirst,
+        arguments: rentalId,
+      );
     }
   }
 

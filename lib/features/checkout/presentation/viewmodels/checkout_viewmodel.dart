@@ -57,7 +57,9 @@ class CheckoutViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> confirm(AppUser user, {required String address}) async {
+  /// Confirms the rental request. Returns the new rental id, or null when
+  /// validation fails or the request could not be completed.
+  Future<String?> confirm(AppUser user, {required String address}) async {
     _error = null;
     // No back-scheduling: block past start dates before hitting Firestore so
     // the user gets "Start date cannot be in the past" instead of a payment error.
@@ -67,12 +69,12 @@ class CheckoutViewModel extends ChangeNotifier {
     if (startDay.isBefore(today)) {
       _error = 'Start date cannot be in the past.';
       notifyListeners();
-      return false;
+      return null;
     }
     if (!endDate.isAfter(startDate)) {
       _error = 'Return date must be after the start date.';
       notifyListeners();
-      return false;
+      return null;
     }
     // Fixed 5-day allowance (date-only difference must equal 4).
     final startDayOnly = DateTime(startDate.year, startDate.month, startDate.day);
@@ -80,7 +82,7 @@ class CheckoutViewModel extends ChangeNotifier {
     if (endDayOnly.difference(startDayOnly).inDays != dateDifferenceDays) {
       _error = 'Rental period is fixed to 5 days.';
       notifyListeners();
-      return false;
+      return null;
     }
     _confirming = true;
     notifyListeners();
@@ -103,14 +105,13 @@ class CheckoutViewModel extends ChangeNotifier {
     );
 
     try {
-      await _createRental.execute(rental);
-      return true;
+      return await _createRental.execute(rental);
     } catch (e) {
       // Surface the underlying cause (e.g. permission-denied, not-found,
       // network) so the UI/snackbar and logs show WHY it failed instead of
       // a generic message. Keep the friendly prefix for users.
       _error = 'Request could not be completed. Details: $e';
-      return false;
+      return null;
     } finally {
       _confirming = false;
       notifyListeners();

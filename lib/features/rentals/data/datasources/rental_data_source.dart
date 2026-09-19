@@ -5,7 +5,8 @@ abstract class RentalDataSource {
 
   Stream<List<Rental>> allRentalsStream();
 
-  Future<void> createRental(Rental rental);
+  /// Creates the rental and returns its new id.
+  Future<String> createRental(Rental rental);
 
   Future<void> completeRental(String rentalId, {DateTime? returnedAt});
 

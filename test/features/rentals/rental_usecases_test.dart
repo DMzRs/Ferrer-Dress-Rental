@@ -20,7 +20,10 @@ class FakeRentalRepository implements RentalRepository {
   DateTime? lastReturnedAt;
 
   @override
-  Future<void> createRental(Rental rental) async => createCalls++;
+  Future<String> createRental(Rental rental) async {
+    createCalls++;
+    return 'new-id';
+  }
 
   @override
   Future<void> completeRental(String id, {DateTime? returnedAt}) async {
@@ -113,8 +116,9 @@ void main() {
       final inventory = FakeInventoryRepository();
       final usecase = CreateRentalUseCase(rentals, inventory);
 
-      await usecase.execute(_rental());
+      final id = await usecase.execute(_rental());
 
+      expect(id, 'new-id');
       expect(rentals.createCalls, 1);
       expect(inventory.statusUpdates, [('i1', 'rented')]);
     });

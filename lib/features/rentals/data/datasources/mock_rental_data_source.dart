@@ -166,7 +166,7 @@ class MockRentalDataSource implements RentalDataSource {
   }
 
   @override
-  Future<void> createRental(Rental rental) async {
+  Future<String> createRental(Rental rental) async {
     _ensureSeed();
     await Future.delayed(const Duration(milliseconds: 600));
     final id = 'rnt-${DateTime.now().millisecondsSinceEpoch}';
@@ -174,6 +174,7 @@ class MockRentalDataSource implements RentalDataSource {
     _emit();
     // NOTE: item status flips live in the use-case layer (same as Firebase),
     // so this data source never touches inventory — no double writes.
+    return id;
   }
 
   @override

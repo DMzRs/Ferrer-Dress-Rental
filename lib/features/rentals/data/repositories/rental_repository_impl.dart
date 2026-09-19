@@ -23,7 +23,8 @@ class RentalRepositoryImpl implements RentalRepository {
   Stream<List<Rental>> allRentalsStream() => _dataSource.allRentalsStream();
 
   @override
-  Future<void> createRental(Rental rental) => _dataSource.createRental(rental);
+  Future<String> createRental(Rental rental) =>
+      _dataSource.createRental(rental);
 
   @override
   Future<void> completeRental(String rentalId, {DateTime? returnedAt}) =>
