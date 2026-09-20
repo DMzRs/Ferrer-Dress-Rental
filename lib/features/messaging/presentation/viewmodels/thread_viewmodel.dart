@@ -17,6 +17,7 @@ class ThreadViewModel extends ChangeNotifier {
     required this.seen,
     required this.auth,
     this.initialLimit = 50,
+    this.autoMarkRead = false,
   }) {
     _limit = initialLimit;
     _authSub = auth.authStateChanges.listen((user) {
@@ -32,6 +33,13 @@ class ThreadViewModel extends ChangeNotifier {
   final MarkSeenUseCase seen;
   final AuthRepository auth;
   final int initialLimit;
+
+  /// When true, every incoming batch auto-marks read. Only for views that
+  /// are visible by construction (admin pushed thread route). Tab screens
+  /// (IndexedStack builds all tabs eagerly) must leave this false and call
+  /// [markRead] explicitly when the user opens the tab — otherwise merely
+  /// launching the app would clear all unread state.
+  final bool autoMarkRead;
 
   StreamSubscription? _authSub;
   StreamSubscription<List<ChatMessage>>? _messageSub;
@@ -138,7 +146,7 @@ class ThreadViewModel extends ChangeNotifier {
   void _onMessages(List<ChatMessage> incoming) {
     _messages = incoming;
     notifyListeners();
-    markRead();
+    if (autoMarkRead) markRead();
   }
 
   @override

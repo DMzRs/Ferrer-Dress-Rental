@@ -1254,6 +1254,7 @@ class ThreadViewModel extends ChangeNotifier {
     required this.seen,
     required this.auth,
     this.initialLimit = 50,
+    this.autoMarkRead = false,
   }) {
     _limit = initialLimit;
     _authSub = auth.authStateChanges.listen((user) {
@@ -1269,6 +1270,13 @@ class ThreadViewModel extends ChangeNotifier {
   final MarkSeenUseCase seen;
   final AuthRepository auth;
   final int initialLimit;
+
+  /// When true, every incoming batch auto-marks read. Only for views that
+  /// are visible by construction (admin pushed thread route). Tab screens
+  /// (IndexedStack builds all tabs eagerly) must leave this false and call
+  /// [markRead] explicitly when the user opens the tab — otherwise merely
+  /// launching the app would clear all unread state.
+  final bool autoMarkRead;
 
   StreamSubscription? _authSub;
   StreamSubscription<List<ChatMessage>>? _messageSub;
@@ -1375,7 +1383,7 @@ class ThreadViewModel extends ChangeNotifier {
   void _onMessages(List<ChatMessage> incoming) {
     _messages = incoming;
     notifyListeners();
-    markRead();
+    if (autoMarkRead) markRead();
   }
 
   @override
@@ -1650,36 +1658,30 @@ class CustomerThreadScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<ThreadViewModel>(
-      create: (_) => ThreadViewModel(
-        messages: context.read<MessageRepository>(),
-        sender: context.read<SendMessageUseCase>(),
-        seen: context.read<MarkSeenUseCase>(),
-        auth: context.read<AuthRepository>(),
-      ),
-      child: Container(
-        decoration: const BoxDecoration(gradient: AppColors.creamGradient),
-        child: const SafeArea(
-          bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
-                child: Text(
-                  'Messages',
-                  style: TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink),
-                ),
+    // Subscribed by UserShell; watching here rebuilds on new messages.
+    context.watch<ThreadViewModel>();
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.creamGradient),
+      child: const SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
+              child: Text(
+                'Messages',
+                style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink),
               ),
-              Expanded(
-                child: ThreadView(otherLabel: 'Ferrer Shop'),
-              ),
-            ],
-          ),
+            ),
+            Expanded(
+              child: ThreadView(otherLabel: 'Ferrer Shop'),
+            ),
+          ],
         ),
       ),
     );
@@ -2583,7 +2585,17 @@ Needs imports: `AuthViewModel`, `MessageRepository`, `Conversation`, `ChatMessag
                 label: 'Messages',
               ),
 ```
-- IndexedStack: insert `const CustomerThreadScreen()` at position 4 (before ProfileScreenTab). CustomerThreadScreen must be const-constructible (no required params — VM created inside via providers; screen reads them from context like other tab screens).
+- IndexedStack: insert `const CustomerThreadScreen()` at position 4 (before ProfileScreenTab).
+- Provide the shared `ThreadViewModel` in `UserShell`'s `MultiProvider` (after `MyAppointmentsViewModel`), constructed from the global `MessageRepository`/`SendMessageUseCase`/`MarkSeenUseCase`/`AuthRepository` exactly like the sibling VMs. `CustomerThreadScreen` only watches it.
+- Mark-on-open: `onDestinationSelected` becomes:
+```dart
+onDestinationSelected: (i) {
+  setState(() => _index = i);
+  // Entering the Messages tab marks the thread read.
+  if (i == 4) context.read<ThreadViewModel>().markRead();
+},
+```
+(`provider` import already in user_shell.dart; `ThreadViewModel` import must be added.)
 - Avatar tap: line 89 `setState(() => _index = 4)` → `5`.
 - Profile rentals row `onNavigateTo(2)` unchanged (Rentals stays 2). Notifications row `onNavigateTo?.call(1)` unchanged (Bookings stays 1). Router `initialTab: 2` unchanged.
 

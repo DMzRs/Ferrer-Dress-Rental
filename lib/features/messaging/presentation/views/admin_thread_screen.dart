@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
-import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
@@ -37,6 +34,7 @@ class AdminThreadScreen extends StatelessWidget {
         sender: sender,
         seen: seen,
         auth: auth,
+        autoMarkRead: true,
       )..openThread(userId),
       child: Scaffold(
         appBar: AppBar(
