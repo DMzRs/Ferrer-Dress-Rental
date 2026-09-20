@@ -32,11 +32,13 @@ class ThreadView extends StatefulWidget {
 class _ThreadViewState extends State<ThreadView> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scroll = ScrollController();
+  final FocusNode _composerFocus = FocusNode();
 
   @override
   void dispose() {
     _controller.dispose();
     _scroll.dispose();
+    _composerFocus.dispose();
     super.dispose();
   }
 
@@ -54,10 +56,29 @@ class _ThreadViewState extends State<ThreadView> {
         Expanded(
           child: messages.isEmpty
               ? Center(
-                  child: Text(
-                    widget.emptyText,
-                    style: const TextStyle(
-                        color: AppColors.inkSoft, fontSize: 14, height: 1.5),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.emptyText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: AppColors.inkSoft,
+                              fontSize: 14,
+                              height: 1.5),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _composerFocus.requestFocus(),
+                          icon: const Icon(
+                              Icons.add_comment_outlined,
+                              size: 18),
+                          label: const Text('Start conversation'),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -131,6 +152,7 @@ class _ThreadViewState extends State<ThreadView> {
               Expanded(
                 child: TextField(
                   controller: _controller,
+                  focusNode: _composerFocus,
                   maxLines: 4,
                   minLines: 1,
                   maxLength: 1000,

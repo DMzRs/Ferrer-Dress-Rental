@@ -71,6 +71,9 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<int> usersCountStream() => Stream<int>.empty();
+
+  @override
+  Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
 }
 
 void main() {
@@ -115,5 +118,42 @@ void main() {
     await t.tap(find.byIcon(Icons.send_rounded));
     await t.pumpAndSettle();
     expect(find.text('Thanks!'), findsOneWidget);
+  });
+
+  testWidgets('empty thread shows start button that focuses composer',
+      (t) async {
+    final repo = MessageRepositoryImpl(MockMessageDataSource());
+    await t.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<AuthRepository>.value(value: FakeAuthRepository()),
+          ChangeNotifierProvider<AuthViewModel>(
+            create: (c) => AuthViewModel(c.read<AuthRepository>()),
+          ),
+          Provider<MessageRepository>.value(value: repo),
+          Provider<SendMessageUseCase>(
+            create: (c) => SendMessageUseCase(c.read<MessageRepository>()),
+          ),
+          Provider<MarkSeenUseCase>(
+            create: (c) => MarkSeenUseCase(c.read<MessageRepository>()),
+          ),
+          ChangeNotifierProvider<ThreadViewModel>(
+            create: (c) => ThreadViewModel(
+              messages: c.read<MessageRepository>(),
+              sender: c.read<SendMessageUseCase>(),
+              seen: c.read<MarkSeenUseCase>(),
+              auth: c.read<AuthRepository>(),
+            ),
+          ),
+        ],
+        child: const MaterialApp(
+            home: Scaffold(body: CustomerThreadScreen())),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('Start conversation'), findsOneWidget);
+    await t.tap(find.text('Start conversation'));
+    await t.pump();
+    expect(t.testTextInput.isVisible, isTrue);
   });
 }
