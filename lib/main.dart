@@ -13,6 +13,10 @@ import 'features/booking/domain/repositories/appointment_repository.dart';
 import 'features/booking/presentation/viewmodels/booking_viewmodel.dart';
 import 'features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'features/inventory/domain/repositories/inventory_repository.dart';
+import 'features/messaging/data/repositories/message_repository_impl.dart';
+import 'features/messaging/domain/repositories/message_repository.dart';
+import 'features/messaging/domain/usecases/mark_seen_usecase.dart';
+import 'features/messaging/domain/usecases/send_message_usecase.dart';
 import 'features/rentals/data/repositories/rental_repository_impl.dart';
 import 'features/rentals/domain/repositories/rental_repository.dart';
 import 'features/rentals/domain/usecases/cancel_rental_usecase.dart';
@@ -50,6 +54,17 @@ Future<void> main() async {
       Provider<SubmitReviewUseCase>(
         create: (context) =>
             SubmitReviewUseCase(context.read<ReviewRepository>()),
+      ),
+      Provider<MessageRepository>.value(
+        value: MessageRepositoryImpl(MessageRepositoryImpl.defaultDataSource()),
+      ),
+      Provider<SendMessageUseCase>(
+        create: (context) =>
+            SendMessageUseCase(context.read<MessageRepository>()),
+      ),
+      Provider<MarkSeenUseCase>(
+        create: (context) =>
+            MarkSeenUseCase(context.read<MessageRepository>()),
       ),
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => AuthViewModel(authRepository),

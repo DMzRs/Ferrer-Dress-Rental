@@ -18,6 +18,9 @@ import 'package:ferrer_rental_shop/features/admin/reviews/presentation/views/adm
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/presentation/views/admin_inbox_screen.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rental_usecase.dart';
@@ -105,6 +108,7 @@ class _AdminShellViewState extends State<_AdminShellView> {
             const InventoryManagementScreen(),
             const RentalManagementScreen(),
             const AdminReviewsScreen(),
+            const AdminInboxScreen(),
             const ReportsScreen(),
           ],
         ),
@@ -163,6 +167,18 @@ class _AdminShellViewState extends State<_AdminShellView> {
               selectedIcon: Icon(Icons.rate_review_rounded),
               label: 'Reviews',
             ),
+            NavigationDestination(
+              icon: const _MessagesBadge(
+                icon: Icons.forum_outlined,
+                selectedIcon: Icons.forum_rounded,
+              ),
+              selectedIcon: const _MessagesBadge(
+                icon: Icons.forum_outlined,
+                selectedIcon: Icons.forum_rounded,
+                selected: true,
+              ),
+              label: 'Messages',
+            ),
             const NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),
               selectedIcon: Icon(Icons.bar_chart_rounded),
@@ -200,6 +216,40 @@ class _QueueIcon extends StatelessWidget {
       textColor: Colors.white,
       label: Text(count > 9 ? '9+' : '$count'),
       child: iconWidget,
+    );
+  }
+}
+
+/// Messages tab icon: bubble counts threads with customer messages newer
+/// than the admin's last open. Plain icon when zero.
+class _MessagesBadge extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final bool selected;
+
+  const _MessagesBadge({
+    required this.icon,
+    required this.selectedIcon,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Conversation>>(
+      stream: context.read<MessageRepository>().watchInbox(),
+      builder: (context, snapshot) {
+        final count = (snapshot.data ?? const <Conversation>[])
+            .where((c) => c.unreadForAdmin)
+            .length;
+        final iconWidget = Icon(selected ? selectedIcon : icon);
+        if (count <= 0) return iconWidget;
+        return Badge(
+          backgroundColor: AppColors.adminPrimary,
+          textColor: Colors.white,
+          label: Text(count > 9 ? '9+' : '$count'),
+          child: iconWidget,
+        );
+      },
     );
   }
 }

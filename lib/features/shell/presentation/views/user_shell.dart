@@ -9,9 +9,17 @@ import 'package:ferrer_rental_shop/features/booking/presentation/views/my_appoin
 import 'package:ferrer_rental_shop/features/home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/home/presentation/views/home_screen.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/entities/chat_message.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/presentation/viewmodels/thread_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/messaging/presentation/views/customer_thread_screen.dart';
 import 'package:ferrer_rental_shop/features/notifications/domain/notifications_builder.dart';
 import 'package:ferrer_rental_shop/features/notifications/presentation/views/notifications_screen.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
+import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/views/my_rentals_screen.dart';
 import 'profile_screen_tab.dart';
@@ -45,6 +53,14 @@ class UserShell extends StatelessWidget {
           create: (_) => MyAppointmentsViewModel(
             context.read<AppointmentRepository>(),
             context.read<AuthRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider<ThreadViewModel>(
+          create: (_) => ThreadViewModel(
+            messages: context.read<MessageRepository>(),
+            sender: context.read<SendMessageUseCase>(),
+            seen: context.read<MarkSeenUseCase>(),
+            auth: context.read<AuthRepository>(),
           ),
         ),
       ],
@@ -86,12 +102,13 @@ class _UserShellViewState extends State<_UserShellView> {
       body: IndexedStack(
         index: _index,
         children: [
-          HomeScreen(onAvatarTap: () => setState(() => _index = 4)),
+          HomeScreen(onAvatarTap: () => setState(() => _index = 5)),
           const MyAppointmentsScreen(),
           MyRentalsScreen(highlightRentalId: widget.highlightRentalId),
           NotificationsScreen(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),
+          const CustomerThreadScreen(),
           ProfileScreenTab(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),
@@ -135,7 +152,11 @@ class _UserShellViewState extends State<_UserShellView> {
           ),
           child: NavigationBar(
             selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
+            onDestinationSelected: (i) {
+              setState(() => _index = i);
+              // Entering the Messages tab marks the thread read.
+              if (i == 4) context.read<ThreadViewModel>().markRead();
+            },
             destinations: [
               const NavigationDestination(
                 icon: Icon(Icons.explore_outlined),
@@ -165,6 +186,18 @@ class _UserShellViewState extends State<_UserShellView> {
                   selected: true,
                 ),
                 label: 'Notifications',
+              ),
+              NavigationDestination(
+                icon: const _MessagesBadge(
+                  icon: Icons.forum_outlined,
+                  selectedIcon: Icons.forum_rounded,
+                ),
+                selectedIcon: const _MessagesBadge(
+                  icon: Icons.forum_outlined,
+                  selectedIcon: Icons.forum_rounded,
+                  selected: true,
+                ),
+                label: 'Messages',
               ),
               const NavigationDestination(
                 icon: Icon(Icons.person_outline_rounded),
@@ -203,6 +236,53 @@ class _NavIcon extends StatelessWidget {
       textColor: Colors.white,
       label: Text(badgeCount > 9 ? '9+' : '$badgeCount'),
       child: iconWidget,
+    );
+  }
+}
+
+/// Messages tab icon: bubble counts the shop's messages newer than the
+/// customer's last open. Plain icon when zero.
+class _MessagesBadge extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final bool selected;
+
+  const _MessagesBadge({
+    required this.icon,
+    required this.selectedIcon,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = context.watch<AuthViewModel>().user?.uid;
+    if (uid == null) {
+      return Icon(selected ? selectedIcon : icon);
+    }
+    return StreamBuilder<Conversation?>(
+      stream: context.read<MessageRepository>().watchThread(uid),
+      builder: (context, threadSnap) {
+        return StreamBuilder<List<ChatMessage>>(
+          stream: context.read<MessageRepository>().watchMessages(uid),
+          builder: (context, msgSnap) {
+            final seen = threadSnap.data?.lastSeenCustomer;
+            final count = (msgSnap.data ?? const <ChatMessage>[]).where((m) {
+              if (m.senderRole != 'admin') return false;
+              if (m.createdAt == null) return false;
+              if (seen == null) return true;
+              return m.createdAt!.isAfter(seen);
+            }).length;
+            final iconWidget = Icon(selected ? selectedIcon : icon);
+            if (count <= 0) return iconWidget;
+            return Badge(
+              backgroundColor: AppColors.roseDark,
+              textColor: Colors.white,
+              label: Text(count > 9 ? '9+' : '$count'),
+              child: iconWidget,
+            );
+          },
+        );
+      },
     );
   }
 }
