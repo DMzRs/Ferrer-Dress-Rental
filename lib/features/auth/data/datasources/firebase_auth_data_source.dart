@@ -265,5 +265,14 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
       return null;
     }
   }
+
+  @override
+  Stream<List<AppUser>> watchUsers() {
+    return _db
+        .collection(FirestoreCollections.users)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => AppUserModel.fromMap(d.id, d.data())).toList());
+  }
 }
 

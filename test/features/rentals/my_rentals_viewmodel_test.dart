@@ -111,6 +111,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<int> usersCountStream() => const Stream.empty();
+
+  @override
+  Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
 }
 
 MyRentalsViewModel _vm() {

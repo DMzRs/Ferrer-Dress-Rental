@@ -14,6 +14,9 @@ class _ThrottledDataSource implements AuthDataSource {
   Stream<int> usersCountStream() => const Stream.empty();
 
   @override
+  Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
+
+  @override
   Future<AppUser> signIn({required String email, required String password}) =>
       throw UnimplementedError();
 

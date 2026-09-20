@@ -171,6 +171,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<int> usersCountStream() => Stream<int>.empty();
+
+  @override
+  Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
 }
 
 Future<void> _pumpShell(WidgetTester t) async {

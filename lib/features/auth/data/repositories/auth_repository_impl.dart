@@ -120,4 +120,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<int> usersCountStream() => _dataSource.usersCountStream();
+
+  @override
+  Stream<List<AppUser>> watchUsers() => _dataSource.watchUsers();
 }

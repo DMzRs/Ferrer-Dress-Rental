@@ -180,5 +180,13 @@ class MockAuthDataSource implements AuthDataSource {
     return controller.stream;
   }
 
+  @override
+  Stream<List<AppUser>> watchUsers() async* {
+    yield List.unmodifiable(_users);
+    await for (final _ in _session.stream) {
+      yield List.unmodifiable(_users);
+    }
+  }
+
   AppUserModel? get currentUser => _current;
 }

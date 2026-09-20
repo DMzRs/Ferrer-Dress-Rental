@@ -38,5 +38,8 @@ abstract class AuthRepository {
   });
 
   Stream<int> usersCountStream();
+
+  /// All user profiles, newest last. Admin-only server-side.
+  Stream<List<AppUser>> watchUsers();
 }
 

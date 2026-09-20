@@ -20,6 +20,10 @@ const _admin = AppUser(
 );
 
 class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository({this.directory = const []});
+
+  final List<AppUser> directory;
+
   @override
   Stream<AppUser?> get authStateChanges => Stream.value(_admin);
 
@@ -69,6 +73,9 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<int> usersCountStream() => Stream<int>.empty();
+
+  @override
+  Stream<List<AppUser>> watchUsers() => Stream.value(directory);
 }
 
 Future<MessageRepository> _seededRepo() async {
@@ -81,6 +88,7 @@ Future<MessageRepository> _seededRepo() async {
     text: 'Do you have this in blue?',
   );
   await repo.markSeen('u2', 'admin');
+  await Future<void>.delayed(const Duration(milliseconds: 5));
   await repo.sendMessage(
     threadUserId: 'u1',
     senderId: 'u1',
@@ -127,5 +135,45 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Ana Reyes'), findsOneWidget);
     expect(find.text('Maria Santos'), findsNothing);
+  });
+
+  testWidgets('new-message button opens picker and starts a thread', (t) async {
+    const maria = AppUser(
+      uid: 'u9',
+      fullName: 'Maria Santos',
+      email: 'maria@example.com',
+      phone: '0917',
+      role: UserRole.customer,
+    );
+    final repo = MessageRepositoryImpl(MockMessageDataSource());
+    await t.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<AuthRepository>.value(
+              value: FakeAuthRepository(directory: const [maria])),
+          Provider<MessageRepository>.value(value: repo),
+          Provider<SendMessageUseCase>(
+            create: (c) => SendMessageUseCase(c.read<MessageRepository>()),
+          ),
+          Provider<MarkSeenUseCase>(
+            create: (c) => MarkSeenUseCase(c.read<MessageRepository>()),
+          ),
+        ],
+        child:
+            const MaterialApp(home: Scaffold(body: AdminInboxScreen())),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const ValueKey('new-message')));
+    await t.pumpAndSettle();
+    await t.enterText(
+        find.byKey(const ValueKey('customer-search')), 'Maria');
+    await t.pumpAndSettle();
+    expect(find.text('Maria Santos'), findsWidgets);
+    await t.tap(find.text('Maria Santos').last);
+    await t.pumpAndSettle();
+    expect(find.text('No messages yet. Say hello!'), findsOneWidget);
+    await t.pump(const Duration(seconds: 5));
+    await t.pumpAndSettle();
   });
 }

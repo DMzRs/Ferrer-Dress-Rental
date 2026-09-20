@@ -38,5 +38,7 @@ abstract class AuthDataSource {
   Future<void> updateProfile({String? fullName, String? phone, String? address, List<String>? savedPlaces});
 
   Stream<int> usersCountStream();
+
+  Stream<List<AppUser>> watchUsers();
 }
 
