@@ -146,5 +146,57 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
     }
+
+    // ------------------------------------------------------------------
+    // conversations (one thread per customer, id = userId)
+    // ------------------------------------------------------------------
+    match /conversations/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.keys()
+                  .hasOnly([
+                    'userId', 'userName', 'lastText', 'lastSenderRole',
+                    'updatedAt', 'lastSeenCustomer',
+                  ]));
+
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly([
+                    'lastText', 'lastSenderRole', 'updatedAt',
+                    'lastSeenCustomer',
+                  ]));
+
+      allow delete: if isAdmin();
+    }
+
+    match /conversations/{userId}/messages/{messageId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId);
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.senderRole == 'customer'
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1
+        && request.resource.data.text.size() <= 1000;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // Admins send in any thread as the shop identity. Kept separate so the
+    // customer branch above stays a tight owner-only rule.
+    match /conversations/{userId}/messages/{adminMessageId} {
+      allow create: if isAdmin()
+        && request.resource.data.senderRole == 'admin'
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1
+        && request.resource.data.text.size() <= 1000;
+    }
   }
 }

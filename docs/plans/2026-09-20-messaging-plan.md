@@ -409,7 +409,7 @@ In `lib/core/constants/firestore_collections.dart` (class with `static const use
 
 - [ ] **Step 2: Append the rules block**
 
-Append inside `match /databases/{database}/documents`, after the reviews block close:
+Append inside `match /databases/{database}/documents`, after the reviews block close. Note: admin message writes live in a SEPARATE match block on the same path (rules on the same path merge with OR semantics) — a single combined `allow create` with a top-level `request.auth.uid == userId` conjunct would wrongly reject admin sends, since an admin's uid never equals the customer's thread id:
 
 ```
     // ------------------------------------------------------------------
@@ -418,13 +418,22 @@ Append inside `match /databases/{database}/documents`, after the reviews block c
     match /conversations/{userId} {
       allow read: if isOwner(userId) || isAdmin();
 
-      allow create, update: if isAdmin()
+      allow create: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.keys()
+                  .hasOnly([
+                    'userId', 'userName', 'lastText', 'lastSenderRole',
+                    'updatedAt', 'lastSeenCustomer',
+                  ]));
+
+      allow update: if isAdmin()
         || (isOwner(userId)
             && request.resource.data.userId == request.auth.uid
             && request.resource.data.diff(resource.data)
                   .affectedKeys().hasOnly([
-                    'userId', 'userName', 'lastText', 'lastSenderRole',
-                    'updatedAt', 'lastSeenCustomer',
+                    'lastText', 'lastSenderRole', 'updatedAt',
+                    'lastSeenCustomer',
                   ]));
 
       allow delete: if isAdmin();
@@ -437,55 +446,36 @@ Append inside `match /databases/{database}/documents`, after the reviews block c
       allow create: if isSignedIn()
         && request.auth.uid == userId
         && request.resource.data.senderId == request.auth.uid
-        && (request.resource.data.senderRole == 'customer'
-            || request.resource.data.senderRole == 'admin')
-        && ((request.auth.uid == userId
-                && request.resource.data.senderRole == 'customer')
-            || (isAdmin()
-                && request.resource.data.senderRole == 'admin'))
+        && request.resource.data.senderRole == 'customer'
         && request.resource.data.text is string
         && request.resource.data.text.size() >= 1
         && request.resource.data.text.size() <= 1000;
 
       allow update, delete: if isAdmin();
     }
-```
 
-Note: `create` on a missing doc — `resource` is null so `diff()` throws; split into two allowances to stay safe:
-```
+    // Admins send in any thread as the shop identity. Kept separate so the
+    // customer branch above stays a tight owner-only rule.
+    match /conversations/{userId}/messages/{adminMessageId} {
       allow create: if isAdmin()
-        || (isOwner(userId)
-            && request.resource.data.userId == request.auth.uid
-            && request.resource.data.keys()
-                  .hasOnly([
-                    'userId', 'userName', 'lastText', 'lastSenderRole',
-                    'updatedAt', 'lastSeenCustomer', 'lastSeenAdmin',
-                  ]));
-
-      allow update: if isAdmin()
-        || (isOwner(userId)
-            && request.resource.data.userId == request.auth.uid
-            && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly([
-                    'lastText', 'lastSenderRole', 'updatedAt',
-                    'lastSeenCustomer',
-                  ]));
-```
-Use this split version (not the combined one above). Customer updates may never touch `userId`, `userName`, or `lastSeenAdmin`; only admins write `lastSeenAdmin`.
-
-- [ ] **Step 3: Append the index**
-
-In `firestore.indexes.json`, mirror an existing entry exactly:
-```json
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
-      ]
+        && request.resource.data.senderRole == 'admin'
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1
+        && request.resource.data.text.size() <= 1000;
     }
+  }
+}
 ```
-(Message queries are single-thread `orderBy('createdAt')` — no composite index needed.)
+Customer updates may never touch `userId`, `userName`, or `lastSeenAdmin`; only admins write `lastSeenAdmin`. (`create` uses `keys().hasOnly` instead of `diff()` because `resource` is null on missing docs.)
+
+- [ ] **Step 3: Confirm no index is needed**
+
+Both messaging queries are single-field (`conversations` orderBy
+`updatedAt`, per-thread messages orderBy `createdAt`) — Firestore serves
+these from automatic single-field indexes, and an explicit single-field
+composite entry is REJECTED at deploy ("not necessary, configure using
+single field index controls", verified). So `firestore.indexes.json` stays
+untouched; no composite index for messaging.
 
 - [ ] **Step 4: Deploy and verify (manual, needs console access)**
 
