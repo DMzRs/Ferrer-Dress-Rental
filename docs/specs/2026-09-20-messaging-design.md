@@ -95,7 +95,7 @@ list on this side, just the chat view:
 
 New `Messages` tab (7th destination, after Reviews, before Reports): inbox
 list of customer threads sorted by `updatedAt` desc — avatar initial, name,
-last-message preview, time-ago, unread dot + count for threads newer than
+last-message preview, time-ago, unread dot for threads newer than
 `lastSeenAdmin`, search-by-name field at top. Tapping opens the thread (same
 bubble UI mirrored, own messages labeled "Ferrer Shop"), stamps
 `lastSeenAdmin` on open. Long threads paginate with Load-earlier (limit 50).
