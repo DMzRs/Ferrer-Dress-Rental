@@ -19,10 +19,22 @@ class ThreadView extends StatefulWidget {
   final String otherLabel;
   final String emptyText;
 
+  /// Extra clearance below the composer for floating bars (e.g. the user
+  /// shell's bottom nav: 64px bar + 14px margin + spacing ≈ 96). Admin
+  /// threads sit in their own Scaffold, so this stays 0 there.
+  final double bottomPadding;
+
+  /// Shows the "Start conversation" shortcut in the empty state.
+  /// Kept only for legacy callers — inside a chat thread the composer
+  /// below is already the entry point, so this defaults to hidden.
+  final bool showStartButton;
+
   const ThreadView({
     super.key,
     required this.otherLabel,
     this.emptyText = 'No messages yet. Say hello!',
+    this.bottomPadding = 0,
+    this.showStartButton = false,
   });
 
   @override
@@ -69,14 +81,18 @@ class _ThreadViewState extends State<ThreadView> {
                               fontSize: 14,
                               height: 1.5),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _composerFocus.requestFocus(),
-                          icon: const Icon(
-                              Icons.add_comment_outlined,
-                              size: 18),
-                          label: const Text('Start conversation'),
-                        ),
+                        if (widget.showStartButton) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () =>
+                                _composerFocus.requestFocus(),
+                            icon: const Icon(
+                                Icons.add_comment_outlined,
+                                size: 18),
+                            label:
+                                const Text('Start conversation'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -145,35 +161,48 @@ class _ThreadViewState extends State<ThreadView> {
               ),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _composerFocus,
-                  maxLines: 4,
-                  minLines: 1,
-                  maxLength: 1000,
-                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  enabled: !vm.sending,
-                  decoration: const InputDecoration(
-                    hintText: 'Write a message',
-                    counterText: '',
+        Builder(
+          builder: (context) {
+            // extendBody:true lets the floating nav sit over the body, so
+            // reserve its height when the keyboard is closed. When the
+            // keyboard opens the nav is covered and the Scaffold shrinks
+            // the body, so drop the reserve to sit flush above keys.
+            final keyboardOpen =
+                MediaQuery.of(context).viewInsets.bottom > 0;
+            final navClearance =
+                keyboardOpen ? 0.0 : widget.bottomPadding;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 12 + navClearance),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _composerFocus,
+                      maxLines: 4,
+                      minLines: 1,
+                      maxLength: 1000,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                      enabled: !vm.sending,
+                      decoration: const InputDecoration(
+                        hintText: 'Write a message',
+                        counterText: '',
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    key: const ValueKey('send-message'),
+                    icon: const Icon(Icons.send_rounded),
+                    color: AppColors.roseDark,
+                    tooltip: 'Send message',
+                    onPressed:
+                        vm.sending ? null : () => _send(vm),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              IconButton(
-                key: const ValueKey('send-message'),
-                icon: const Icon(Icons.send_rounded),
-                color: AppColors.roseDark,
-                onPressed:
-                    vm.sending ? null : () => _send(vm),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ],
     );

@@ -40,7 +40,11 @@ class AdminThreadScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(userName.isEmpty ? 'Customer' : userName),
         ),
-        body: ThreadView(otherLabel: _firstName(userName)),
+        body: ThreadView(
+          otherLabel: _firstName(userName),
+          // Already inside the chat — composer below is the entry point.
+          showStartButton: false,
+        ),
       ),
     );
   }

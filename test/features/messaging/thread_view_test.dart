@@ -120,7 +120,7 @@ void main() {
     expect(find.text('Thanks!'), findsOneWidget);
   });
 
-  testWidgets('empty thread shows start button that focuses composer',
+  testWidgets('customer empty thread hides start button (types in composer)',
       (t) async {
     final repo = MessageRepositoryImpl(MockMessageDataSource());
     await t.pumpWidget(
@@ -151,9 +151,9 @@ void main() {
       ),
     );
     await t.pumpAndSettle();
-    expect(find.text('Start conversation'), findsOneWidget);
-    await t.tap(find.text('Start conversation'));
-    await t.pump();
-    expect(t.testTextInput.isVisible, isTrue);
+    // User side: no shortcut button — empty text + composer only.
+    expect(find.text('Start conversation'), findsNothing);
+    expect(find.text('No messages yet. Say hello!'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
   });
 }
