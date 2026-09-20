@@ -1,9 +1,12 @@
+import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/messaging/data/datasources/mock_message_data_source.dart';
 import 'package:ferrer_rental_shop/features/messaging/data/repositories/message_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/entities/chat_message.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
@@ -156,4 +159,100 @@ void main() {
     expect(find.text('No messages yet. Say hello!'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
   });
+
+  testWidgets('date separator stays with first message of the day',
+      (t) async {
+    final day1 = DateTime(2026, 9, 19, 17, 0);
+    final day2Morning = DateTime(2026, 9, 20, 9, 0);
+    final day2Evening = DateTime(2026, 9, 20, 22, 0);
+    // Newest-first, as the repository stream yields.
+    final seeded = [
+      ChatMessage(
+          id: 'm3',
+          senderId: 'u1',
+          senderRole: 'customer',
+          text: 'Second today',
+          createdAt: day2Evening),
+      ChatMessage(
+          id: 'm2',
+          senderId: 'admin-1',
+          senderRole: 'admin',
+          text: 'First today',
+          createdAt: day2Morning),
+      ChatMessage(
+          id: 'm1',
+          senderId: 'admin-1',
+          senderRole: 'admin',
+          text: 'Older day',
+          createdAt: day1),
+    ];
+    final repo = _SeededMessageRepository(seeded);
+    await t.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<AuthRepository>.value(value: FakeAuthRepository()),
+          ChangeNotifierProvider<AuthViewModel>(
+            create: (c) => AuthViewModel(c.read<AuthRepository>()),
+          ),
+          Provider<MessageRepository>.value(value: repo),
+          Provider<SendMessageUseCase>(
+            create: (c) => SendMessageUseCase(c.read<MessageRepository>()),
+          ),
+          Provider<MarkSeenUseCase>(
+            create: (c) => MarkSeenUseCase(c.read<MessageRepository>()),
+          ),
+          ChangeNotifierProvider<ThreadViewModel>(
+            create: (c) => ThreadViewModel(
+              messages: c.read<MessageRepository>(),
+              sender: c.read<SendMessageUseCase>(),
+              seen: c.read<MarkSeenUseCase>(),
+              auth: c.read<AuthRepository>(),
+            ),
+          ),
+        ],
+        child: const MaterialApp(
+            home: Scaffold(body: CustomerThreadScreen())),
+      ),
+    );
+    await t.pumpAndSettle();
+    final day2Label = Formatters.date(day2Evening);
+    expect(find.text(day2Label), findsOneWidget);
+    // The Sep-20 header must sit above the FIRST Sep-20 message, so a new
+    // same-day message below must not drag it down.
+    final headerY = t.getTopLeft(find.text(day2Label)).dy;
+    final firstTodayY = t.getTopLeft(find.text('First today')).dy;
+    final secondTodayY = t.getTopLeft(find.text('Second today')).dy;
+    expect(headerY < firstTodayY, isTrue);
+    expect(firstTodayY < secondTodayY, isTrue);
+  });
+}
+
+class _SeededMessageRepository implements MessageRepository {
+  _SeededMessageRepository(this.seeded);
+
+  final List<ChatMessage> seeded;
+
+  @override
+  Stream<Conversation?> watchThread(String userId) =>
+      Stream<Conversation?>.value(null);
+
+  @override
+  Stream<List<Conversation>> watchInbox() =>
+      Stream<List<Conversation>>.value(const []);
+
+  @override
+  Stream<List<ChatMessage>> watchMessages(String userId, {int limit = 50}) =>
+      Stream<List<ChatMessage>>.value(seeded);
+
+  @override
+  Future<void> sendMessage({
+    required String threadUserId,
+    required String senderId,
+    required String senderRole,
+    required String text,
+    String userName = '',
+  }) async {}
+
+  @override
+  Future<void> markSeen(String threadUserId, String role) async {}
 }

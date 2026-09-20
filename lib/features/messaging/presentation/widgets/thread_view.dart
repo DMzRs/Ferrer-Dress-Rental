@@ -112,12 +112,16 @@ class _ThreadViewState extends State<ThreadView> {
                       );
                     }
                     final message = messages[index];
-                    final newer = index == 0
+                    // messages is newest-first; index+1 is the next-older
+                    // message (visually above). The header belongs above
+                    // the OLDEST message of each day, so a new same-day
+                    // message below must not drag it down.
+                    final older = index + 1 >= messages.length
                         ? null
-                        : messages[index - 1];
-                    final showDate = newer == null ||
+                        : messages[index + 1];
+                    final showDate = older == null ||
                         !_isSameDay(
-                            newer.createdAt, message.createdAt);
+                            older.createdAt, message.createdAt);
                     return Column(
                       crossAxisAlignment: message.isMine(vm.currentUid ?? '')
                           ? CrossAxisAlignment.end
