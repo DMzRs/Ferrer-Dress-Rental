@@ -7,6 +7,11 @@ import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/datasources/mock_message_data_source.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/repositories/message_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rental_usecase.dart';
@@ -216,6 +221,14 @@ void main() {
           Provider<DeclineRentalUseCase>(
               create: (c) => DeclineRentalUseCase(c.read<RentalRepository>(),
                   c.read<InventoryRepository>())),
+          Provider<MessageRepository>.value(
+              value: MessageRepositoryImpl(MockMessageDataSource())),
+          Provider<SendMessageUseCase>(
+              create: (c) =>
+                  SendMessageUseCase(c.read<MessageRepository>())),
+          Provider<MarkSeenUseCase>(
+              create: (c) =>
+                  MarkSeenUseCase(c.read<MessageRepository>())),
         ],
         child: const MaterialApp(home: AdminShell()),
       ),

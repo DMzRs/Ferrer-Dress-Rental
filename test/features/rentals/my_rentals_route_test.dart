@@ -13,6 +13,11 @@ import 'package:ferrer_rental_shop/features/reviews/data/datasources/mock_review
 import 'package:ferrer_rental_shop/features/reviews/data/repositories/review_repository_impl.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/repositories/review_repository.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/usecases/submit_review_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/datasources/mock_message_data_source.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/repositories/message_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -189,6 +194,15 @@ Future<void> _pumpShell(WidgetTester t) async {
         Provider<SubmitReviewUseCase>(
             create: (c) =>
                 SubmitReviewUseCase(c.read<ReviewRepository>())),
+        Provider<MessageRepository>.value(
+            value:
+                MessageRepositoryImpl(MockMessageDataSource())),
+        Provider<SendMessageUseCase>(
+            create: (c) =>
+                SendMessageUseCase(c.read<MessageRepository>())),
+        Provider<MarkSeenUseCase>(
+            create: (c) =>
+                MarkSeenUseCase(c.read<MessageRepository>())),
       ],
       child: MaterialApp(
         home: const Scaffold(body: Text('home')),

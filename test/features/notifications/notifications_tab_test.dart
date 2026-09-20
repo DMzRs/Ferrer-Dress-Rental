@@ -8,6 +8,11 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/datasources/mock_message_data_source.dart';
+import 'package:ferrer_rental_shop/features/messaging/data/repositories/message_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/mark_seen_usecase.dart';
+import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_message_usecase.dart';
 import 'package:ferrer_rental_shop/features/shell/presentation/views/user_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -174,6 +179,15 @@ Widget _harness() {
       Provider<RentalRepository>.value(value: _FakeRentalRepository()),
       Provider<AppointmentRepository>.value(
           value: _FakeAppointmentRepository()),
+      Provider<MessageRepository>.value(
+          value:
+              MessageRepositoryImpl(MockMessageDataSource())),
+      Provider<SendMessageUseCase>(
+          create: (c) =>
+              SendMessageUseCase(c.read<MessageRepository>())),
+      Provider<MarkSeenUseCase>(
+          create: (c) =>
+              MarkSeenUseCase(c.read<MessageRepository>())),
     ],
     child: MaterialApp(
       home: const UserShell(),
