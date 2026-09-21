@@ -105,10 +105,10 @@ class _UserShellViewState extends State<_UserShellView> {
           HomeScreen(onAvatarTap: () => setState(() => _index = 5)),
           const MyAppointmentsScreen(),
           MyRentalsScreen(highlightRentalId: widget.highlightRentalId),
+          const CustomerThreadScreen(),
           NotificationsScreen(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),
-          const CustomerThreadScreen(),
           ProfileScreenTab(
             onNavigateTo: (tab) => setState(() => _index = tab),
           ),
@@ -155,7 +155,7 @@ class _UserShellViewState extends State<_UserShellView> {
             onDestinationSelected: (i) {
               setState(() => _index = i);
               // Entering the Messages tab marks the thread read.
-              if (i == 4) context.read<ThreadViewModel>().markRead();
+              if (i == 3) context.read<ThreadViewModel>().markRead();
             },
             destinations: [
               const NavigationDestination(
@@ -174,6 +174,18 @@ class _UserShellViewState extends State<_UserShellView> {
                 label: 'Rentals',
               ),
               NavigationDestination(
+                icon: const _MessagesBadge(
+                  icon: Icons.forum_outlined,
+                  selectedIcon: Icons.forum_rounded,
+                ),
+                selectedIcon: const _MessagesBadge(
+                  icon: Icons.forum_outlined,
+                  selectedIcon: Icons.forum_rounded,
+                  selected: true,
+                ),
+                label: 'Messages',
+              ),
+              NavigationDestination(
                 icon: _NavIcon(
                   icon: Icons.notifications_outlined,
                   selectedIcon: Icons.notifications_rounded,
@@ -186,18 +198,6 @@ class _UserShellViewState extends State<_UserShellView> {
                   selected: true,
                 ),
                 label: 'Notifications',
-              ),
-              NavigationDestination(
-                icon: const _MessagesBadge(
-                  icon: Icons.forum_outlined,
-                  selectedIcon: Icons.forum_rounded,
-                ),
-                selectedIcon: const _MessagesBadge(
-                  icon: Icons.forum_outlined,
-                  selectedIcon: Icons.forum_rounded,
-                  selected: true,
-                ),
-                label: 'Messages',
               ),
               const NavigationDestination(
                 icon: Icon(Icons.person_outline_rounded),
