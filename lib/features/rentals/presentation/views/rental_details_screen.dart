@@ -5,6 +5,8 @@ import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/cancel_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/rental_details_viewmodel.dart';
@@ -110,13 +112,30 @@ class _Body extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ItemThumbnail(
-                          imageUrls: const [],
-                          name: rental.itemName,
-                          width: 96,
-                          height: 122,
-                          borderRadius: BorderRadius.circular(18),
-                          gradientSeed: rental.itemId.hashCode,
+                        StreamBuilder<List<CatalogItem>>(
+                          stream: context
+                              .read<InventoryRepository>()
+                              .itemsStream(),
+                          builder: (context, snapshot) {
+                            var thumb = '';
+                            for (final item in snapshot.data ??
+                                const <CatalogItem>[]) {
+                              if (item.id == rental.itemId &&
+                                  item.thumbnail.isNotEmpty) {
+                                thumb = item.thumbnail;
+                                break;
+                              }
+                            }
+                            return ItemThumbnail(
+                              imageUrls:
+                                  thumb.isEmpty ? const [] : [thumb],
+                              name: rental.itemName,
+                              width: 96,
+                              height: 122,
+                              borderRadius: BorderRadius.circular(18),
+                              gradientSeed: rental.itemId.hashCode,
+                            );
+                          },
                         ),
                         const SizedBox(width: 16),
                         Expanded(

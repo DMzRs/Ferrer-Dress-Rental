@@ -16,11 +16,15 @@ class RentalCard extends StatelessWidget {
   /// Ring color: danger for warnings (overdue), success for fresh arrivals.
   final Color highlightColor;
 
+  /// Item photo(s) resolved from inventory; empty falls back to placeholder.
+  final List<String> imageUrls;
+
   const RentalCard(
       {super.key,
       required this.rental,
       this.highlight = false,
-      this.highlightColor = AppColors.danger});
+      this.highlightColor = AppColors.danger,
+      this.imageUrls = const []});
 
   Color get _statusColor {
     final (_, color) =
@@ -62,7 +66,7 @@ class RentalCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ItemThumbnail(
-                  imageUrls: const [],
+                  imageUrls: imageUrls,
                   name: rental.itemName,
                   width: 66,
                   height: 84,

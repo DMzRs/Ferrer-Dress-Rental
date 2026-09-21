@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/widgets/rental_card.dart';
 
@@ -223,18 +225,40 @@ class _MyRentalsScreenState extends State<MyRentalsScreen>
                       : RefreshIndicator(
                           color: AppColors.roseDark,
                           onRefresh: () async {},
-                          child: ListView.separated(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(20, 6, 20, 110),
-                            itemCount: vm.rentals.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 14),
-                            itemBuilder: (context, index) {
-                              final rental = vm.rentals[index];
-                              return RentalCard(
-                                key: _keyFor(rental.id),
-                                rental: rental,
-                                highlight: _highlightIds.contains(rental.id),
-                                highlightColor: _highlightColor,
+                          child: StreamBuilder<List<CatalogItem>>(
+                            stream: context
+                                .read<InventoryRepository>()
+                                .itemsStream(),
+                            builder: (context, snapshot) {
+                              final thumbs = <String, String>{};
+                              for (final item
+                                  in snapshot.data ??
+                                      const <CatalogItem>[]) {
+                                if (item.thumbnail.isNotEmpty) {
+                                  thumbs[item.id] = item.thumbnail;
+                                }
+                              }
+                              return ListView.separated(
+                                controller: _scrollController,
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 6, 20, 110),
+                                itemCount: vm.rentals.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 14),
+                                itemBuilder: (context, index) {
+                                  final rental = vm.rentals[index];
+                                  final thumb = thumbs[rental.itemId];
+                                  return RentalCard(
+                                    key: _keyFor(rental.id),
+                                    rental: rental,
+                                    highlight:
+                                        _highlightIds.contains(rental.id),
+                                    highlightColor: _highlightColor,
+                                    imageUrls: thumb == null
+                                        ? const []
+                                        : [thumb],
+                                  );
+                                },
                               );
                             },
                           ),

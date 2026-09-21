@@ -1,6 +1,8 @@
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
@@ -115,11 +117,34 @@ class _FakeAuthRepository implements AuthRepository {
   Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
 }
 
+class _FakeInventoryRepository implements InventoryRepository {
+  @override
+  Stream<List<CatalogItem>> itemsStream() =>
+      Stream<List<CatalogItem>>.value(const []);
+
+  @override
+  Future<String> addItem(CatalogItem item) async => 'x';
+
+  @override
+  Future<void> updateItem(CatalogItem item) async {}
+
+  @override
+  Future<void> updateStatus(String itemId, String status) async {}
+
+  @override
+  Future<void> saveItemPhotos(String itemId, List<String> photos) async {}
+
+  @override
+  Future<List<String>> itemPhotos(String itemId) async => [];
+}
+
 Widget _harness(MyRentalsViewModel vm) {
   final reviewRepo = ReviewRepositoryImpl(MockReviewDataSource());
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<MyRentalsViewModel>.value(value: vm),
+      Provider<InventoryRepository>.value(
+          value: _FakeInventoryRepository()),
       Provider<ReviewRepository>.value(value: reviewRepo),
       Provider<SubmitReviewUseCase>(
           create: (c) => SubmitReviewUseCase(c.read<ReviewRepository>())),
