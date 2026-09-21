@@ -97,6 +97,10 @@ class _UserShellViewState extends State<_UserShellView> {
       context.watch<MyRentalsViewModel>().allRentalsForNotifications,
       context.watch<MyAppointmentsViewModel>().allAppointmentsForNotifications,
     ));
+    // Large system fonts would overlap the six labels, so fall back to
+    // icons only (labels remain as tooltips/semantics).
+    final hideLabels =
+        MediaQuery.textScalerOf(context).scale(1) > 1.2;
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
@@ -152,6 +156,9 @@ class _UserShellViewState extends State<_UserShellView> {
           ),
           child: NavigationBar(
             selectedIndex: _index,
+            labelBehavior: hideLabels
+                ? NavigationDestinationLabelBehavior.alwaysHide
+                : NavigationDestinationLabelBehavior.alwaysShow,
             onDestinationSelected: (i) {
               setState(() => _index = i);
               // Entering the Messages tab marks the thread read.

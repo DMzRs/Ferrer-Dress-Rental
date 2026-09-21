@@ -95,6 +95,10 @@ class _AdminShellViewState extends State<_AdminShellView> {
         context.watch<RentalManagementViewModel>().overdueCount;
     final rentalUrgent =
         context.watch<RentalManagementViewModel>().overdueCount > 0;
+    // Large system fonts would overlap the seven labels, so fall back to
+    // icons only (labels remain as tooltips/semantics).
+    final hideLabels =
+        MediaQuery.textScalerOf(context).scale(1) > 1.2;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -114,6 +118,9 @@ class _AdminShellViewState extends State<_AdminShellView> {
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
+          labelBehavior: hideLabels
+              ? NavigationDestinationLabelBehavior.alwaysHide
+              : NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: [
             const NavigationDestination(
