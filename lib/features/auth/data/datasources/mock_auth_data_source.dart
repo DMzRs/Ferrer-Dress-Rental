@@ -9,6 +9,13 @@ class MockAuthDataSource implements AuthDataSource {
   MockAuthDataSource() {
     _users.addAll([
       const AppUserModel(
+        uid: 'superadmin-001',
+        fullName: 'Shop Owner',
+        email: 'owner@ferrer.ph',
+        phone: '09171234567',
+        role: UserRole.superadmin,
+      ),
+      const AppUserModel(
         uid: 'admin-001',
         fullName: 'Ms. Ferrer',
         email: 'admin@ferrer.ph',
@@ -201,6 +208,70 @@ class MockAuthDataSource implements AuthDataSource {
     await for (final _ in _session.stream) {
       yield List.unmodifiable(_users);
     }
+  }
+
+  @override
+  Future<AppUser> createAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 700));
+    final normalized = email.trim().toLowerCase();
+    if (password.length < 6) {
+      throw Exception('Password must be at least 6 characters.');
+    }
+    if (_users.any((u) => u.email.toLowerCase() == normalized)) {
+      throw Exception('An account with this email already exists.');
+    }
+    final user = AppUserModel(
+      uid: 'user-${DateTime.now().millisecondsSinceEpoch}',
+      fullName: fullName.trim(),
+      email: normalized,
+      phone: phone.trim(),
+      role: UserRole.admin,
+    );
+    _users.add(user);
+    // Tick watchers (accounts list) without touching the session: only
+    // re-emit when someone is signed in, so this never signs anyone out.
+    if (_current != null) _setSession(_current);
+    return user;
+  }
+
+  @override
+  Future<AppUser> updateUserRole({
+    required String uid,
+    required UserRole role,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    final index = _users.indexWhere((u) => u.uid == uid);
+    if (index == -1) throw Exception('Account not found.');
+    final current = _users[index];
+    if (current.role == UserRole.superadmin && role != UserRole.superadmin) {
+      throw Exception('A superadmin account cannot be demoted.');
+    }
+    if (current.role == UserRole.customer && role == UserRole.admin) {
+      throw Exception(
+          'Admin accounts must be created fresh via Register Admin.');
+    }
+    final updated = AppUserModel(
+      uid: current.uid,
+      fullName: current.fullName,
+      email: current.email,
+      phone: current.phone,
+      address: current.address,
+      savedPlaces: current.savedPlaces,
+      role: role,
+    );
+    _users[index] = updated;
+    // Refresh watchers (and a viewer looking at their own row) without
+    // ever emitting null — emitting null would sign the viewer out.
+    final viewer = _current;
+    if (viewer != null) {
+      _setSession(viewer.uid == uid ? updated : viewer);
+    }
+    return updated;
   }
 
   AppUserModel? get currentUser => _current;

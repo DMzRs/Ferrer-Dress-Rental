@@ -22,6 +22,18 @@ void main() {
       expect(customer.isAdmin, isFalse);
     });
 
+    test('superadmin is neither admin-routed nor customer', () {
+      const superadmin = AppUser(
+        uid: 's1',
+        fullName: 'Owner',
+        email: 'owner@x.com',
+        phone: '123',
+        role: UserRole.superadmin,
+      );
+      expect(superadmin.isSuperAdmin, isTrue);
+      expect(superadmin.isAdmin, isFalse);
+    });
+
     test('initials handles single name, full name, and blanks', () {
       const single = AppUser(
         uid: '1',

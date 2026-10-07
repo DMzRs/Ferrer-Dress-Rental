@@ -151,4 +151,28 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<List<AppUser>> watchUsers() => _dataSource.watchUsers();
+
+  @override
+  Future<Result<AppUser>> createAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  }) {
+    return _safe(() => _dataSource.createAdmin(
+          fullName: fullName,
+          email: email,
+          phone: phone,
+          password: password,
+        ));
+  }
+
+  @override
+  Future<Result<AppUser>> updateUserRole({
+    required String uid,
+    required UserRole role,
+  }) {
+    return _safe(
+        () => _dataSource.updateUserRole(uid: uid, role: role));
+  }
 }

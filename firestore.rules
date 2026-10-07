@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Ferrer Clothing Rental - security rules for the `ferrer-db` database.
-// Roles are stored on the user document (users/{uid}.role == 'admin').
+// Roles are stored on the user document (users/{uid}.role): 'customer',
+// 'admin', or 'superadmin'. Only the console creates superadmins.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -15,6 +16,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
@@ -23,26 +30,54 @@ service cloud.firestore {
     // users
     // ------------------------------------------------------------------
     match /users/{uid} {
-      allow get: if isOwner(uid) || isAdmin();
+      allow get: if isOwner(uid) || isAdmin() || isSuperAdmin();
       // The admin dashboard watches the whole collection to count users.
-      allow list: if isAdmin();
+      allow list: if isAdmin() || isSuperAdmin();
 
       // Sign-up writes the caller's own profile; the role is forced to
       // customer so nobody can self-promote to admin. fullName may be
       // absent/empty (users without a display name complete it later).
-      allow create: if isOwner(uid)
+      // A superadmin registering an admin writes that profile instead;
+      // superadmin accounts are never creatable client-side.
+      allow create: if (isOwner(uid)
         && request.resource.data.role == 'customer'
         && (!('fullName' in request.resource.data)
-            || request.resource.data.fullName is string);
+            || request.resource.data.fullName is string))
+        || (isSuperAdmin()
+            && request.resource.data.role in ['customer', 'admin']);
 
-      // Admins may edit anyone; users may edit their own profile but can
-      // never touch their own role.
-      allow update: if isAdmin()
+      // Superadmins manage roles but can never demote a fellow superadmin
+      // (UI blocks it too), and can never promote a customer in place:
+      // admin accounts are created fresh. Admins may edit anyone except
+      // superadmins; users may edit their own profile but can never touch
+      // their role.
+      allow update: if (isSuperAdmin()
+            && (resource.data.role != 'superadmin'
+                || request.resource.data.role == 'superadmin')
+            && !(resource.data.role == 'customer'
+                && request.resource.data.role == 'admin'))
+        || (isAdmin() && resource.data.role != 'superadmin')
         || (isOwner(uid)
             && !request.resource.data.diff(resource.data)
                   .affectedKeys().hasAny(['role']));
 
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin()
+        || (isAdmin() && resource.data.role != 'superadmin');
+    }
+
+    // ------------------------------------------------------------------
+    // auditLogs (superadmin activity trail)
+    // ------------------------------------------------------------------
+    match /auditLogs/{logId} {
+      allow list, get: if isSuperAdmin();
+
+      // Any signed-in user may record their own actions; the actor must
+      // match the caller so nobody can forge entries for someone else.
+      // Entries are append-only.
+      allow create: if isSignedIn()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string
+        && request.resource.data.actorEmail is string;
     }
 
     // ------------------------------------------------------------------
@@ -76,7 +111,7 @@ service cloud.firestore {
     // rentals
     // ------------------------------------------------------------------
     match /rentals/{rentalId} {
-      allow read: if isAdmin()
+      allow read: if isAdmin() || isSuperAdmin()
         || (isSignedIn() && resource.data.userId == request.auth.uid);
 
       allow create: if isSignedIn()
@@ -102,7 +137,7 @@ service cloud.firestore {
     // appointments
     // ------------------------------------------------------------------
     match /appointments/{appointmentId} {
-      allow read: if isAdmin()
+      allow read: if isAdmin() || isSuperAdmin()
         || (isSignedIn() && resource.data.userId == request.auth.uid);
 
       allow create: if isSignedIn()
@@ -123,7 +158,7 @@ service cloud.firestore {
     // reviews (one doc per completed rental, id = rentalId)
     // ------------------------------------------------------------------
     match /reviews/{rentalId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isSuperAdmin();
 
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
@@ -151,7 +186,7 @@ service cloud.firestore {
     // conversations (one thread per customer, id = userId)
     // ------------------------------------------------------------------
     match /conversations/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin() || isSuperAdmin();
 
       allow create: if isAdmin()
         || (isOwner(userId)
@@ -175,7 +210,7 @@ service cloud.firestore {
     }
 
     match /conversations/{userId}/messages/{messageId} {
-      allow read: if isAdmin()
+      allow read: if isAdmin() || isSuperAdmin()
         || (isSignedIn() && request.auth.uid == userId);
 
       allow create: if isSignedIn()

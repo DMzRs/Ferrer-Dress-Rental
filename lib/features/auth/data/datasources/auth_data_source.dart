@@ -63,5 +63,17 @@ abstract class AuthDataSource {
   Stream<int> usersCountStream();
 
   Stream<List<AppUser>> watchUsers();
+
+  Future<AppUser> createAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  });
+
+  Future<AppUser> updateUserRole({
+    required String uid,
+    required UserRole role,
+  });
 }
 

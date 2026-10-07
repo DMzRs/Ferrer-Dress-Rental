@@ -20,7 +20,11 @@ class AppUserModel extends AppUser {
       address: (map['address'] ?? '') as String,
       savedPlaces:
           ((map['savedPlaces'] as List?) ?? []).map((e) => e.toString()).toList(),
-      role: map['role'] == 'admin' ? UserRole.admin : UserRole.customer,
+      role: switch (map['role']) {
+        'superadmin' => UserRole.superadmin,
+        'admin' => UserRole.admin,
+        _ => UserRole.customer,
+      },
     );
   }
 
@@ -31,7 +35,11 @@ class AppUserModel extends AppUser {
       'phone': phone,
       'address': address,
       'savedPlaces': savedPlaces,
-      'role': role == UserRole.admin ? 'admin' : 'customer',
+      'role': switch (role) {
+        UserRole.superadmin => 'superadmin',
+        UserRole.admin => 'admin',
+        UserRole.customer => 'customer',
+      },
       'createdAt': DateTime.now().toIso8601String(),
     };
   }

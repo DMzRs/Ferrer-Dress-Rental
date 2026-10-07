@@ -23,7 +23,14 @@ class ReportPoint {
 
 class ReportsViewModel extends ChangeNotifier {
   ReportsViewModel(this._repository) {
-    _subscription = _repository.allRentalsStream().listen(_onRentals);
+    // A denied feed ends loading instead of hanging + crashing.
+    _subscription = _repository.allRentalsStream().listen(
+      _onRentals,
+      onError: (_) {
+        _loading = false;
+        notifyListeners();
+      },
+    );
   }
 
   /// Developer's platform share of every rental fee.

@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:ferrer_rental_shop/core/error/failure.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/cancel_rental_usecase.dart';
 
 class RentalDetailsViewModel extends ChangeNotifier {
-  RentalDetailsViewModel(this._cancelRental);
+  RentalDetailsViewModel(this._cancelRental, {this._audit});
 
   final CancelRentalUseCase _cancelRental;
+  final AuditLogger? _audit;
 
   bool _busy = false;
   String? _error;
@@ -20,6 +22,8 @@ class RentalDetailsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _cancelRental.execute(rental);
+      await _audit?.log('rental.cancelled',
+          targetType: 'rental', targetId: rental.id);
       return true;
     } on Failure catch (failure) {
       _error = failure.message;

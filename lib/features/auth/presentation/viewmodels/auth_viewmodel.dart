@@ -4,13 +4,14 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/result.dart';
+import '../../../audit/domain/audit_logger.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 enum EmailLinkState { idle, sending, linkSent, verifying, verified }
 
 class AuthViewModel extends ChangeNotifier {
-  AuthViewModel(this._repository) {
+  AuthViewModel(this._repository, {this._audit}) {
     _subscription = _repository.authStateChanges.listen((user) {
       _user = user;
       notifyListeners();
@@ -18,6 +19,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   final AuthRepository _repository;
+  final AuditLogger? _audit;
   StreamSubscription<AppUser?>? _subscription;
 
   AppUser? _user;
@@ -93,6 +95,10 @@ class AuthViewModel extends ChangeNotifier {
       // profile doc write lands); trust this result instead.
       _user = result.data;
       notifyListeners();
+      await _audit?.log('user.signup',
+          actor: result.data,
+          targetType: 'user',
+          targetId: result.data.uid);
       return true;
     }
     _error = result.failure?.message ?? 'Something went wrong. Please try again.';
@@ -231,6 +237,10 @@ class AuthViewModel extends ChangeNotifier {
     if (result is Success<AppUser>) {
       _user = result.data;
       _linkState = EmailLinkState.verified;
+      await _audit?.log('user.signup',
+          actor: result.data,
+          targetType: 'user',
+          targetId: result.data.uid);
     } else {
       _linkState = EmailLinkState.linkSent;
       _linkError =

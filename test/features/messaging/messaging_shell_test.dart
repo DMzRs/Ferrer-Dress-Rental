@@ -1,5 +1,9 @@
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/admin/admin_shell.dart';
+import 'package:ferrer_rental_shop/features/audit/data/datasources/mock_audit_data_source.dart';
+import 'package:ferrer_rental_shop/features/audit/data/repositories/audit_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/repositories/audit_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -105,6 +109,19 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<Result<AppUser>> linkGoogleAccount(
           {required String email, required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> createAdmin(
+          {required String fullName,
+          required String email,
+          required String phone,
+          required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> updateUserRole(
+          {required String uid, required UserRole role}) =>
       throw UnimplementedError();
 }
 
@@ -224,6 +241,14 @@ Future<void> _pumpShell(
     MultiProvider(
       providers: [
         Provider<AuthRepository>.value(value: auth),
+        Provider<AuditRepository>.value(
+            value: AuditRepositoryImpl(MockAuditDataSource())),
+        Provider<AuditLogger>(
+          create: (c) => AuditLogger(
+            auth: c.read<AuthRepository>(),
+            logs: c.read<AuditRepository>(),
+          ),
+        ),
         ChangeNotifierProvider<AuthViewModel>(
           create: (c) => AuthViewModel(c.read<AuthRepository>()),
         ),

@@ -123,6 +123,19 @@ class _FakeAuthRepository implements AuthRepository {
   Future<Result<AppUser>> linkGoogleAccount(
           {required String email, required String password}) =>
       throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> createAdmin(
+          {required String fullName,
+          required String email,
+          required String phone,
+          required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> updateUserRole(
+          {required String uid, required UserRole role}) =>
+      throw UnimplementedError();
 }
 
 class _FakeInventoryRepository implements InventoryRepository {

@@ -38,6 +38,19 @@ class _FakeGoogleAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Result<AppUser>> createAdmin(
+          {required String fullName,
+          required String email,
+          required String phone,
+          required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> updateUserRole(
+          {required String uid, required UserRole role}) =>
+      throw UnimplementedError();
+
+  @override
   Future<Result<AppUser>> signIn(
           {required String email, required String password}) =>
       throw UnimplementedError();

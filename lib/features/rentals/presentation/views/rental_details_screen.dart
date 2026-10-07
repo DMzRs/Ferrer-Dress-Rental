@@ -5,6 +5,7 @@ import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 import 'package:ferrer_rental_shop/core/widgets/top_snackbar.dart';
 import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
@@ -22,6 +23,7 @@ class RentalDetailsScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => RentalDetailsViewModel(
         context.read<CancelRentalUseCase>(),
+        audit: context.read<AuditLogger>(),
       ),
       child: _Body(rental: rental),
     );

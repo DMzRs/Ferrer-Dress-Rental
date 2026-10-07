@@ -4,15 +4,24 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:ferrer_rental_shop/core/services/item_photo_encoder.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 
 class InventoryViewModel extends ChangeNotifier {
-  InventoryViewModel(this._repository) {
-    _subscription = _repository.itemsStream().listen(_onItems);
+  InventoryViewModel(this._repository, {this._audit}) {
+    // A denied feed ends loading instead of hanging + crashing.
+    _subscription = _repository.itemsStream().listen(
+      _onItems,
+      onError: (_) {
+        _loading = false;
+        notifyListeners();
+      },
+    );
   }
 
   final InventoryRepository _repository;
+  final AuditLogger? _audit;
   StreamSubscription<List<CatalogItem>>? _subscription;
 
   List<CatalogItem> _items = [];
@@ -62,6 +71,10 @@ class InventoryViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _repository.updateStatus(item.id, status);
+      await _audit?.log('item.status_changed',
+          targetType: 'item',
+          targetId: item.id,
+          meta: {'from': item.status, 'to': status});
       return null;
     } catch (_) {
       return 'Could not update status. Please try again.';
@@ -117,6 +130,8 @@ class InventoryViewModel extends ChangeNotifier {
       if (bundle != null) {
         await _repository.saveItemPhotos(id, bundle.photos);
       }
+      await _audit?.log('item.created',
+          targetType: 'item', targetId: id, meta: {'name': name});
       return id;
     } on PhotoTooLargeException {
       rethrow;
@@ -149,6 +164,8 @@ class InventoryViewModel extends ChangeNotifier {
       } else {
         await _repository.updateItem(updated);
       }
+      await _audit?.log('item.updated',
+          targetType: 'item', targetId: item.id);
       return true;
     } on PhotoTooLargeException {
       rethrow;

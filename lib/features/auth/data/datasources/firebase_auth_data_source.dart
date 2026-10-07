@@ -4,8 +4,11 @@ import 'package:ferrer_rental_shop/core/services/app_firestore.dart';
 import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import 'package:ferrer_rental_shop/firebase_options.dart';
 
 import 'package:ferrer_rental_shop/core/constants/firestore_collections.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
@@ -401,6 +404,77 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
         .snapshots()
         .map((s) =>
             s.docs.map((d) => AppUserModel.fromMap(d.id, d.data())).toList());
+  }
+
+  /// Superadmin-only (enforced by rules): creates an admin account through a
+  /// secondary Firebase app so the superadmin's own session is untouched.
+  @override
+  Future<AppUser> createAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    FirebaseApp secondary;
+    try {
+      secondary = Firebase.app('ferrer-admin-creator');
+    } catch (_) {
+      secondary = await Firebase.initializeApp(
+        name: 'ferrer-admin-creator',
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+    final secondaryAuth = FirebaseAuth.instanceFor(app: secondary);
+    try {
+      final credential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final uid = credential.user!.uid;
+      await credential.user!.updateDisplayName(fullName.trim());
+      final model = AppUserModel(
+        uid: uid,
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        role: UserRole.admin,
+      );
+      await _db
+          .collection(FirestoreCollections.users)
+          .doc(uid)
+          .set(model.toMap());
+      return model;
+    } finally {
+      await secondaryAuth.signOut();
+    }
+  }
+
+  /// Superadmin-only (enforced by rules): changes a user's role. Refuses to
+  /// demote a superadmin client-side too, so the UI fails fast.
+  @override
+  Future<AppUser> updateUserRole({
+    required String uid,
+    required UserRole role,
+  }) async {
+    final ref = _db.collection(FirestoreCollections.users).doc(uid);
+    final doc = await ref.get();
+    if (!doc.exists) throw Exception('Account not found.');
+    if (doc.data()?['role'] == 'superadmin' && role != UserRole.superadmin) {
+      throw Exception('A superadmin account cannot be demoted.');
+    }
+    if (doc.data()?['role'] == 'customer' && role == UserRole.admin) {
+      throw Exception(
+          'Admin accounts must be created fresh via Register Admin.');
+    }
+    await ref.set({
+      'role': role == UserRole.superadmin
+          ? 'superadmin'
+          : role == UserRole.admin
+              ? 'admin'
+              : 'customer',
+    }, SetOptions(merge: true));
+    final updated = await ref.get();
+    return AppUserModel.fromMap(uid, updated.data()!);
   }
 }
 

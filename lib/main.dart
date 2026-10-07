@@ -5,6 +5,9 @@ import 'core/router/app_router.dart';
 import 'core/services/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/auth_gate.dart';
+import 'features/audit/data/repositories/audit_repository_impl.dart';
+import 'features/audit/domain/audit_logger.dart';
+import 'features/audit/domain/repositories/audit_repository.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -42,9 +45,18 @@ Future<void> main() async {
   final appointmentRepository =
       AppointmentRepositoryImpl(AppointmentRepositoryImpl.defaultDataSource());
 
+  final auditRepository =
+      AuditRepositoryImpl(AuditRepositoryImpl.defaultDataSource());
+  final auditLogger = AuditLogger(auth: authRepository, logs: auditRepository);
+
   runApp(MultiProvider(
     providers: [
       Provider<AuthRepository>.value(value: authRepository),
+      Provider<AuditRepository>.value(value: auditRepository),
+      Provider<AuditLogger>(
+        create: (_) => auditLogger,
+        dispose: (_, logger) => logger.dispose(),
+      ),
       Provider<InventoryRepository>.value(value: inventoryRepository),
       Provider<RentalRepository>.value(value: rentalRepository),
       Provider<AppointmentRepository>.value(value: appointmentRepository),
@@ -67,7 +79,7 @@ Future<void> main() async {
             MarkSeenUseCase(context.read<MessageRepository>()),
       ),
       ChangeNotifierProvider<AuthViewModel>(
-        create: (_) => AuthViewModel(authRepository),
+        create: (_) => AuthViewModel(authRepository, audit: auditLogger),
       ),
       Provider<CreateRentalUseCase>(
         create: (_) => CreateRentalUseCase(rentalRepository, inventoryRepository),

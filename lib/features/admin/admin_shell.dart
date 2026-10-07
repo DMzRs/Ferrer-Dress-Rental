@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:ferrer_rental_shop/core/theme/app_theme.dart';
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/viewmodels/appointments_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/appointments/presentation/views/admin_appointments_screen.dart';
 import 'package:ferrer_rental_shop/features/admin/dashboard/presentation/viewmodels/dashboard_viewmodel.dart';
@@ -46,10 +47,13 @@ class AdminShell extends StatelessWidget {
           create: (_) => AppointmentsViewModel(
             context.read<AppointmentRepository>(),
             context.read<InventoryRepository>(),
+            audit: context.read<AuditLogger>(),
           ),
         ),
         ChangeNotifierProvider<InventoryViewModel>(
-          create: (_) => InventoryViewModel(context.read<InventoryRepository>()),
+          create: (_) => InventoryViewModel(
+              context.read<InventoryRepository>(),
+              audit: context.read<AuditLogger>()),
         ),
         ChangeNotifierProvider<RentalManagementViewModel>(
           create: (_) => RentalManagementViewModel(
@@ -57,6 +61,7 @@ class AdminShell extends StatelessWidget {
             context.read<ProcessReturnUseCase>(),
             context.read<ConfirmRentalUseCase>(),
             context.read<DeclineRentalUseCase>(),
+            audit: context.read<AuditLogger>(),
           ),
         ),
         ChangeNotifierProvider<ReportsViewModel>(

@@ -54,5 +54,21 @@ abstract class AuthRepository {
 
   /// All user profiles, newest last. Admin-only server-side.
   Stream<List<AppUser>> watchUsers();
+
+  /// Superadmin-only: creates an account with the admin role. Uses a
+  /// secondary Firebase app so the superadmin's own session is untouched.
+  Future<Result<AppUser>> createAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  });
+
+  /// Superadmin-only: changes a user's role. Refuses to demote a
+  /// superadmin (also enforced server-side).
+  Future<Result<AppUser>> updateUserRole({
+    required String uid,
+    required UserRole role,
+  });
 }
 

@@ -1,4 +1,4 @@
-enum UserRole { customer, admin }
+enum UserRole { customer, admin, superadmin }
 
 class AppUser {
   final String uid;
@@ -41,6 +41,8 @@ class AppUser {
   }
 
   bool get isAdmin => role == UserRole.admin;
+
+  bool get isSuperAdmin => role == UserRole.superadmin;
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+'));

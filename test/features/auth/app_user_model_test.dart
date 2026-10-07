@@ -28,6 +28,18 @@ void main() {
       expect(model.role, UserRole.customer);
     });
 
+    test('fromMap parses superadmin role', () {
+      final model = AppUserModel.fromMap('uid9', {
+        'fullName': 'Owner',
+        'email': 'owner@x.com',
+        'phone': '1',
+        'role': 'superadmin',
+      });
+      expect(model.role, UserRole.superadmin);
+      expect(model.isSuperAdmin, isTrue);
+      expect(model.isAdmin, isFalse);
+    });
+
     test('toMap serializes role correctly', () {
       final model = AppUserModel.fromMap('uid3', {
         'fullName': 'Bob',

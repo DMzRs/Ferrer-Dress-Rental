@@ -78,28 +78,30 @@ class DashboardViewModel extends ChangeNotifier {
         _items = inventoryRepository.itemsStream(),
         _appointments = appointmentRepository.allAppointmentsStream(),
         _usersCount = authRepository.usersCountStream() {
+    // A denied feed (e.g. outdated Firestore rules) counts as an empty
+    // feed: the dashboard degrades to zeros instead of hanging + crashing.
     _subscriptions.add(_rentals.listen((rentals) {
       _rentalList
         ..clear()
         ..addAll(rentals);
       _recompute();
-    }));
+    }, onError: (_) => _recompute()));
     _subscriptions.add(_items.listen((items) {
       _itemList
         ..clear()
         ..addAll(items);
       _recompute();
-    }));
+    }, onError: (_) => _recompute()));
     _subscriptions.add(_appointments.listen((appointments) {
       _appointmentList
         ..clear()
         ..addAll(appointments);
       _recompute();
-    }));
+    }, onError: (_) => _recompute()));
     _subscriptions.add(_usersCount.listen((count) {
       _userCount = count;
       _recompute();
-    }));
+    }, onError: (_) => _recompute()));
   }
 
   final Stream<List<Rental>> _rentals;

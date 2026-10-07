@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/confirm_rental_usecase.dart';
@@ -15,8 +16,9 @@ class RentalManagementViewModel extends ChangeNotifier {
     this._repository,
     this._processReturn,
     this._confirmRental,
-    this._declineRental,
-  ) {
+    this._declineRental, {
+    this._audit,
+  }) {
     _subscribe();
   }
 
@@ -24,6 +26,7 @@ class RentalManagementViewModel extends ChangeNotifier {
   final ProcessReturnUseCase _processReturn;
   final ConfirmRentalUseCase _confirmRental;
   final DeclineRentalUseCase _declineRental;
+  final AuditLogger? _audit;
 
   StreamSubscription<List<Rental>>? _subscription;
 
@@ -39,7 +42,11 @@ class RentalManagementViewModel extends ChangeNotifier {
     _subscription?.cancel();
     _subscription = _repository
         .pagedRentalsStream(limit: _pageSize)
-        .listen(_onRentals);
+        // A denied feed ends loading instead of hanging + crashing.
+        .listen(_onRentals, onError: (_) {
+      _loading = false;
+      notifyListeners();
+    });
   }
 
   /// Loads the next page of the admin feed.
@@ -114,7 +121,10 @@ class RentalManagementViewModel extends ChangeNotifier {
     _processingId = true;
     notifyListeners();
     try {
-      return await _processReturn.execute(rental);
+      final result = await _processReturn.execute(rental);
+      await _audit?.log('rental.returned',
+          targetType: 'rental', targetId: rental.id);
+      return result;
     } catch (_) {
       return null;
     } finally {
@@ -131,6 +141,8 @@ class RentalManagementViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _confirmRental.execute(rental);
+      await _audit?.log('rental.confirmed',
+          targetType: 'rental', targetId: rental.id);
       return null;
     } catch (_) {
       return 'Could not confirm this rental. Please try again.';
@@ -151,6 +163,10 @@ class RentalManagementViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _declineRental.execute(rental, reason: reason);
+      await _audit?.log('rental.declined',
+          targetType: 'rental',
+          targetId: rental.id,
+          meta: {'reason': reason.trim()});
       return null;
     } catch (_) {
       return 'Could not decline this rental. Please try again.';

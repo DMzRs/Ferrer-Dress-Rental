@@ -1,5 +1,9 @@
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/admin/admin_shell.dart';
+import 'package:ferrer_rental_shop/features/audit/data/datasources/mock_audit_data_source.dart';
+import 'package:ferrer_rental_shop/features/audit/data/repositories/audit_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
+import 'package:ferrer_rental_shop/features/audit/domain/repositories/audit_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -197,6 +201,19 @@ class _FakeAuthRepository implements AuthRepository {
   Future<Result<AppUser>> linkGoogleAccount(
           {required String email, required String password}) =>
       throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> createAdmin(
+          {required String fullName,
+          required String email,
+          required String phone,
+          required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> updateUserRole(
+          {required String uid, required UserRole role}) =>
+      throw UnimplementedError();
 }
 
 bool _badgeWith(WidgetTester t, String label) => find
@@ -210,13 +227,19 @@ void main() {
     final rentals = _FakeRentalRepository();
     final inventory = _FakeInventoryRepository();
     final appointments = _FakeAppointmentRepository();
+    final auth = _FakeAuthRepository();
+    final auditRepo = AuditRepositoryImpl(MockAuditDataSource());
     await t.pumpWidget(
       MultiProvider(
         providers: [
           Provider<RentalRepository>.value(value: rentals),
           Provider<InventoryRepository>.value(value: inventory),
           Provider<AppointmentRepository>.value(value: appointments),
-          Provider<AuthRepository>.value(value: _FakeAuthRepository()),
+          Provider<AuthRepository>.value(value: auth),
+          Provider<AuditRepository>.value(value: auditRepo),
+          Provider<AuditLogger>(
+            create: (_) => AuditLogger(auth: auth, logs: auditRepo),
+          ),
           Provider<ReviewRepository>.value(
               value: ReviewRepositoryImpl(MockReviewDataSource())),
           ChangeNotifierProvider<AuthViewModel>(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
@@ -9,12 +10,15 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 /// Admin-side appointment requests. Confirming a request that is tied to a
 /// product also flips that product to 'scheduled_for_appointment'.
 class AppointmentsViewModel extends ChangeNotifier {
-  AppointmentsViewModel(this._appointmentRepository, this._inventoryRepository) {
+  AppointmentsViewModel(this._appointmentRepository,
+      this._inventoryRepository,
+      {this._audit}) {
     _subscribe();
   }
 
   final AppointmentRepository _appointmentRepository;
   final InventoryRepository _inventoryRepository;
+  final AuditLogger? _audit;
 
   StreamSubscription<List<Appointment>>? _subscription;
 
@@ -30,7 +34,11 @@ class AppointmentsViewModel extends ChangeNotifier {
     _subscription?.cancel();
     _subscription = _appointmentRepository
         .pagedAppointmentsStream(limit: _pageSize)
-        .listen(_onAppointments);
+        // A denied feed ends loading instead of hanging + crashing.
+        .listen(_onAppointments, onError: (_) {
+      _loading = false;
+      notifyListeners();
+    });
   }
 
   /// Loads the next page of the admin feed.
@@ -120,6 +128,8 @@ class AppointmentsViewModel extends ChangeNotifier {
         await _inventoryRepository.updateStatus(
             itemId, 'scheduled_for_appointment');
       }
+      await _audit?.log('appointment.confirmed',
+          targetType: 'appointment', targetId: appointment.id);
       return true;
     } catch (_) {
       return false;
@@ -144,6 +154,12 @@ class AppointmentsViewModel extends ChangeNotifier {
     try {
       await _appointmentRepository.updateStatus(appointmentId, status);
       await _freeItemIfScheduled(appointmentId);
+      await _audit?.log(
+          status == Appointment.statusCompleted
+              ? 'appointment.completed'
+              : 'appointment.no_show',
+          targetType: 'appointment',
+          targetId: appointmentId);
       return true;
     } catch (_) {
       return false;
@@ -177,6 +193,10 @@ class AppointmentsViewModel extends ChangeNotifier {
         Appointment.statusDeclined,
         declineReason: reason,
       );
+      await _audit?.log('appointment.declined',
+          targetType: 'appointment',
+          targetId: appointment.id,
+          meta: {'reason': reason.trim()});
       return true;
     } catch (_) {
       return false;

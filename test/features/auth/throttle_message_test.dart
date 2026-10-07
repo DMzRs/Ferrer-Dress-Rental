@@ -25,6 +25,19 @@ class _ThrottledDataSource implements AuthDataSource {
       throw UnimplementedError();
 
   @override
+  Future<AppUser> createAdmin(
+          {required String fullName,
+          required String email,
+          required String phone,
+          required String password}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<AppUser> updateUserRole(
+          {required String uid, required UserRole role}) =>
+      throw UnimplementedError();
+
+  @override
   Future<AppUser> signIn({required String email, required String password}) =>
       throw UnimplementedError();
 

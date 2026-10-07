@@ -5,6 +5,7 @@ import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/views/login_screen.dart';
 import 'package:ferrer_rental_shop/features/shell/presentation/views/user_shell.dart';
+import 'package:ferrer_rental_shop/features/superadmin/presentation/views/super_admin_shell.dart';
 import 'app_logo.dart';
 import '../constants/app_colors.dart';
 
@@ -26,6 +27,7 @@ class AuthGate extends StatelessWidget {
         }
         final user = snapshot.data;
         if (user == null) return const LoginScreen();
+        if (user.isSuperAdmin) return const SuperAdminShell();
         return user.isAdmin ? const AdminShell() : const UserShell();
       },
     );
