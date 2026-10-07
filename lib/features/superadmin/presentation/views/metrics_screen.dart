@@ -109,36 +109,25 @@ class _RevenueSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.adminPrimary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('TOTAL REVENUE',
-                  style: TextStyle(
-                      fontSize: 10.5,
-                      letterSpacing: 1.4,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white70)),
-              const SizedBox(height: 6),
-              Text(
-                Formatters.peso(vm.totalRevenue),
-                style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white),
+        Row(
+          children: [
+            Expanded(
+              child: _MoneyBox(
+                label: 'TOTAL REVENUE',
+                value: Formatters.peso(vm.totalRevenue),
+                footnote:
+                    '${vm.completedCount} completed · ${Formatters.peso(vm.heldDeposits)} deposits held',
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${vm.completedCount} completed · ${Formatters.peso(vm.heldDeposits)} deposits held',
-                style: const TextStyle(fontSize: 11.5, color: Colors.white70),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _MoneyBox(
+                label: 'DEVELOPER SHARE · 5%',
+                value: Formatters.peso(vm.totalDeveloperCut),
+                footnote: 'Platform cut on rental fees',
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         Wrap(
@@ -174,6 +163,64 @@ class _RevenueSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MoneyBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String footnote;
+
+  const _MoneyBox({
+    required this.label,
+    required this.value,
+    required this.footnote,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.adminPrimary,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w700,
+                color: Colors.white70),
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            footnote,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style:
+                const TextStyle(fontSize: 11, color: Colors.white70),
+          ),
+        ],
+      ),
     );
   }
 }
