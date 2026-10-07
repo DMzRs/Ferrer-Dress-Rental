@@ -25,6 +25,19 @@ abstract class AuthRepository {
     String? password,
   });
 
+  /// Google sign-in. Fails with [GoogleLinkRequired] when the Google email
+  /// already has a password account — the UI must then call
+  /// [linkGoogleAccount] once with the password.
+  Future<Result<AppUser>> signInWithGoogle();
+
+  /// Signs in with email + password and links the pending Google credential
+  /// from a previous [GoogleLinkRequired]. Throws when there is nothing
+  /// pending (stale flow — the UI should restart Google sign-in).
+  Future<Result<AppUser>> linkGoogleAccount({
+    required String email,
+    required String password,
+  });
+
   Stream<String> emailLinkStream();
 
   Future<void> signOut();

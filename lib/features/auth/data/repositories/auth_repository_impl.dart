@@ -46,6 +46,12 @@ class AuthRepositoryImpl implements AuthRepository {
     if (message.contains('invalid-action-code')) {
       return 'This sign-in link is invalid. Request a new one.';
     }
+    if (message.contains('account-exists-with-different-credential')) {
+      return 'This email already uses password sign-in. Sign in with your password to link Google.';
+    }
+    if (message.contains('canceled') || message.contains('cancelled')) {
+      return 'Google sign-in was cancelled.';
+    }
     if (message.contains('network')) return 'Please check your internet connection.';
     return message;
   }
@@ -93,6 +99,28 @@ class AuthRepositoryImpl implements AuthRepository {
           link: link,
           fullName: fullName,
           phone: phone,
+          password: password,
+        ));
+  }
+
+  @override
+  Future<Result<AppUser>> signInWithGoogle() async {
+    try {
+      return Success(await _dataSource.signInWithGoogle());
+    } on GoogleLinkRequiredException catch (e) {
+      return Err(GoogleLinkRequired(e.email));
+    } catch (e) {
+      return Err(AuthFailure(_friendly(e)));
+    }
+  }
+
+  @override
+  Future<Result<AppUser>> linkGoogleAccount({
+    required String email,
+    required String password,
+  }) {
+    return _safe(() => _dataSource.linkGoogleAccount(
+          email: email,
           password: password,
         ));
   }

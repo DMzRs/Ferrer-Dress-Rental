@@ -149,6 +149,14 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
+
+  @override
+  Future<Result<AppUser>> signInWithGoogle() => throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> linkGoogleAccount(
+          {required String email, required String password}) =>
+      throw UnimplementedError();
 }
 
 void main() {

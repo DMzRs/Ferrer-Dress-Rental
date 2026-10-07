@@ -183,6 +183,110 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    final ok = await _vm.signInWithGoogle();
+    if (!mounted) return;
+    final linkEmail = _vm.googleLinkEmail;
+    if (linkEmail != null) {
+      await _showGoogleLinkSheet(linkEmail);
+      return;
+    }
+    if (!ok) {
+      showAppSnackBar(
+        context,
+        _vm.error ?? 'Something went wrong. Please try again.',
+        backgroundColor: AppColors.danger,
+      );
+    }
+  }
+
+  /// One-time password prompt when the Google email already has a password
+  /// account. Linking attaches Google, so next time one tap signs in.
+  Future<void> _showGoogleLinkSheet(String email) async {
+    final passwordController = TextEditingController();
+    var busy = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            MediaQuery.of(sheetContext).viewInsets.bottom + 28,
+          ),
+          child: StatefulBuilder(builder: (context, setSheetState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.champagne,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Link Google Account',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$email already uses password sign-in. Enter its password once to link Google — next time, one tap signs you in.',
+                  style: const TextStyle(
+                      color: AppColors.inkSoft, fontSize: 13.5, height: 1.5),
+                ),
+                const SizedBox(height: 18),
+                ElegantTextField(
+                  controller: passwordController,
+                  hint: '••••••••',
+                  label: 'PASSWORD',
+                  prefixIcon: Icons.lock_rounded,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 20),
+                GradientButton(
+                  label: 'Link Google Account',
+                  busy: busy,
+                  onPressed: () async {
+                    if (passwordController.text.isEmpty) {
+                      showAppSnackBar(context, 'Enter your password');
+                      return;
+                    }
+                    setSheetState(() => busy = true);
+                    final ok = await _vm
+                        .linkGoogleWithPassword(passwordController.text);
+                    setSheetState(() => busy = false);
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
+                    if (!ok && mounted) {
+                      showAppSnackBar(
+                        context,
+                        _vm.error ?? 'Could not link Google.',
+                        backgroundColor: AppColors.danger,
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          }),
+        );
+      },
+    );
+    passwordController.dispose();
+  }
+
   Future<void> _showForgotPasswordSheet() async {
     final emailController = TextEditingController(text: _emailController.text);
     await showModalBottomSheet<void>(
@@ -329,6 +433,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onSwitchToLogin: () =>
                                     _switchMode(AuthMode.login),
                               ),
+                        if (AppConfig.firebaseEnabled) ...[
+                          const SizedBox(height: 18),
+                          const _OrDivider(),
+                          const SizedBox(height: 14),
+                          _GoogleSignInButton(
+                            busy: vm.busy,
+                            onPressed: _signInWithGoogle,
+                          ),
+                        ],
                         const SizedBox(height: 22),
                         if (!AppConfig.firebaseEnabled) ...[
                           const SizedBox(height: 26),
@@ -342,6 +455,84 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(child: Divider(color: AppColors.champagne)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'or',
+            style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5),
+          ),
+        ),
+        Expanded(child: Divider(color: AppColors.champagne)),
+      ],
+    );
+  }
+}
+
+class _GoogleSignInButton extends StatelessWidget {
+  final bool busy;
+  final VoidCallback onPressed;
+
+  const _GoogleSignInButton({required this.busy, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: busy ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white.withValues(alpha: .92),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          side: BorderSide(color: AppColors.goldSoft.withValues(alpha: .8)),
+        ),
+        child: busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.roseDark,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'G',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.roseDark,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Continue with Google',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

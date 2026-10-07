@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/error/failure.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -43,6 +44,18 @@ class AuthViewModel extends ChangeNotifier {
   EmailLinkState get linkState => _linkState;
   String? get linkError => _linkError;
   int get resendCooldownSeconds => _resendCooldownSeconds;
+
+  /// Set when Google sign-in hits a password account: the UI must prompt for
+  /// the password once and call [linkGoogleWithPassword].
+  String? _googleLinkEmail;
+  String? get googleLinkEmail => _googleLinkEmail;
+
+  void clearGoogleLink() {
+    if (_googleLinkEmail != null) {
+      _googleLinkEmail = null;
+      notifyListeners();
+    }
+  }
 
   void _setBusy(bool value) {
     _busy = value;
@@ -89,6 +102,46 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<bool> sendPasswordReset(String email) {
     return _run(() => _repository.sendPasswordReset(email.trim()));
+  }
+
+  Future<bool> signInWithGoogle() async {
+    _error = null;
+    _googleLinkEmail = null;
+    _setBusy(true);
+    final result = await _repository.signInWithGoogle();
+    _setBusy(false);
+    if (result is Success<AppUser>) {
+      _user = result.data;
+      notifyListeners();
+      return true;
+    }
+    final failure = result.failure;
+    if (failure is GoogleLinkRequired) {
+      _googleLinkEmail = failure.email;
+      notifyListeners();
+      return false;
+    }
+    _error = failure?.message ?? 'Something went wrong. Please try again.';
+    notifyListeners();
+    return false;
+  }
+
+  /// One-time password entry after a Google collision: links the Google
+  /// credential, then completes Google sign-in through the same path.
+  Future<bool> linkGoogleWithPassword(String password) async {
+    final email = _googleLinkEmail;
+    if (email == null || email.isEmpty) return false;
+    _error = null;
+    _setBusy(true);
+    final result =
+        await _repository.linkGoogleAccount(email: email, password: password);
+    _setBusy(false);
+    if (result is! Success<AppUser>) {
+      _error = result.failure?.message ?? 'Something went wrong. Please try again.';
+      notifyListeners();
+      return false;
+    }
+    return signInWithGoogle();
   }
 
   Future<bool> updateProfile({

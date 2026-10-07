@@ -104,6 +104,21 @@ class MockAuthDataSource implements AuthDataSource {
   }
 
   @override
+  Future<AppUser> signInWithGoogle() {
+    // Mock mode has no Google account chooser; the login UI hides the
+    // Google button when Firebase is off.
+    throw UnimplementedError('Google sign-in needs Firebase.');
+  }
+
+  @override
+  Future<AppUser> linkGoogleAccount({
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError('Google sign-in needs Firebase.');
+  }
+
+  @override
   Future<AppUser> signInWithEmailLink({
     required String email,
     required String link,

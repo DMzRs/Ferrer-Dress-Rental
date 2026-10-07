@@ -76,6 +76,14 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<List<AppUser>> watchUsers() => Stream.value(directory);
+
+  @override
+  Future<Result<AppUser>> signInWithGoogle() => throw UnimplementedError();
+
+  @override
+  Future<Result<AppUser>> linkGoogleAccount(
+          {required String email, required String password}) =>
+      throw UnimplementedError();
 }
 
 Future<MessageRepository> _seededRepo() async {

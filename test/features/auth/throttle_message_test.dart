@@ -17,6 +17,14 @@ class _ThrottledDataSource implements AuthDataSource {
   Stream<List<AppUser>> watchUsers() => Stream<List<AppUser>>.value([]);
 
   @override
+  Future<AppUser> signInWithGoogle() => throw UnimplementedError();
+
+  @override
+  Future<AppUser> linkGoogleAccount(
+          {required String email, required String password}) =>
+      throw UnimplementedError();
+
+  @override
   Future<AppUser> signIn({required String email, required String password}) =>
       throw UnimplementedError();
 

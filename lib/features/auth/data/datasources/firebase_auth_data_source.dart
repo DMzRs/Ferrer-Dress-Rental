@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:ferrer_rental_shop/core/constants/firestore_collections.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
@@ -39,6 +40,30 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
   /// Must match the authorized domain + app-link host configured for the
   /// Firebase project (see README / console checklist).
   static const String _linkHost = 'ferrer-rental-shop.firebaseapp.com';
+
+  /// Google sign-in allowlist: matching emails keep the admin role on first
+  /// Google sign-in; everyone else becomes a customer.
+  static const Set<String> _googleAdminEmails = {'admin@ferrer.ph'};
+
+  /// Google credential kept when sign-in hits a password-account collision,
+  /// so [linkGoogleAccount] can attach it after one password sign-in.
+  AuthCredential? _pendingGoogleCredential;
+
+  /// Web OAuth client ID (google-services.json, client_type 3). google_sign_in
+  /// v7 requires it at initialize() time on Android. Public identifier, not
+  /// a secret.
+  static const String _googleServerClientId =
+      '1088977668935-u0dug2pmbni4hu6h3sg3krsjed5khiev.apps.googleusercontent.com';
+
+  bool _googleInitialized = false;
+
+  Future<void> _ensureGoogleInitialized() async {
+    if (_googleInitialized) return;
+    await GoogleSignIn.instance.initialize(
+      serverClientId: _googleServerClientId,
+    );
+    _googleInitialized = true;
+  }
 
   @override
   Stream<AppUser?> get authStateChanges =>
@@ -110,6 +135,100 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
     );
     await _db.collection(FirestoreCollections.users).doc(uid).set(model.toMap());
     return model;
+  }
+
+  @override
+  Future<AppUser> signInWithGoogle() async {
+    await _ensureGoogleInitialized();
+    final GoogleSignInAccount account;
+    try {
+      account = await GoogleSignIn.instance.authenticate();
+    } on GoogleSignInException catch (e) {
+      // v7 surfaces setup problems (unregistered SHA-1, OAuth consent) as
+      // `canceled` — log the raw code so logcat shows the real cause.
+      debugPrint('GOOGLEDBG code=${e.code} description=${e.description}');
+      rethrow;
+    }
+    final idToken = account.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception('Google sign-in failed. Please try again.');
+    }
+    final credential = GoogleAuthProvider.credential(idToken: idToken);
+    try {
+      final userCredential = await _auth.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        throw Exception('Google sign-in failed. Please try again.');
+      }
+      return await _resolveGoogleUser(firebaseUser);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential') {
+        final pending = e.credential;
+        if (pending != null) _pendingGoogleCredential = pending;
+        throw GoogleLinkRequiredException((e.email ?? '').trim());
+      }
+      rethrow;
+    }
+  }
+
+  /// Profile write for a Google sign-in. Keeps an existing doc's role (e.g.
+  /// admin) and name; only brand-new docs get a role (admin allowlist,
+  /// otherwise customer) plus the Google profile name.
+  Future<AppUser> _resolveGoogleUser(User firebaseUser) async {
+    final ref =
+        _db.collection(FirestoreCollections.users).doc(firebaseUser.uid);
+    final doc = await ref.get();
+    final email = firebaseUser.email ?? '';
+    final displayName = (firebaseUser.displayName ?? '').trim();
+    if (!doc.exists) {
+      final role = _googleAdminEmails.contains(email.trim().toLowerCase())
+          ? 'admin'
+          : 'customer';
+      await ref.set({
+        'email': email,
+        'phone': firebaseUser.phoneNumber ?? '',
+        if (displayName.isNotEmpty) 'fullName': displayName,
+        'role': role,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else if (displayName.isNotEmpty &&
+        (doc.data()?['fullName'] ?? '').toString().trim().isEmpty) {
+      await ref.set({'fullName': displayName}, SetOptions(merge: true));
+    }
+    final user = await _resolveUser(firebaseUser);
+    if (user == null) throw Exception('Google sign-in failed. Please try again.');
+    return user;
+  }
+
+  @override
+  Future<AppUser> linkGoogleAccount({
+    required String email,
+    required String password,
+  }) async {
+    final pending = _pendingGoogleCredential;
+    if (pending == null) {
+      throw Exception('Google sign-in expired. Please try again.');
+    }
+    final normalizedEmail = email.trim();
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: normalizedEmail,
+      password: password,
+    );
+    final firebaseUser = credential.user;
+    if (firebaseUser == null) throw Exception('Sign-in failed. Please try again.');
+    try {
+      await firebaseUser.linkWithCredential(pending);
+    } on FirebaseAuthException catch (e) {
+      if (e.code != 'provider-already-linked' &&
+          e.code != 'credential-already-in-use') {
+        rethrow;
+      }
+      // Already linked — the password sign-in stands on its own.
+    }
+    _pendingGoogleCredential = null;
+    final user = await _resolveUser(firebaseUser);
+    if (user == null) throw Exception('Account not found');
+    return user;
   }
 
   @override
@@ -217,7 +336,16 @@ class FirebaseAuthDataSource implements AuthDataSource {  FirebaseAuth get _auth
   }
 
   @override
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await _auth.signOut();
+    // Otherwise the next Google tap silently reuses the same account
+    // without showing the chooser.
+    try {
+      await GoogleSignIn.instance.signOut();
+    } on Object {
+      // Mock mode / already signed out — Firebase sign-out stands.
+    }
+  }
 
   @override
   Future<void> updateProfile({

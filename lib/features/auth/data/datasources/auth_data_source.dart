@@ -1,5 +1,17 @@
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 
+/// Thrown by [AuthDataSource.signInWithGoogle] when the Google email already
+/// has a password account. Carries the email so the UI can prompt for the
+/// password once and finish via [AuthDataSource.linkGoogleAccount].
+class GoogleLinkRequiredException implements Exception {
+  final String email;
+
+  const GoogleLinkRequiredException(this.email);
+
+  @override
+  String toString() => 'GoogleLinkRequiredException: $email';
+}
+
 abstract class AuthDataSource {
   Stream<AppUser?> get authStateChanges;
 
@@ -31,6 +43,17 @@ abstract class AuthDataSource {
 
   /// Raw incoming deep links filtered to Firebase email sign-in links.
   Stream<String> get emailLinkStream;
+
+  /// Google sign-in. Throws [GoogleLinkRequiredException] when the Google
+  /// email already has a password account (the pending credential is kept
+  /// for [linkGoogleAccount]).
+  Future<AppUser> signInWithGoogle();
+
+  /// Links the pending Google credential after a password sign-in.
+  Future<AppUser> linkGoogleAccount({
+    required String email,
+    required String password,
+  });
 
   Future<void> signOut();
 
