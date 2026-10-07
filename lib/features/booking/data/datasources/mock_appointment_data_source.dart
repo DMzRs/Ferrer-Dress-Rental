@@ -4,12 +4,14 @@ import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_
 import 'package:ferrer_rental_shop/features/booking/data/models/appointment_model.dart';
 import 'appointment_data_source.dart';
 
+/// In-memory appointment store for previews and offline use.
 class MockAppointmentDataSource implements AppointmentDataSource {
   final List<Appointment> _appointments = [];
   final StreamController<List<Appointment>> _controller =
       StreamController<List<Appointment>>.broadcast();
   bool _seeded = false;
 
+  /// Fixed demo time-slot labels.
   static const List<String> slotLabels = [
     '9:00 AM',
     '10:00 AM',
@@ -63,6 +65,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     }
   }
 
+  /// Streams in-memory appointments for one user.
   @override
   Stream<List<Appointment>> userAppointmentsStream(String userId) async* {
     _ensureSeed();
@@ -73,6 +76,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     }
   }
 
+  /// Streams all in-memory appointments.
   @override
   Stream<List<Appointment>> allAppointmentsStream() async* {
     _ensureSeed();
@@ -81,6 +85,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     yield* _controller.stream;
   }
 
+  /// Streams recent in-memory appointments up to [limit].
   @override
   Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) async* {
     _ensureSeed();
@@ -91,6 +96,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     }
   }
 
+  /// Loads taken demo slot labels for a calendar day.
   @override
   Future<List<String>> bookedSlotsFor(DateTime day) async {
     _ensureSeed();
@@ -110,6 +116,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     return slotLabels[index];
   }
 
+  /// Inserts an appointment at the top of memory.
   @override
   Future<void> createAppointment(Appointment appointment) async {
     _ensureSeed();
@@ -122,6 +129,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     _emit();
   }
 
+  /// Marks an in-memory appointment as cancelled.
   @override
   Future<void> cancelAppointment(String appointmentId) async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -136,6 +144,7 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     }
   }
 
+  /// Updates in-memory status and optional decline reason.
   @override
   Future<void> updateStatus(
     String appointmentId,

@@ -5,6 +5,7 @@ import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 
 import 'auth_data_source.dart';
 
+/// In-memory demo users with session broadcast.
 class MockAuthDataSource implements AuthDataSource {
   MockAuthDataSource() {
     _users.addAll([
@@ -43,6 +44,7 @@ class MockAuthDataSource implements AuthDataSource {
     if (!_session.isClosed) _session.add(user);
   }
 
+  /// Emits current user then session updates.
   @override
   Stream<AppUser?> get authStateChanges async* {
     yield _current;
@@ -51,6 +53,7 @@ class MockAuthDataSource implements AuthDataSource {
     }
   }
 
+  /// Signs in demo user by email and password.
   @override
   Future<AppUser> signIn({required String email, required String password}) async {
     await Future.delayed(const Duration(milliseconds: 600));
@@ -72,6 +75,7 @@ class MockAuthDataSource implements AuthDataSource {
     return user;
   }
 
+  /// Registers customer and starts session.
   @override
   Future<AppUser> signUp({
     required String fullName,
@@ -96,6 +100,7 @@ class MockAuthDataSource implements AuthDataSource {
     return user;
   }
 
+  /// Simulates password-reset email lookup.
   @override
   Future<void> sendPasswordReset(String email) async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -105,11 +110,13 @@ class MockAuthDataSource implements AuthDataSource {
     }
   }
 
+  /// Simulates sending email sign-in link.
   @override
   Future<void> sendSignInLink(String email) async {
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
+  /// Throws since mock has no Google chooser.
   @override
   Future<AppUser> signInWithGoogle() {
     // Mock mode has no Google account chooser; the login UI hides the
@@ -117,6 +124,7 @@ class MockAuthDataSource implements AuthDataSource {
     throw UnimplementedError('Google sign-in needs Firebase.');
   }
 
+  /// Throws since mock has no Google linking.
   @override
   Future<AppUser> linkGoogleAccount({
     required String email,
@@ -125,6 +133,7 @@ class MockAuthDataSource implements AuthDataSource {
     throw UnimplementedError('Google sign-in needs Firebase.');
   }
 
+  /// Signs in or registers via email link.
   @override
   Future<AppUser> signInWithEmailLink({
     required String email,
@@ -153,14 +162,17 @@ class MockAuthDataSource implements AuthDataSource {
     return user;
   }
 
+  /// Empty stream since mock has no deep links.
   @override
   Stream<String> get emailLinkStream => const Stream.empty();
 
+  /// Clears current session.
   @override
   Future<void> signOut() async {
     _setSession(null);
   }
 
+  /// Updates signed-in user fields in memory.
   @override
   Future<void> updateProfile({
     String? fullName,
@@ -184,6 +196,7 @@ class MockAuthDataSource implements AuthDataSource {
     _setSession(updated);
   }
 
+  /// Polls in-memory user count every 3 seconds.
   @override
   Stream<int> usersCountStream() {
     late StreamController<int> controller;
@@ -202,6 +215,7 @@ class MockAuthDataSource implements AuthDataSource {
     return controller.stream;
   }
 
+  /// Streams user list on session changes.
   @override
   Stream<List<AppUser>> watchUsers() async* {
     yield List.unmodifiable(_users);
@@ -210,6 +224,7 @@ class MockAuthDataSource implements AuthDataSource {
     }
   }
 
+  /// Adds new admin without changing session.
   @override
   Future<AppUser> createAdmin({
     required String fullName,
@@ -239,6 +254,7 @@ class MockAuthDataSource implements AuthDataSource {
     return user;
   }
 
+  /// Changes user role with demotion guards.
   @override
   Future<AppUser> updateUserRole({
     required String uid,
@@ -274,5 +290,6 @@ class MockAuthDataSource implements AuthDataSource {
     return updated;
   }
 
+  /// Currently signed-in mock user.
   AppUserModel? get currentUser => _current;
 }

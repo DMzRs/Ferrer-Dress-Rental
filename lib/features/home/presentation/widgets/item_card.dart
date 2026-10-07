@@ -4,9 +4,13 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 
+/// Horizontally scrolling category filter pills.
 class CategoryPills extends StatelessWidget {
+  /// Filter keys to display labels.
   final Map<String, String> categories;
+  /// Currently selected category key.
   final String selected;
+  /// Called when a category pill is tapped.
   final ValueChanged<String> onSelect;
 
   const CategoryPills({
@@ -16,6 +20,7 @@ class CategoryPills extends StatelessWidget {
     required this.onSelect,
   });
 
+  /// Returns the icon for a category key.
   IconData iconFor(String key) {
     switch (key) {
       case 'dress':
@@ -31,6 +36,7 @@ class CategoryPills extends StatelessWidget {
     }
   }
 
+  /// Builds the scrolling category pill row.
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -96,9 +102,13 @@ class CategoryPills extends StatelessWidget {
   }
 }
 
+/// Staggered-grid card showing an item summary.
 class ItemCard extends StatelessWidget {
+  /// Item displayed by this card.
   final CatalogItem item;
+  /// Position used for staggered height and placeholder.
   final int index;
+  /// Called when the card is tapped.
   final VoidCallback onTap;
 
   const ItemCard({
@@ -108,6 +118,7 @@ class ItemCard extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Builds the item card with image and price.
   @override
   Widget build(BuildContext context) {
     final tall = index.isEven;

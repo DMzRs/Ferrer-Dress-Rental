@@ -2,9 +2,13 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 
+/// Outcome of a completed return with deposit refund details.
 class ProcessReturnResult {
+/// Returned item name.
   final String itemName;
+/// Deposit amount refunded after late penalties.
   final double depositRefunded;
+/// True when the rental was past its due date.
   final bool wasOverdue;
 
   const ProcessReturnResult({
@@ -14,12 +18,14 @@ class ProcessReturnResult {
   });
 }
 
+/// Completes active rentals, frees items, and settles deposits.
 class ProcessReturnUseCase {
   const ProcessReturnUseCase(this._rentalRepository, this._inventoryRepository);
 
   final RentalRepository _rentalRepository;
   final InventoryRepository _inventoryRepository;
 
+  /// Completes the rental, frees the item, and computes the refund.
   Future<ProcessReturnResult> execute(Rental rental) async {
     // Only live rentals can be returned. This blocks completing pending
     // requests, already-cancelled/declined rentals, and double returns

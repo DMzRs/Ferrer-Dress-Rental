@@ -6,9 +6,11 @@ import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_it
 import 'package:ferrer_rental_shop/features/inventory/data/models/catalog_item_model.dart';
 import 'item_data_source.dart';
 
+/// Firestore-backed item catalog with photo side-docs.
 class FirebaseItemDataSource implements ItemDataSource {
   FirebaseFirestore get _db => AppFirestore.instance;
 
+  /// Streams catalog items newest first.
   @override
   Stream<List<CatalogItem>> itemsStream() {
     return _db
@@ -20,6 +22,7 @@ class FirebaseItemDataSource implements ItemDataSource {
             .toList());
   }
 
+  /// Adds an item and returns its new document id.
   @override
   Future<String> addItem(CatalogItem item) async {
     final doc = _db.collection(FirestoreCollections.items).doc();
@@ -27,6 +30,7 @@ class FirebaseItemDataSource implements ItemDataSource {
     return doc.id;
   }
 
+  /// Overwrites the stored fields for an existing item.
   @override
   Future<void> updateItem(CatalogItem item) {
     return _db
@@ -35,6 +39,7 @@ class FirebaseItemDataSource implements ItemDataSource {
         .update(CatalogItemModel.fromEntity(item).toMap(forFirestore: true));
   }
 
+  /// Updates only the availability status field.
   @override
   Future<void> updateStatus(String itemId, String status) {
     return _db
@@ -43,6 +48,7 @@ class FirebaseItemDataSource implements ItemDataSource {
         .update({'status': status});
   }
 
+  /// Saves photo URLs or deletes the side-doc when empty.
   @override
   Future<void> saveItemPhotos(String itemId, List<String> photos) async {
     final ref = _db.collection(FirestoreCollections.itemPhotos).doc(itemId);
@@ -55,6 +61,7 @@ class FirebaseItemDataSource implements ItemDataSource {
     await ref.set({'photos': photos, 'updatedAt': FieldValue.serverTimestamp()});
   }
 
+  /// Loads stored photo URLs, or empty when none exist.
   @override
   Future<List<String>> itemPhotos(String itemId) async {
     final doc =

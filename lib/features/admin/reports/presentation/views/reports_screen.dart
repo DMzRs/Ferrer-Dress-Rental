@@ -6,9 +6,11 @@ import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/reports/presentation/viewmodels/reports_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/admin/reports/presentation/widgets/charts.dart';
 
+/// Shows revenue totals, period filters, and rental charts.
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
+  /// Builds revenue cards, period chips, and chart sections.
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ReportsViewModel>();

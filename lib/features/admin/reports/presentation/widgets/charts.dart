@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 
+/// Bar chart of rental-fee revenue per period label.
 class RevenueBarChart extends StatelessWidget {
+  /// Revenue amounts per chart slot.
   final List<double> values;
+  /// Period labels under each bar.
   final List<String> labels;
 
   const RevenueBarChart({super.key, required this.values, required this.labels});
 
+  /// Sizes the bar canvas and paints revenue bars with labels.
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -109,8 +113,11 @@ class _BarChartPainter extends CustomPainter {
       oldDelegate.values != values;
 }
 
+/// Line chart of completed rentals per period label.
 class RentalsLineChart extends StatelessWidget {
+  /// Completed-rental counts per chart point.
   final List<int> values;
+  /// Period labels under each point.
   final List<String> labels;
 
   const RentalsLineChart({
@@ -119,6 +126,7 @@ class RentalsLineChart extends StatelessWidget {
     required this.labels,
   });
 
+  /// Sizes the line canvas and paints counts with labels.
   @override
   Widget build(BuildContext context) {
     return SizedBox(

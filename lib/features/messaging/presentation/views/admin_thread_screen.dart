@@ -8,12 +8,19 @@ import 'package:ferrer_rental_shop/features/messaging/domain/usecases/send_messa
 import 'package:ferrer_rental_shop/features/messaging/presentation/viewmodels/thread_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/messaging/presentation/widgets/thread_view.dart';
 
+/// Shows one customer thread with admin send and seen handling.
 class AdminThreadScreen extends StatelessWidget {
+/// Thread owner's user id.
   final String userId;
+/// Display name shown in the thread app bar.
   final String userName;
+/// Message repository backing the thread streams.
   final MessageRepository messages;
+/// Validated sender used by the thread composer.
   final SendMessageUseCase sender;
+/// Seen-marker writer triggered when the thread opens.
   final MarkSeenUseCase seen;
+/// Auth source for the current admin uid.
   final AuthRepository auth;
 
   const AdminThreadScreen({
@@ -26,6 +33,7 @@ class AdminThreadScreen extends StatelessWidget {
     required this.auth,
   });
 
+  /// Opens the thread stream and renders the shared chat view.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<ThreadViewModel>(

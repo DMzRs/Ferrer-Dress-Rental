@@ -9,12 +9,15 @@ import 'package:ferrer_rental_shop/features/superadmin/presentation/views/super_
 import 'app_logo.dart';
 import '../constants/app_colors.dart';
 
+/// Routes users by auth state and role.
 class AuthGate extends StatelessWidget {
+  /// Source of auth state changes.
   final AuthRepository authRepository;
 
   const AuthGate({super.key, required this.authRepository});
 
   @override
+  /// Builds splash, login, or role shell.
   Widget build(BuildContext context) {
     return StreamBuilder<AppUser?>(
       stream: authRepository.authStateChanges,

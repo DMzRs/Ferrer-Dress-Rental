@@ -31,6 +31,7 @@ import 'features/reviews/data/repositories/review_repository_impl.dart';
 import 'features/reviews/domain/repositories/review_repository.dart';
 import 'features/reviews/domain/usecases/submit_review_usecase.dart';
 
+/// Bootstraps Firebase, repositories, and root providers.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseService.initialize();
@@ -107,6 +108,7 @@ Future<void> main() async {
   ));
 }
 
+/// Root widget with theme, routing, and auth gate.
 class FerrerApp extends StatelessWidget {
   const FerrerApp({super.key});
 

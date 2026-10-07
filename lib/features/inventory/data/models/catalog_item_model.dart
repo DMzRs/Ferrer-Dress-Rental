@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 
+/// Catalog item with Firestore and map serialization.
 class CatalogItemModel extends CatalogItem {
   const CatalogItemModel({
     required super.id,
@@ -19,6 +20,7 @@ class CatalogItemModel extends CatalogItem {
     super.ratingCount,
   });
 
+  /// Creates a model from a Firestore document id and map.
   factory CatalogItemModel.fromMap(String id, Map<String, dynamic> map) {
     return CatalogItemModel(
       id: id,
@@ -38,6 +40,7 @@ class CatalogItemModel extends CatalogItem {
     );
   }
 
+  /// Creates a model from a domain entity.
   factory CatalogItemModel.fromEntity(CatalogItem entity) {
     return CatalogItemModel(
       id: entity.id,
@@ -68,6 +71,7 @@ class CatalogItemModel extends CatalogItem {
     return DateTime.now();
   }
 
+  /// Converts this item to a storable map.
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     return {
       'name': name,

@@ -13,7 +13,9 @@ import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_it
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/create_rental_usecase.dart';
 import 'package:ferrer_rental_shop/features/checkout/presentation/viewmodels/checkout_viewmodel.dart';
 
+/// Checkout flow for a single catalog item.
 class CheckoutScreen extends StatelessWidget {
+  /// Item being rented.
   final CatalogItem item;
 
   const CheckoutScreen({super.key, required this.item});

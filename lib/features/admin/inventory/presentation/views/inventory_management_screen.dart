@@ -9,9 +9,11 @@ import 'package:ferrer_rental_shop/features/admin/inventory/presentation/viewmod
 import 'package:ferrer_rental_shop/features/admin/inventory/presentation/widgets/add_item_sheet.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 
+/// Shows searchable inventory with status pills and quick edits.
 class InventoryManagementScreen extends StatelessWidget {
   const InventoryManagementScreen({super.key});
 
+  /// Builds the search field, status pills, and inventory list.
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<InventoryViewModel>();

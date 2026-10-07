@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 
+/// Circular branded app logo.
 class AppLogo extends StatelessWidget {
+  /// Logo diameter in logical pixels.
   final double size;
 
   const AppLogo({super.key, this.size = 72});
 
   @override
+  /// Builds the circular logo image.
   Widget build(BuildContext context) {
     return Container(
       width: size,
@@ -35,9 +38,13 @@ class AppLogo extends StatelessWidget {
   }
 }
 
+/// Ferrer brand wordmark with tagline.
 class FerrerWordmark extends StatelessWidget {
+  /// Text color for the wordmark.
   final Color color;
+  /// Base font size for the brand name.
   final double fontSize;
+  /// Whether to show the tagline row.
   final bool showTagline;
 
   const FerrerWordmark({
@@ -48,6 +55,7 @@ class FerrerWordmark extends StatelessWidget {
   });
 
   @override
+  /// Builds the wordmark and tagline.
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(

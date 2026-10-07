@@ -8,26 +8,36 @@ import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entit
 import 'package:ferrer_rental_shop/features/rentals/presentation/views/rental_details_screen.dart';
 import 'package:ferrer_rental_shop/features/shell/presentation/views/user_shell.dart';
 
+/// Named route paths.
 class AppRoutes {
   AppRoutes._();
 
+  /// Item details route.
   static const itemDetails = '/item-details';
+  /// Checkout route.
   static const checkout = '/checkout';
+  /// Fitting booking route.
   static const booking = '/booking';
+  /// Rentals list route.
   static const myRentals = '/my-rentals';
+  /// Rental details route.
   static const rentalDetails = '/rental-details';
 }
 
+/// Navigation helpers on [BuildContext].
 extension AppNavigator on BuildContext {
+  /// Pushes a named route with optional arguments.
   void pushNamed(String route, {Object? arguments}) {
     Navigator.of(this).pushNamed(route, arguments: arguments);
   }
 
+  /// Replaces the current route with a named route.
   void pushReplacementNamed(String route, {Object? arguments}) {
     Navigator.of(this).pushReplacementNamed(route, arguments: arguments);
   }
 }
 
+/// Builds routes for named navigation.
 Route<dynamic>? onGenerateRoute(RouteSettings settings) {
   switch (settings.name) {
     case AppRoutes.itemDetails:

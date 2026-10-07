@@ -1,5 +1,6 @@
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 
+/// Firestore-mapped [AppUser] with role parsing.
 class AppUserModel extends AppUser {
   const AppUserModel({
     required super.uid,
@@ -11,6 +12,7 @@ class AppUserModel extends AppUser {
     required super.role,
   });
 
+  /// Builds model from Firestore doc id and map.
   factory AppUserModel.fromMap(String uid, Map<String, dynamic> map) {
     return AppUserModel(
       uid: uid,
@@ -28,6 +30,7 @@ class AppUserModel extends AppUser {
     );
   }
 
+  /// Converts model to Firestore-ready map.
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,

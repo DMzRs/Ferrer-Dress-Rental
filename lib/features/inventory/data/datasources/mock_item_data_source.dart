@@ -4,6 +4,7 @@ import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_it
 import 'package:ferrer_rental_shop/features/inventory/data/models/catalog_item_model.dart';
 import 'item_data_source.dart';
 
+/// In-memory item catalog for previews and offline use.
 class MockItemDataSource implements ItemDataSource {
   MockItemDataSource() {
     _items = _seed();
@@ -19,6 +20,7 @@ class MockItemDataSource implements ItemDataSource {
     }
   }
 
+  /// Streams seeded items then live in-memory updates.
   @override
   Stream<List<CatalogItem>> itemsStream() async* {
     await Future.delayed(const Duration(milliseconds: 350));
@@ -26,6 +28,7 @@ class MockItemDataSource implements ItemDataSource {
     yield* _controller.stream;
   }
 
+  /// Inserts an item at the top and returns its id.
   @override
   Future<String> addItem(CatalogItem item) async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -38,6 +41,7 @@ class MockItemDataSource implements ItemDataSource {
     return id;
   }
 
+  /// Replaces the matching in-memory item.
   @override
   Future<void> updateItem(CatalogItem item) async {
     await Future.delayed(const Duration(milliseconds: 400));
@@ -46,6 +50,7 @@ class MockItemDataSource implements ItemDataSource {
     _emit();
   }
 
+  /// Updates only the in-memory availability status.
   @override
   Future<void> updateStatus(String itemId, String status) async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -54,6 +59,7 @@ class MockItemDataSource implements ItemDataSource {
     _emit();
   }
 
+  /// Stores photo URLs or clears them when empty.
   @override
   Future<void> saveItemPhotos(String itemId, List<String> photos) async {
     if (photos.isEmpty) {
@@ -63,6 +69,7 @@ class MockItemDataSource implements ItemDataSource {
     _photos[itemId] = List.unmodifiable(photos);
   }
 
+  /// Loads in-memory photo URLs, or empty when none exist.
   @override
   Future<List<String>> itemPhotos(String itemId) async =>
       _photos[itemId] ?? const [];

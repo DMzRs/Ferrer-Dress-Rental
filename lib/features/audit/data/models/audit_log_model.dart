@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ferrer_rental_shop/features/audit/domain/entities/audit_log_entry.dart';
 
+/// Firestore-serializable form of an audit log entry.
 class AuditLogModel extends AuditLogEntry {
   const AuditLogModel({
     required super.id,
@@ -13,6 +14,7 @@ class AuditLogModel extends AuditLogEntry {
     super.meta,
   });
 
+  /// Builds a log entry from a Firestore document id and map.
   factory AuditLogModel.fromMap(String id, Map<String, dynamic> map) {
     final at = map['at'];
     return AuditLogModel(
@@ -30,6 +32,7 @@ class AuditLogModel extends AuditLogEntry {
     );
   }
 
+  /// Serializes the entry for the auditLogs collection.
   Map<String, dynamic> toMap() {
     return {
       'actorUid': actorUid,

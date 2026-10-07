@@ -7,9 +7,11 @@ import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/presentation/viewmodels/my_appointments_viewmodel.dart';
 
+/// Upcoming and history tabs for user fittings.
 class MyAppointmentsScreen extends StatelessWidget {
   const MyAppointmentsScreen({super.key});
 
+  /// Builds tabbed upcoming and history appointment lists.
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MyAppointmentsViewModel>();

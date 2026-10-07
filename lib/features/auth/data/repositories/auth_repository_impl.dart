@@ -8,14 +8,17 @@ import '../datasources/auth_data_source.dart';
 import '../datasources/firebase_auth_data_source.dart';
 import '../datasources/mock_auth_data_source.dart';
 
+/// Maps data-source auth results to friendly failures.
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(this._dataSource);
 
   final AuthDataSource _dataSource;
 
+  /// Picks Firebase or mock data source.
   static AuthDataSource defaultDataSource() =>
       AppConfig.firebaseEnabled ? FirebaseAuthDataSource() : MockAuthDataSource();
 
+  /// Streams signed-in user changes.
   @override
   Stream<AppUser?> get authStateChanges => _dataSource.authStateChanges;
 
@@ -56,11 +59,13 @@ class AuthRepositoryImpl implements AuthRepository {
     return message;
   }
 
+  /// Signs in with email and password.
   @override
   Future<Result<AppUser>> signIn({required String email, required String password}) {
     return _safe(() => _dataSource.signIn(email: email, password: password));
   }
 
+  /// Registers customer account.
   @override
   Future<Result<AppUser>> signUp({
     required String fullName,
@@ -76,16 +81,19 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
   }
 
+  /// Sends password-reset email.
   @override
   Future<Result<void>> sendPasswordReset(String email) {
     return _safe(() => _dataSource.sendPasswordReset(email));
   }
 
+  /// Sends passwordless sign-in link.
   @override
   Future<Result<void>> sendSignInLink(String email) {
     return _safe(() => _dataSource.sendSignInLink(email));
   }
 
+  /// Completes email-link sign-in.
   @override
   Future<Result<AppUser>> signInWithEmailLink({
     required String email,
@@ -103,6 +111,7 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
   }
 
+  /// Signs in with Google or requests linking.
   @override
   Future<Result<AppUser>> signInWithGoogle() async {
     try {
@@ -114,6 +123,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Links Google credential via password.
   @override
   Future<Result<AppUser>> linkGoogleAccount({
     required String email,
@@ -125,12 +135,15 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
   }
 
+  /// Streams incoming email sign-in links.
   @override
   Stream<String> emailLinkStream() => _dataSource.emailLinkStream;
 
+  /// Signs out current user.
   @override
   Future<void> signOut() => _dataSource.signOut();
 
+  /// Updates current user profile fields.
   @override
   Future<Result<void>> updateProfile({
     String? fullName,
@@ -146,12 +159,15 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
   }
 
+  /// Streams total user count.
   @override
   Stream<int> usersCountStream() => _dataSource.usersCountStream();
 
+  /// Streams all users for admin views.
   @override
   Stream<List<AppUser>> watchUsers() => _dataSource.watchUsers();
 
+  /// Creates new admin account.
   @override
   Future<Result<AppUser>> createAdmin({
     required String fullName,
@@ -167,6 +183,7 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
   }
 
+  /// Updates role for given user id.
   @override
   Future<Result<AppUser>> updateUserRole({
     required String uid,

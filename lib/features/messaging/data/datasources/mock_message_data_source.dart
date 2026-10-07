@@ -4,7 +4,9 @@ import 'package:ferrer_rental_shop/features/messaging/data/datasources/message_d
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/chat_message.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
 
+/// In-memory threads and messages for offline or test use.
 class MockMessageDataSource implements MessageDataSource {
+  /// Creates an empty in-memory message store.
   MockMessageDataSource();
 
   final Map<String, Conversation> _threads = {};
@@ -23,6 +25,7 @@ class MockMessageDataSource implements MessageDataSource {
     if (!_msgTick.isClosed) _msgTick.add(null);
   }
 
+  /// Watches a single customer thread by user id.
   @override
   Stream<Conversation?> watchThread(String userId) async* {
     yield _threads[userId];
@@ -31,6 +34,7 @@ class MockMessageDataSource implements MessageDataSource {
     }
   }
 
+  /// Watches all threads ordered by most recent activity.
   @override
   Stream<List<Conversation>> watchInbox() async* {
     yield _inbox();
@@ -39,6 +43,7 @@ class MockMessageDataSource implements MessageDataSource {
     }
   }
 
+  /// Watches newest-first messages for a thread with a page limit.
   @override
   Stream<List<ChatMessage>> watchMessages(String userId,
       {int limit = 50}) async* {
@@ -48,6 +53,7 @@ class MockMessageDataSource implements MessageDataSource {
     }
   }
 
+  /// Appends a message and refreshes the thread preview.
   @override
   Future<void> sendMessage({
     required String threadUserId,
@@ -80,6 +86,7 @@ class MockMessageDataSource implements MessageDataSource {
     _emitMessages();
   }
 
+  /// Marks a thread read for one side without write loops.
   @override
   Future<void> markSeen(String threadUserId, String role) async {
     final existing = _threads[threadUserId];

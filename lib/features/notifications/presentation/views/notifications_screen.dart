@@ -9,11 +9,14 @@ import 'package:ferrer_rental_shop/features/notifications/domain/app_notificatio
 import 'package:ferrer_rental_shop/features/notifications/domain/notifications_builder.dart';
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_rentals_viewmodel.dart';
 
+/// Lists rental and fitting updates derived from active view models.
 class NotificationsScreen extends StatelessWidget {
+  /// Optional tab-jump callback for appointment notifications.
   final void Function(int tabIndex)? onNavigateTo;
 
   const NotificationsScreen({super.key, this.onNavigateTo});
 
+  /// Builds the grouped notification list from rentals and fittings.
   @override
   Widget build(BuildContext context) {
     final rentalsVm = context.watch<MyRentalsViewModel>();

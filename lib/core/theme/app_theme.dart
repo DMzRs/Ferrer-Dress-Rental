@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:ferrer_rental_shop/core/constants/app_colors.dart';
 
+/// App Material themes.
 class AppTheme {
   AppTheme._();
 
+  /// Customer-facing light theme.
   static ThemeData get light {
     final base = ThemeData(
       useMaterial3: true,
@@ -136,6 +138,7 @@ class AppTheme {
         .apply(bodyColor: AppColors.ink);
   }
 
+  /// Admin portal theme.
   static ThemeData get admin {
     final base = ThemeData(
       useMaterial3: true,

@@ -1,11 +1,13 @@
 import 'package:ferrer_rental_shop/core/error/failure.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/repositories/message_repository.dart';
 
+/// Validates and sends a chat message as customer or admin.
 class SendMessageUseCase {
   const SendMessageUseCase(this._repository);
 
   final MessageRepository _repository;
 
+  /// Validates sender, role, and text then sends the message.
   Future<void> execute({
     required String threadUserId,
     required String senderId,

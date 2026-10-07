@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 
+/// Bounded month grid for picking a booking date.
 class MonthCalendar extends StatefulWidget {
+  /// Currently selected day.
   final DateTime selectedDate;
+  /// Called when a valid day is tapped.
   final ValueChanged<DateTime> onSelect;
+  /// How far ahead booking is allowed.
   final int maxDaysAhead;
 
   const MonthCalendar({
@@ -14,6 +18,7 @@ class MonthCalendar extends StatefulWidget {
     this.maxDaysAhead = 90,
   });
 
+  /// Creates month calendar state.
   @override
   State<MonthCalendar> createState() => _MonthCalendarState();
 }

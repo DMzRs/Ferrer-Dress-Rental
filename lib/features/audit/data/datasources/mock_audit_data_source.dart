@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:ferrer_rental_shop/features/audit/data/datasources/audit_data_source.dart';
 import 'package:ferrer_rental_shop/features/audit/domain/entities/audit_log_entry.dart';
 
+/// In-memory audit log for offline or test use.
 class MockAuditDataSource implements AuditDataSource {
   final List<AuditLogEntry> _entries = [];
   final StreamController<void> _tick =
       StreamController<void>.broadcast();
   int _seq = 0;
 
+  /// Watches newest-first audit entries up to the given limit.
   @override
   Stream<List<AuditLogEntry>> watchLogs({int limit = 100}) async* {
     yield _sorted(limit);
@@ -17,6 +19,7 @@ class MockAuditDataSource implements AuditDataSource {
     }
   }
 
+  /// Persists a single audit entry in memory.
   @override
   Future<void> log(AuditLogEntry entry) async {
     _entries.add(AuditLogEntry(

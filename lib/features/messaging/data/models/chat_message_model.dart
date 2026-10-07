@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/chat_message.dart';
 
+/// Firestore-serializable form of a single chat message.
 class ChatMessageModel extends ChatMessage {
   const ChatMessageModel({
     required super.id,
@@ -11,6 +12,7 @@ class ChatMessageModel extends ChatMessage {
     super.createdAt,
   });
 
+  /// Builds a message from a Firestore document id and map.
   factory ChatMessageModel.fromMap(String docId, Map<String, dynamic> map) {
     return ChatMessageModel(
       id: docId,
@@ -22,6 +24,7 @@ class ChatMessageModel extends ChatMessage {
     );
   }
 
+  /// Copies a domain message into its serializable model form.
   factory ChatMessageModel.fromEntity(ChatMessage m) => ChatMessageModel(
         id: m.id,
         senderId: m.senderId,
@@ -30,6 +33,7 @@ class ChatMessageModel extends ChatMessage {
         createdAt: m.createdAt,
       );
 
+  /// Serializes the message, optionally using Firestore timestamps.
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime? date) {
       if (date == null) return null;

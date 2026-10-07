@@ -4,7 +4,9 @@ import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entit
 import 'package:ferrer_rental_shop/features/rentals/data/models/rental_model.dart';
 import 'rental_data_source.dart';
 
+/// In-memory rentals with seed data for offline or test use.
 class MockRentalDataSource implements RentalDataSource {
+  /// Creates an empty in-memory rental store.
   MockRentalDataSource();
 
   final List<Rental> _rentals = [];
@@ -147,6 +149,7 @@ class MockRentalDataSource implements RentalDataSource {
     }
   }
 
+  /// Streams rentals for one user, newest first.
   @override
   Stream<List<Rental>> userRentalsStream(String userId) async* {
     _ensureSeed();
@@ -157,6 +160,7 @@ class MockRentalDataSource implements RentalDataSource {
     }
   }
 
+  /// Streams every rental, newest first, for admin views.
   @override
   Stream<List<Rental>> allRentalsStream() async* {
     _ensureSeed();
@@ -165,6 +169,7 @@ class MockRentalDataSource implements RentalDataSource {
     yield* _controller.stream;
   }
 
+  /// Streams the newest rentals up to the given limit.
   @override
   Stream<List<Rental>> pagedRentalsStream({int limit = 20}) async* {
     _ensureSeed();
@@ -175,6 +180,7 @@ class MockRentalDataSource implements RentalDataSource {
     }
   }
 
+  /// Creates a rental in memory and returns its generated id.
   @override
   Future<String> createRental(Rental rental) async {
     _ensureSeed();
@@ -187,6 +193,7 @@ class MockRentalDataSource implements RentalDataSource {
     return id;
   }
 
+  /// Marks a rental completed with its return timestamp.
   @override
   Future<void> completeRental(String rentalId, {DateTime? returnedAt}) async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -202,6 +209,7 @@ class MockRentalDataSource implements RentalDataSource {
     }
   }
 
+  /// Marks a rental cancelled.
   @override
   Future<void> cancelRental(String rentalId) async {
     await Future.delayed(const Duration(milliseconds: 400));
@@ -216,6 +224,7 @@ class MockRentalDataSource implements RentalDataSource {
     }
   }
 
+  /// Updates status and optional decline reason with a fresh timestamp.
   @override
   Future<void> updateRentalStatus(
     String rentalId,

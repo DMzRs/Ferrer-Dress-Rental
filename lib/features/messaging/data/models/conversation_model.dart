@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
 
+/// Firestore-serializable thread preview with per-side seen markers.
 class ConversationModel extends Conversation {
   const ConversationModel({
     required super.userId,
@@ -13,6 +14,7 @@ class ConversationModel extends Conversation {
     super.lastSeenAdmin,
   });
 
+  /// Builds a thread preview from a Firestore document id and map.
   factory ConversationModel.fromMap(String docId, Map<String, dynamic> map) {
     return ConversationModel(
       userId: (map['userId'] ?? docId) as String,
@@ -30,6 +32,7 @@ class ConversationModel extends Conversation {
     );
   }
 
+  /// Copies a domain thread into its serializable model form.
   factory ConversationModel.fromEntity(Conversation c) => ConversationModel(
         userId: c.userId,
         userName: c.userName,
@@ -40,6 +43,7 @@ class ConversationModel extends Conversation {
         lastSeenAdmin: c.lastSeenAdmin,
       );
 
+  /// Serializes the thread, optionally using Firestore timestamps.
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime? date) {
       if (date == null) return null;

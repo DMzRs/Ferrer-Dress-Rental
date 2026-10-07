@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 
+/// Appointment entity with Firestore and map serialization.
 class AppointmentModel extends Appointment {
   const AppointmentModel({
     required super.id,
@@ -17,6 +18,7 @@ class AppointmentModel extends Appointment {
     super.updatedAt,
   });
 
+  /// Creates a model from a Firestore document id and map.
   factory AppointmentModel.fromMap(String id, Map<String, dynamic> map) {
     return AppointmentModel(
       id: id,
@@ -33,6 +35,7 @@ class AppointmentModel extends Appointment {
     );
   }
 
+  /// Creates a model from a domain entity.
   factory AppointmentModel.fromEntity(Appointment a) {
     return AppointmentModel(
       id: a.id,
@@ -49,6 +52,7 @@ class AppointmentModel extends Appointment {
     );
   }
 
+  /// Returns a copy with selected fields replaced.
   AppointmentModel copyWith({
     String? id,
     String? userId,
@@ -86,6 +90,7 @@ class AppointmentModel extends Appointment {
     return DateTime.now();
   }
 
+  /// Converts this appointment to a storable map.
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime date) =>
         forFirestore ? Timestamp.fromDate(date) : date.toIso8601String();

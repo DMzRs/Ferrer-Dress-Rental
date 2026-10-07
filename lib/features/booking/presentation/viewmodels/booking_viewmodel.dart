@@ -6,6 +6,7 @@ import 'package:ferrer_rental_shop/core/error/failure.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 
+/// Holds booking date, slot, and confirmation state.
 class BookingViewModel extends ChangeNotifier {
   BookingViewModel(this._repository);
 
@@ -19,16 +20,25 @@ class BookingViewModel extends ChangeNotifier {
   bool _loadingSlots = true;
   bool _confirming = false;
 
+  /// All bookable time-slot labels.
   static const List<String> allSlots = TimeSlots.labels;
 
+  /// Currently picked calendar day.
   DateTime get selectedDate => _selectedDate;
+  /// Currently picked time slot, if any.
   String? get selectedSlot => _selectedSlot;
+  /// Chosen visit purpose.
   String get purpose => _purpose;
+  /// Taken slot labels for the selected day.
   List<String> get bookedSlots => _bookedSlots;
+  /// Whether booked slots are still loading.
   bool get isLoadingSlots => _loadingSlots;
+  /// Whether confirmation is in progress.
   bool get isConfirming => _confirming;
+  /// Whether the confirm button can be pressed.
   bool get canConfirm => _selectedSlot != null && !_confirming && !_loadingSlots;
 
+  /// Free slot labels for the selected day.
   List<String> get availableSlots =>
       allSlots.where((s) => !_bookedSlots.contains(s)).toList();
 
@@ -37,12 +47,15 @@ class BookingViewModel extends ChangeNotifier {
     return DateTime(now.year, now.month, now.day + 1);
   }
 
+  /// Keeps the user appointment stream alive for updates.
   void watchUserAppointments(String userId) {
     _sub ??= _repository.userAppointmentsStream(userId).listen((_) {});
   }
 
+  /// Loads booked slots for the selected date.
   Future<void> init() => _loadSlots();
 
+  /// Picks a new date and reloads its booked slots.
   Future<void> selectDate(DateTime date) async {
     final normalized = DateTime(date.year, date.month, date.day);
     if (normalized == _selectedDate) return;
@@ -72,6 +85,7 @@ class BookingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Picks a free time slot.
   void selectSlot(String slot) {
     if (_bookedSlots.contains(slot)) return;
     _error = null;
@@ -79,11 +93,13 @@ class BookingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Picks the visit purpose.
   void selectPurpose(String purpose) {
     _purpose = purpose;
     notifyListeners();
   }
 
+  /// Creates the appointment and returns true on success.
   Future<bool> confirm({
     required String userId,
     required String userName,
@@ -137,6 +153,7 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   String? _error;
+  /// Latest validation or booking failure message.
   String? get error => _error;
 
   DateTime _combineDateAndSlot(DateTime date, String slot) {
@@ -144,6 +161,7 @@ class BookingViewModel extends ChangeNotifier {
     return DateTime(date.year, date.month, date.day, hour);
   }
 
+  /// Cancels the stream subscription.
   @override
   void dispose() {
     _sub?.cancel();
@@ -151,7 +169,9 @@ class BookingViewModel extends ChangeNotifier {
   }
 }
 
+/// Shared booking slot labels and hours.
 class TimeSlots {
+  /// Display labels for bookable slots.
   static const labels = [
     '9:00 AM',
     '10:00 AM',
@@ -162,6 +182,7 @@ class TimeSlots {
     '4:00 PM',
   ];
 
+  /// Hour of day matching each label.
   static const hours = [9, 10, 11, 13, 14, 15, 16];
 }
 

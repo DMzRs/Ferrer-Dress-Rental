@@ -6,6 +6,7 @@ import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_
 import 'package:ferrer_rental_shop/features/booking/data/models/appointment_model.dart';
 import 'appointment_data_source.dart';
 
+/// Firestore-backed appointment store ordered by schedule.
 class FirebaseAppointmentDataSource implements AppointmentDataSource {
   FirebaseFirestore get _db => AppFirestore.instance;
 
@@ -13,6 +14,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
       .collection(FirestoreCollections.appointments)
       .orderBy('scheduledAt', descending: true);
 
+  /// Streams appointments for one user newest first.
   @override
   Stream<List<Appointment>> userAppointmentsStream(String userId) {
     return _base
@@ -22,6 +24,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
             s.docs.map((d) => AppointmentModel.fromMap(d.id, d.data())).toList());
   }
 
+  /// Streams all appointments newest first.
   @override
   Stream<List<Appointment>> allAppointmentsStream() {
     return _base
@@ -30,6 +33,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
             s.docs.map((d) => AppointmentModel.fromMap(d.id, d.data())).toList());
   }
 
+  /// Streams the most recent appointments up to [limit].
   @override
   Stream<List<Appointment>> pagedAppointmentsStream({int limit = 20}) {
     return _base
@@ -39,6 +43,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
             s.docs.map((d) => AppointmentModel.fromMap(d.id, d.data())).toList());
   }
 
+  /// Loads taken time-slot labels for a calendar day.
   @override
   Future<List<String>> bookedSlotsFor(DateTime day) async {
     final start = DateTime(day.year, day.month, day.day);
@@ -51,6 +56,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
     return snapshot.docs.map((d) => (d.data()['timeSlot'] ?? '') as String).toList();
   }
 
+  /// Creates an appointment with its derived time-slot label.
   @override
   Future<void> createAppointment(Appointment appointment) async {
     final doc = _db.collection(FirestoreCollections.appointments).doc();
@@ -61,6 +67,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
     );
   }
 
+  /// Marks an appointment as cancelled.
   @override
   Future<void> cancelAppointment(String appointmentId) {
     return _db
@@ -72,6 +79,7 @@ class FirebaseAppointmentDataSource implements AppointmentDataSource {
     });
   }
 
+  /// Updates status and optional decline reason.
   @override
   Future<void> updateStatus(
     String appointmentId,

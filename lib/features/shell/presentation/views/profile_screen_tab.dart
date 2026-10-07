@@ -7,6 +7,7 @@ import 'package:ferrer_rental_shop/core/constants/app_strings.dart';
 import 'package:ferrer_rental_shop/core/widgets/common_widgets.dart';
 import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
+/// Profile tab with menus, edit sheets, and sign-out.
 class ProfileScreenTab extends StatelessWidget {
   /// Lets menu tiles switch tabs in the owning [UserShell]
   /// (0 = Discover, 1 = Bookings, 2 = Rentals, 3 = Profile).

@@ -10,18 +10,24 @@ import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_
 import 'package:ferrer_rental_shop/features/booking/presentation/viewmodels/booking_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/booking/presentation/widgets/month_calendar.dart';
 
+/// Optional item context for a fitting booking.
 class BookingScreenArgs {
+  /// Linked catalog item id, if booked from an item.
   final String? itemId;
+  /// Linked catalog item name, if booked from an item.
   final String? itemName;
 
   const BookingScreenArgs({this.itemId, this.itemName});
 }
 
+/// Date, slot, and purpose picker for fittings.
 class BookingScreen extends StatefulWidget {
+  /// Item context passed to booking confirmation.
   final BookingScreenArgs args;
 
   const BookingScreen({super.key, this.args = const BookingScreenArgs()});
 
+  /// Creates booking screen state.
   @override
   State<BookingScreen> createState() => _BookingScreenState();
 }

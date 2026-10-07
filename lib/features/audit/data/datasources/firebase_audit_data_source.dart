@@ -4,9 +4,11 @@ import 'package:ferrer_rental_shop/features/audit/data/datasources/audit_data_so
 import 'package:ferrer_rental_shop/features/audit/data/models/audit_log_model.dart';
 import 'package:ferrer_rental_shop/features/audit/domain/entities/audit_log_entry.dart';
 
+/// Persists and streams audit entries in the auditLogs collection.
 class FirebaseAuditDataSource implements AuditDataSource {
   FirebaseFirestore get _db => AppFirestore.instance;
 
+  /// Watches newest-first audit entries up to the given limit.
   @override
   Stream<List<AuditLogEntry>> watchLogs({int limit = 100}) {
     return _db
@@ -19,6 +21,7 @@ class FirebaseAuditDataSource implements AuditDataSource {
             .toList());
   }
 
+  /// Persists a single audit entry.
   @override
   Future<void> log(AuditLogEntry entry) {
     return _db.collection('auditLogs').add(AuditLogModel(

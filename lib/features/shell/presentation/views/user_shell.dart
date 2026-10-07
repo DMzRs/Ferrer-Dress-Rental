@@ -24,6 +24,7 @@ import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/my_r
 import 'package:ferrer_rental_shop/features/rentals/presentation/views/my_rentals_screen.dart';
 import 'profile_screen_tab.dart';
 
+/// Customer bottom-tab shell with scoped view models.
 class UserShell extends StatelessWidget {
   /// Tab to open first (0 = Discover, 2 = Rentals). Deep links like the
   /// post-checkout "View My Rentals" route land directly on Rentals.

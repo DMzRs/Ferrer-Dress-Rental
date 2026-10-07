@@ -3,12 +3,14 @@ import 'package:ferrer_rental_shop/features/inventory/domain/repositories/invent
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 
+/// Cancels a cancellable rental and frees its item.
 class CancelRentalUseCase {
   const CancelRentalUseCase(this._rentalRepository, this._inventoryRepository);
 
   final RentalRepository _rentalRepository;
   final InventoryRepository _inventoryRepository;
 
+  /// Cancels pending or timely active rentals and releases the item.
   Future<void> execute(Rental rental) async {
     // Only pending or non-overdue active rentals can be cancelled. This
     // mirrors the UI gate and blocks cancelling completed/declined rentals

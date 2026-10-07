@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 
+/// Firestore-serializable form of a rental record.
 class RentalModel extends Rental {
   const RentalModel({
     required super.id,
@@ -23,6 +24,7 @@ class RentalModel extends Rental {
     super.declineReason,
   });
 
+  /// Builds a rental from a Firestore document id and map.
   factory RentalModel.fromMap(String id, Map<String, dynamic> map) {
     return RentalModel(
       id: id,
@@ -45,6 +47,7 @@ class RentalModel extends Rental {
     );
   }
 
+  /// Copies a domain rental into its serializable model form.
   factory RentalModel.fromEntity(Rental r) {
     return RentalModel(
       id: r.id,
@@ -67,6 +70,7 @@ class RentalModel extends Rental {
     );
   }
 
+  /// Copies the rental with selected fields replaced.
   RentalModel copyWith({
     String? id,
     String? userId,
@@ -120,6 +124,7 @@ class RentalModel extends Rental {
     return DateTime.now();
   }
 
+  /// Serializes the rental, optionally using Firestore timestamps.
   Map<String, dynamic> toMap({bool forFirestore = false}) {
     dynamic encode(DateTime date) =>
         forFirestore ? Timestamp.fromDate(date) : date.toIso8601String();

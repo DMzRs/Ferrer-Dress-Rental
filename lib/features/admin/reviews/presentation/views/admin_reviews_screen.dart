@@ -6,9 +6,11 @@ import 'package:ferrer_rental_shop/core/utils/formatters.dart';
 import 'package:ferrer_rental_shop/features/admin/reviews/presentation/viewmodels/admin_reviews_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/reviews/domain/entities/review_entity.dart';
 
+/// Shows average rating, star filters, and all customer reviews.
 class AdminReviewsScreen extends StatelessWidget {
   const AdminReviewsScreen({super.key});
 
+  /// Builds the summary card, filters, and review list.
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AdminReviewsViewModel>();

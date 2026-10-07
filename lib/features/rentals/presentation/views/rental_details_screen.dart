@@ -13,11 +13,14 @@ import 'package:ferrer_rental_shop/features/rentals/domain/usecases/cancel_renta
 import 'package:ferrer_rental_shop/features/rentals/presentation/viewmodels/rental_details_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/rate_pill.dart';
 
+/// Shows rental timeline, pricing, and cancellation for one rental.
 class RentalDetailsScreen extends StatelessWidget {
+/// Rental shown by this details screen.
   final Rental rental;
 
   const RentalDetailsScreen({super.key, required this.rental});
 
+/// Builds the details view with its cancel view model.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(

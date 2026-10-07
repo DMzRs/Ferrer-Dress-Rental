@@ -12,7 +12,9 @@ import 'package:ferrer_rental_shop/features/reviews/presentation/widgets/item_ra
 import 'package:ferrer_rental_shop/features/booking/presentation/views/booking_screen.dart';
 import 'package:ferrer_rental_shop/features/item_details/presentation/viewmodels/item_details_viewmodel.dart';
 
+/// Item details page scoped to its view model.
 class ItemDetailsScreen extends StatelessWidget {
+  /// Catalog item shown on this page.
   final CatalogItem item;
 
   const ItemDetailsScreen({super.key, required this.item});

@@ -8,12 +8,14 @@ import 'package:ferrer_rental_shop/features/messaging/data/models/conversation_m
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/chat_message.dart';
 import 'package:ferrer_rental_shop/features/messaging/domain/entities/conversation.dart';
 
+/// Streams threads and messages between customers and admins from Firestore.
 class FirebaseMessageDataSource implements MessageDataSource {
   FirebaseFirestore get _db => AppFirestore.instance;
 
   DocumentReference<Map<String, dynamic>> _thread(String userId) =>
       _db.collection(FirestoreCollections.conversations).doc(userId);
 
+  /// Watches a single customer thread by user id.
   @override
   Stream<Conversation?> watchThread(String userId) {
     return _thread(userId).snapshots().map(
@@ -21,6 +23,7 @@ class FirebaseMessageDataSource implements MessageDataSource {
         );
   }
 
+  /// Watches all threads ordered by most recent activity.
   @override
   Stream<List<Conversation>> watchInbox() {
     return _db
@@ -31,6 +34,7 @@ class FirebaseMessageDataSource implements MessageDataSource {
             s.docs.map((d) => ConversationModel.fromMap(d.id, d.data())).toList());
   }
 
+  /// Watches newest-first messages for a thread with a page limit.
   @override
   Stream<List<ChatMessage>> watchMessages(String userId, {int limit = 50}) {
     // Newest-first page; the UI reverses so latest sits at the bottom.
@@ -43,6 +47,7 @@ class FirebaseMessageDataSource implements MessageDataSource {
             s.docs.map((d) => ChatMessageModel.fromMap(d.id, d.data())).toList());
   }
 
+  /// Appends a message and refreshes the thread preview in one batch.
   @override
   Future<void> sendMessage({
     required String threadUserId,
@@ -77,6 +82,7 @@ class FirebaseMessageDataSource implements MessageDataSource {
     await batch.commit();
   }
 
+  /// Marks a thread read for one side without write loops.
   @override
   Future<void> markSeen(String threadUserId, String role) async {
     final threadRef = _thread(threadUserId);
