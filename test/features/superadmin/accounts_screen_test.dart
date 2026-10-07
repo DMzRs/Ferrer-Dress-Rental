@@ -1,5 +1,9 @@
 import 'package:ferrer_rental_shop/core/utils/result.dart';
 import 'package:ferrer_rental_shop/features/audit/data/datasources/mock_audit_data_source.dart';
+import 'package:ferrer_rental_shop/features/auth/data/datasources/mock_auth_data_source.dart';
+import 'package:ferrer_rental_shop/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
+import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
 import 'package:ferrer_rental_shop/features/audit/data/repositories/audit_repository_impl.dart';
 import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/audit/domain/repositories/audit_repository.dart';
@@ -181,6 +185,77 @@ void main() {
     expect(find.textContaining('imported'), findsWidgets);
     expect(t.takeException(), isNull);
   });
+
+  testWidgets('demoting a dues-free admin still asks for confirmation',
+      (t) async {
+    final auth = AuthRepositoryImpl(MockAuthDataSource());
+    final auditRepo = AuditRepositoryImpl(MockAuditDataSource());
+    await t.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<AuthRepository>.value(value: auth),
+          Provider<AuditRepository>.value(value: auditRepo),
+          Provider<AuditLogger>(
+            create: (c) => AuditLogger(
+              auth: c.read<AuthRepository>(),
+              logs: c.read<AuditRepository>(),
+            ),
+          ),
+          ChangeNotifierProvider<AuthViewModel>(
+            create: (c) => AuthViewModel(c.read<AuthRepository>()),
+          ),
+          ChangeNotifierProvider<AccountsViewModel>(
+            create: (c) => AccountsViewModel(
+              auth: c.read<AuthRepository>(),
+              audit: c.read<AuditLogger>(),
+              rentals: _EmptyRentals(),
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: AccountsScreen()),
+      ),
+    );
+    await t.pumpAndSettle();
+    // Open the admin row's role menu (admin@ferrer.ph is the seeded admin).
+    await t.tap(find
+        .byWidgetPredicate((w) =>
+            w is PopupMenuButton<UserRole> &&
+            find.descendant(of: find.byWidget(w), matching: find.text('Admin')).evaluate().isNotEmpty)
+        .first);
+    await t.pumpAndSettle();
+    await t.tap(find.text('Demote to customer').last);
+    await t.pumpAndSettle();
+    expect(find.text('Demote Anyway'), findsOneWidget);
+    expect(find.text('Keep Admin'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+}
+
+class _EmptyRentals implements RentalRepository {
+  @override
+  Stream<List<Rental>> userRentalsStream(String userId) =>
+      Stream<List<Rental>>.value(const []);
+
+  @override
+  Stream<List<Rental>> allRentalsStream() =>
+      Stream<List<Rental>>.value(const []);
+
+  @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) =>
+      Stream<List<Rental>>.value(const []);
+
+  @override
+  Future<String> createRental(Rental rental) async => 'new-id';
+
+  @override
+  Future<void> completeRental(String id, {DateTime? returnedAt}) async {}
+
+  @override
+  Future<void> cancelRental(String id) async {}
+
+  @override
+  Future<void> updateRentalStatus(String id, String status,
+          {String? declineReason}) async {}
 }
 
 class _SeededLogRepository implements AuditRepository {

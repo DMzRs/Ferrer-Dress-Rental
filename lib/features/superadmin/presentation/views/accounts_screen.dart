@@ -163,37 +163,41 @@ class AccountsScreen extends StatelessWidget {
   }
 }
 
-  /// Demote flow with a pending-dues guard: a demoted account loses the
-  /// customer app, so outstanding rentals get an explicit confirmation.
+  /// Demote always asks first (misclick protection): the dues warning is
+  /// included when the account holds outstanding rentals.
   Future<void> _confirmDemote(BuildContext context, AccountsViewModel vm,
       AppUser user, UserRole role) async {
     final dues = await vm.pendingDues(user.uid);
     if (!context.mounted) return;
-    var proceed = true;
-    if (dues != null && dues.count > 0) {
-      proceed = await showDialog<bool>(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: const Text('Demote with pending rentals?'),
-              content: Text(
-                'This account has ${Formatters.peso(dues.total)} across '
-                '${dues.count} active rental${dues.count == 1 ? '' : 's'} '
-                'they will no longer see. Proceed?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Keep Admin'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('Demote Anyway'),
-                ),
-              ],
+    final hasDues = dues != null && dues.count > 0;
+    final displayName =
+        user.fullName.isEmpty ? user.email : user.fullName;
+    final proceed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(hasDues
+                ? 'Demote with pending rentals?'
+                : 'Demote $displayName?'),
+            content: Text(
+              hasDues
+                  ? 'This account has ${Formatters.peso(dues.total)} across '
+                      '${dues.count} active rental${dues.count == 1 ? '' : 's'} '
+                      'they will no longer see. Proceed?'
+                  : '$displayName will lose access to the admin app. Proceed?',
             ),
-          ) ??
-          false;
-    }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Keep Admin'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Demote Anyway'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
     if (!proceed || !context.mounted) return;
     final ok = await vm.changeRole(user, role);
     if (!ok && context.mounted) {
