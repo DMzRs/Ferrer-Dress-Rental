@@ -44,6 +44,7 @@ class ReportsViewModel extends ChangeNotifier {
   double _totalRevenue = 0;
   double _totalDeveloperCut = 0;
   double _heldDeposits = 0;
+  double _outstandingFees = 0;
   int _completedCount = 0;
   bool _loading = true;
 
@@ -52,6 +53,7 @@ class ReportsViewModel extends ChangeNotifier {
   double get totalRevenue => _totalRevenue;
   double get totalDeveloperCut => _totalDeveloperCut;
   double get heldDeposits => _heldDeposits;
+  double get outstandingFees => _outstandingFees;
   int get completedCount => _completedCount;
   bool get isLoading => _loading;
   int get activeCount => _activeCount;
@@ -78,12 +80,22 @@ class ReportsViewModel extends ChangeNotifier {
   }
 
   void _rebuild() {
-    final valid = _cache.where((r) => r.status != 'cancelled').toList();
+    // Realized revenue only: completed rentals. Pending, active, and
+    // declined requests are not money yet, and deposits never are.
+    final valid = _cache.where((r) => r.isCompleted).toList();
 
     _totalRevenue = valid.fold(0, (sum, r) => sum + r.rentalFee);
     _totalDeveloperCut = _totalRevenue * developerRate;
-    _heldDeposits =
-        valid.where((r) => r.status == 'active').fold(0, (sum, r) => sum + r.securityDeposit);
+    // Deposits are held on live rentals, independent of the revenue
+    // filter above — completed deposits were already returned.
+    _heldDeposits = _cache
+        .where((r) => r.status == 'active')
+        .fold(0, (sum, r) => sum + r.securityDeposit);
+    // Pipeline money: active fees are collected but not yet earned, so
+    // they sit beside revenue, never inside it.
+    _outstandingFees = _cache
+        .where((r) => r.status == 'active')
+        .fold(0, (sum, r) => sum + r.rentalFee);
     _completedCount = _cache.where((r) => r.isCompleted).length;
     _activeCount = _cache.where((r) => r.status == 'active').length;
 

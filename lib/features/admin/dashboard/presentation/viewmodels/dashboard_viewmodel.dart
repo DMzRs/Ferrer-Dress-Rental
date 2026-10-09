@@ -122,9 +122,11 @@ class DashboardViewModel extends ChangeNotifier {
 
   void _recompute() {
     _hasData = true;
+    // Realized revenue only: completed rental fees. Deposits are
+    // refundable and pending/active/declined requests are not money yet.
     final sales = _rentalList
-        .where((r) => r.status != 'cancelled')
-        .fold<double>(0, (sum, r) => sum + r.total);
+        .where((r) => r.isCompleted)
+        .fold<double>(0, (sum, r) => sum + r.rentalFee);
     final activeCount =
         _rentalList.where((r) => r.status == 'active').length;
     final available = _itemList.where((i) => i.isAvailable).length;

@@ -3,46 +3,51 @@ import 'package:ferrer_rental_shop/features/admin/dashboard/presentation/viewmod
 import 'package:ferrer_rental_shop/features/admin/reports/presentation/viewmodels/reports_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/entities/app_user.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ferrer_rental_shop/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
 import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/entities/rental_entity.dart';
 import 'package:ferrer_rental_shop/features/rentals/domain/repositories/rental_repository.dart';
-import 'package:ferrer_rental_shop/features/superadmin/presentation/views/metrics_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 
-Rental _completedRental() => Rental(
-      id: 'r1',
+Rental _rental(String id, String status, double fee, double deposit) =>
+    Rental(
+      id: id,
       userId: 'u1',
       userName: 'Maria',
       itemId: 'i1',
       itemName: 'Gown',
       startDate: DateTime(2026, 9, 18),
-      endDate: DateTime(2026, 9, 20),
-      rentalFee: 2000,
-      securityDeposit: 500,
-      total: 2500,
-      status: 'completed',
+      endDate: DateTime(2026, 9, 22),
+      rentalFee: fee,
+      securityDeposit: deposit,
+      total: fee + deposit,
+      status: status,
       createdAt: DateTime(2026, 9, 17),
-      returnedAt: DateTime(2026, 9, 21),
     );
 
-class _MetricsRentalRepository implements RentalRepository {
+/// Completed 1000 + deposit 500, plus one of each other status.
+List<Rental> _mixed() => [
+      _rental('done', 'completed', 1000, 500),
+      _rental('pending', 'pending', 2000, 500),
+      _rental('active', 'active', 4000, 500),
+      _rental('declined', 'declined', 3000, 500),
+      _rental('cancelled', 'cancelled', 5000, 500),
+    ];
+
+class _SalesRentalRepository implements RentalRepository {
   @override
   Stream<List<Rental>> userRentalsStream(String userId) =>
       Stream<List<Rental>>.value(const []);
 
   @override
   Stream<List<Rental>> allRentalsStream() =>
-      Stream<List<Rental>>.value([_completedRental()]);
+      Stream<List<Rental>>.value(_mixed());
 
   @override
   Stream<List<Rental>> pagedRentalsStream({int limit = 20}) =>
-      Stream<List<Rental>>.value(const []);
+      Stream<List<Rental>>.value(_mixed());
 
   @override
   Future<String> createRental(Rental rental) async => 'new-id';
@@ -106,7 +111,7 @@ class _EmptyAppointmentRepository implements AppointmentRepository {
           {String? declineReason}) async {}
 }
 
-class _MetricsAuthRepository implements AuthRepository {
+class _SalesAuthRepository implements AuthRepository {
   @override
   Stream<AppUser?> get authStateChanges => Stream.value(null);
 
@@ -183,43 +188,49 @@ class _MetricsAuthRepository implements AuthRepository {
 }
 
 void main() {
-  testWidgets('revenue card shows developer share beside total revenue',
-      (t) async {
-    final rentals = _MetricsRentalRepository();
-    final inventory = _EmptyInventoryRepository();
-    final appointments = _EmptyAppointmentRepository();
-    final auth = _MetricsAuthRepository();
-    t.view.physicalSize = const Size(1200, 800);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.reset);
-    await t.pumpWidget(
-      MultiProvider(
-        providers: [
-          Provider<AuthRepository>.value(value: auth),
-          ChangeNotifierProvider<AuthViewModel>(
-            create: (_) => AuthViewModel(auth),
-          ),
-          ChangeNotifierProvider<DashboardViewModel>(
-            create: (_) => DashboardViewModel(
-              rentalRepository: rentals,
-              inventoryRepository: inventory,
-              appointmentRepository: appointments,
-              authRepository: auth,
-            ),
-          ),
-          ChangeNotifierProvider<ReportsViewModel>(
-            create: (_) => ReportsViewModel(rentals),
-          ),
-        ],
-        child: const MaterialApp(home: MetricsScreen()),
-      ),
+  test('dashboard sales counts completed fees only', () async {
+    final vm = DashboardViewModel(
+      rentalRepository: _SalesRentalRepository(),
+      inventoryRepository: _EmptyInventoryRepository(),
+      appointmentRepository: _EmptyAppointmentRepository(),
+      authRepository: _SalesAuthRepository(),
     );
-    await t.pumpAndSettle();
-    // ₱2,000 completed fee → dashboard sales and revenue agree,
-    // with a 5% developer share of ₱100 beside revenue.
-    expect(find.text('₱2,000'), findsNWidgets(2));
-    expect(find.textContaining('DEVELOPER SHARE'), findsOneWidget);
-    expect(find.text('₱100'), findsOneWidget);
-    expect(t.takeException(), isNull);
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(vm.metrics.totalSales, 1000);
+  });
+
+  test('reports revenue counts completed fees only', () async {
+    final vm = ReportsViewModel(_SalesRentalRepository());
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(vm.totalRevenue, 1000);
+    expect(vm.totalDeveloperCut, 50);
+  });
+
+  test('outstanding fees track active rentals only', () async {
+    final vm = ReportsViewModel(_SalesRentalRepository());
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    // Only the active rental's fee is outstanding; pending has not
+    // started, declined will never pay, completed already counted.
+    expect(vm.outstandingFees, 4000);
+  });
+
+  test('held deposits track active rentals, not completed revenue', () async {
+    final vm = ReportsViewModel(_SalesRentalRepository());
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    // Only the active rental's deposit is held; the completed one's
+    // deposit was returned, the rest were never collected.
+    expect(vm.heldDeposits, 500);
   });
 }

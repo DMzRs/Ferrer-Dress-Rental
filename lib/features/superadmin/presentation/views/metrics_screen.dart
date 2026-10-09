@@ -116,7 +116,7 @@ class _RevenueSection extends StatelessWidget {
                 label: 'TOTAL REVENUE',
                 value: Formatters.peso(vm.totalRevenue),
                 footnote:
-                    '${vm.completedCount} completed · ${Formatters.peso(vm.heldDeposits)} deposits held',
+                    '${vm.completedCount} completed · ${Formatters.peso(vm.heldDeposits)} deposits held · ${Formatters.peso(vm.outstandingFees)} outstanding',
               ),
             ),
             const SizedBox(width: 12),

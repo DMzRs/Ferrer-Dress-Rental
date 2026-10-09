@@ -101,6 +101,33 @@ class ReportsScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               const Expanded(
+                                child: Text(
+                                    'OUTSTANDING ACTIVE FEES · NOT YET EARNED',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        letterSpacing: 1,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white70)),
+                              ),
+                              Text(Formatters.peso(vm.outstandingFees),
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 13, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Expanded(
                                 child: Text('DEVELOPER SHARE · 5% OF FEES',
                                     style: TextStyle(
                                         fontSize: 9,
