@@ -72,8 +72,32 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<bool> signIn(String email, String password) async {
-    return _run(() => _repository.signIn(email: email.trim(), password: password));
+    _error = null;
+    _setBusy(true);
+    final result = await _repository.signIn(
+        email: email.trim(), password: password);
+    _setBusy(false);
+    if (result is Success) return true;
+    var message =
+        result.failure?.message ?? 'Something went wrong. Please try again.';
+    // Firebase v6 removed provider lookup, so a wrong-password error cannot
+    // say which method the account uses. Cover both cases at once: the
+    // account may be password-based, or Google-only with no password set.
+    if (_looksLikeCredentialFailure(message)) {
+      message =
+          'Incorrect email or password. If this account uses Google sign-in '
+          '(no password set), use Continue with Google — or tap Forgot '
+          'Password to set a password.';
+    }
+    _error = message;
+    notifyListeners();
+    return false;
   }
+
+  bool _looksLikeCredentialFailure(String message) =>
+      message.contains('Incorrect email or password') ||
+      message.contains('invalid-credential') ||
+      message.contains('wrong-password');
 
   Future<bool> signUp({
     required String fullName,
