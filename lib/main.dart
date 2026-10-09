@@ -101,7 +101,10 @@ Future<void> main() async {
             DeclineRentalUseCase(rentalRepository, inventoryRepository),
       ),
       ChangeNotifierProvider<BookingViewModel>(
-        create: (_) => BookingViewModel(appointmentRepository),
+        create: (_) => BookingViewModel(
+          appointmentRepository,
+          inventory: inventoryRepository,
+        ),
       ),
     ],
     child: const FerrerApp(),

@@ -5,12 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:ferrer_rental_shop/core/error/failure.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 
 /// Holds booking date, slot, and confirmation state.
 class BookingViewModel extends ChangeNotifier {
-  BookingViewModel(this._repository);
+  BookingViewModel(this._repository, {this._inventory});
 
   final AppointmentRepository _repository;
+
+  /// Item lookup for the maintenance guard. Absent in legacy callers,
+  /// which keep the old behavior of booking without an item check.
+  final InventoryRepository? _inventory;
   StreamSubscription? _sub;
 
   DateTime _selectedDate = _tomorrow();
@@ -110,6 +115,27 @@ class BookingViewModel extends ChangeNotifier {
       _error = 'Please choose a date and time slot first.';
       notifyListeners();
       return false;
+    }
+    // Items under maintenance cannot be tried on, even if the booking
+    // screen was opened before the status changed.
+    final inventory = _inventory;
+    if (itemId != null && itemId.isNotEmpty && inventory != null) {
+      bool blocked;
+      try {
+        final items = await inventory.itemsStream().first;
+        blocked = items.any(
+            (item) => item.id == itemId && item.status == 'maintenance');
+      } catch (_) {
+        _error = 'Could not verify this item right now. Please try again.';
+        notifyListeners();
+        return false;
+      }
+      if (blocked) {
+        _error =
+            'This item is under maintenance and cannot be booked for a fitting right now.';
+        notifyListeners();
+        return false;
+      }
     }
     _error = null;
     _confirming = true;

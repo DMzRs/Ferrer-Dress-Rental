@@ -2,7 +2,43 @@ import 'package:ferrer_rental_shop/core/error/failure.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
 import 'package:ferrer_rental_shop/features/booking/presentation/viewmodels/booking_viewmodel.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/entities/catalog_item.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class FakeInventoryRepository implements InventoryRepository {
+  FakeInventoryRepository(this.items);
+
+  final List<CatalogItem> items;
+
+  @override
+  Stream<List<CatalogItem>> itemsStream() => Stream.value(items);
+
+  @override
+  Future<String> addItem(CatalogItem item) async => 'x';
+
+  @override
+  Future<void> updateItem(CatalogItem item) async {}
+
+  @override
+  Future<void> updateStatus(String itemId, String status) async {}
+
+  @override
+  Future<void> saveItemPhotos(String itemId, List<String> photos) async {}
+
+  @override
+  Future<List<String>> itemPhotos(String itemId) async => [];
+}
+
+CatalogItem _maintenanceGown() => CatalogItem(
+      id: 'i1',
+      name: 'Gown',
+      category: 'dress',
+      basePrice: 1800,
+      securityDeposit: 1000,
+      status: 'maintenance',
+      createdAt: DateTime(2026, 1, 1),
+    );
 
 class FakeAppointmentRepository implements AppointmentRepository {
   List<String> booked = [];
@@ -159,6 +195,28 @@ void main() {
 
       expect(ok, isFalse);
       expect(vm.error, contains('Could not book'));
+      vm.dispose();
+    });
+
+    test('refuses items under maintenance', () async {
+      final repo = FakeAppointmentRepository();
+      final vm = BookingViewModel(
+        repo,
+        inventory: FakeInventoryRepository([_maintenanceGown()]),
+      );
+      await vm.init();
+      vm.selectSlot('11:00 AM');
+
+      final ok = await vm.confirm(
+        userId: 'u1',
+        userName: 'Jane',
+        itemId: 'i1',
+        itemName: 'Gown',
+      );
+
+      expect(ok, isFalse);
+      expect(vm.error, contains('maintenance'));
+      expect(repo.lastCreated, isNull);
       vm.dispose();
     });
   });
