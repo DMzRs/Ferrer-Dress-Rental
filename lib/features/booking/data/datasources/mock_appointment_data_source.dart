@@ -96,7 +96,11 @@ class MockAppointmentDataSource implements AppointmentDataSource {
     }
   }
 
-  /// Loads taken demo slot labels for a calendar day.
+  /// Live appointment states that hold a time slot.
+  static const liveStatuses = ['pending', 'scheduled', 'confirmed'];
+
+  /// Loads taken demo slot labels for a calendar day. Only live requests
+  /// hold slots — cancelled, declined, and finished visits free theirs.
   @override
   Future<List<String>> bookedSlotsFor(DateTime day) async {
     _ensureSeed();
@@ -106,14 +110,17 @@ class MockAppointmentDataSource implements AppointmentDataSource {
       final target = DateTime(d.year, d.month, d.day);
       final query = DateTime(day.year, day.month, day.day);
       if (target != query) return false;
-      return a.status == 'scheduled';
+      return liveStatuses.contains(a.status);
     });
     return sameDay.map(_labelFor).toList();
   }
 
   String _labelFor(Appointment a) {
-    final index = a.scheduledAt.hour.clamp(0, slotLabels.length - 1);
-    return slotLabels[index];
+    final hour = a.scheduledAt.hour;
+    final h12 = hour > 12 ? hour - 12 : hour;
+    final suffix = hour >= 12 ? 'PM' : 'AM';
+    final minute = a.scheduledAt.minute.toString().padLeft(2, '0');
+    return '$h12:$minute $suffix';
   }
 
   /// Inserts an appointment at the top of memory.

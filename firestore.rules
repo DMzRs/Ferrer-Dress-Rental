@@ -155,6 +155,22 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------
+    // slotAvailability (per-day fitting-slot holds for the booking grid)
+    // ------------------------------------------------------------------
+    match /slotAvailability/{day}/holds/{holdId} {
+      // Anyone signed in may read holds (user ids + slot labels only).
+      allow read: if isSignedIn();
+      // Holds are written alongside the appointment itself, owned by the
+      // booking user; staff may clean up any hold.
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.slots is list;
+      allow update, delete: if isSignedIn()
+        && (resource.data.userId == request.auth.uid
+            || isAdmin() || isSuperAdmin());
+    }
+
+    // ------------------------------------------------------------------
     // reviews (one doc per completed rental, id = rentalId)
     // ------------------------------------------------------------------
     match /reviews/{rentalId} {

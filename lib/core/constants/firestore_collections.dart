@@ -16,4 +16,6 @@ class FirestoreCollections {
   static const reviews = 'reviews';
   /// Chat conversations collection.
   static const conversations = 'conversations';
+  /// Per-day fitting-slot holds (`{yyyy-MM-dd}/holds/{appointmentId}`).
+  static const slotAvailability = 'slotAvailability';
 }
