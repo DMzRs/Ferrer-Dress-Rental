@@ -8,20 +8,26 @@ import 'package:ferrer_rental_shop/features/rentals/domain/usecases/decline_rent
 import 'package:ferrer_rental_shop/features/rentals/domain/usecases/process_return_usecase.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Rental _rental(String id) => Rental(
-      id: id,
-      userId: 'u1',
-      userName: 'Maria',
-      itemId: 'i1',
-      itemName: 'Gown $id',
-      startDate: DateTime(2026, 8, 1),
-      endDate: DateTime(2026, 8, 5),
-      rentalFee: 500,
-      securityDeposit: 200,
-      total: 700,
-      status: 'active',
-      createdAt: DateTime(2026, 8, 1),
-    );
+Rental _rental(String id) {
+  // End dates stay in the future so fixtures read as plain active
+  // rentals rather than overdue ones.
+  final end = DateTime.now().add(const Duration(days: 5));
+  final start = end.subtract(const Duration(days: 4));
+  return Rental(
+    id: id,
+    userId: 'u1',
+    userName: 'Maria',
+    itemId: 'i1',
+    itemName: 'Gown $id',
+    startDate: start,
+    endDate: end,
+    rentalFee: 500,
+    securityDeposit: 200,
+    total: 700,
+    status: 'active',
+    createdAt: DateTime(2026, 8, 1),
+  );
+}
 
 class _FakeRentalRepository implements RentalRepository {
   final List<Rental> all =

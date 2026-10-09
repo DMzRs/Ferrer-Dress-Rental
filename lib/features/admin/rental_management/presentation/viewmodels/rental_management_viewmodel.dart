@@ -87,7 +87,11 @@ class RentalManagementViewModel extends ChangeNotifier {
             .where((r) => r.isDeclined || r.isCancelled)
             .toList();
       case RentalTab.active:
-        return _rentals.where((r) => r.status == 'active').toList();
+        // Overdue rentals carry status 'active' but live on the Overdue
+        // tab — keep this list identical to the Active badge count.
+        return _rentals
+            .where((r) => r.status == 'active' && !r.isOverdue)
+            .toList();
     }
   }
 
