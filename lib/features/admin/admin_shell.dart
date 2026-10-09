@@ -94,10 +94,8 @@ class _AdminShellViewState extends State<_AdminShellView> {
   Widget build(BuildContext context) {
     final appointmentQueue =
         context.watch<AppointmentsViewModel>().pendingCount;
-    final rentalQueue = context
-            .watch<RentalManagementViewModel>()
-            .pendingCount +
-        context.watch<RentalManagementViewModel>().overdueCount;
+    final rentalQueue =
+        context.watch<RentalManagementViewModel>().attentionCount;
     final rentalUrgent =
         context.watch<RentalManagementViewModel>().overdueCount > 0;
     // Large system fonts would overlap the seven labels, so fall back to

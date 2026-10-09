@@ -76,6 +76,10 @@ class RentalManagementViewModel extends ChangeNotifier {
   int get activeCount =>
       _rentals.where((r) => r.status == 'active' && !r.isOverdue).length;
   int get overdueCount => _rentals.where((r) => r.isOverdue).length;
+
+  /// Nav badge total: every rental still needing attention — pending,
+  /// active, and overdue alike.
+  int get attentionCount => pendingCount + activeCount + overdueCount;
   int get completedCount => _rentals.where((r) => r.isCompleted).length;
   int get rejectedCount =>
       _rentals.where((r) => r.isDeclined || r.isCancelled).length;

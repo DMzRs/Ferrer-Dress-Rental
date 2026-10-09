@@ -135,6 +135,22 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(vm.canLoadMoreFor(20), isFalse);
   });
+
+  test('attention count covers pending, active and overdue', () async {
+    final rentals = _TabsRentalRepository();
+    final inventory = _TabsInventoryRepository();
+    final vm = RentalManagementViewModel(
+      rentals,
+      ProcessReturnUseCase(rentals, inventory),
+      ConfirmRentalUseCase(rentals),
+      DeclineRentalUseCase(rentals, inventory),
+    );
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+
+    // 2 plain active + 2 overdue, no pending.
+    expect(vm.attentionCount, 4);
+  });
 }
 
 class _FullPageRentalRepository extends _TabsRentalRepository {
