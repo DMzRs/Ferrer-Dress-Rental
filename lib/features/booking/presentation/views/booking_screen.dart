@@ -43,7 +43,11 @@ class _BookingScreenState extends State<BookingScreen> {
     if (user != null) {
       _viewModel.watchUserAppointments(user.uid);
     }
-    _viewModel.init();
+    // Deferred past the first build: init() notifies listeners, which must
+    // never fire while the framework is still building this route.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _viewModel.init();
+    });
   }
 
   Future<void> _confirm() async {
@@ -58,6 +62,16 @@ class _BookingScreenState extends State<BookingScreen> {
       itemName: widget.args.itemName,
     );
     if (!mounted) return;
+
+    // Duplicate guidance is informational: snackbar only, never the
+    // failure sheet (which would imply something went wrong).
+    if (!ok && _viewModel.duplicateRequest) {
+      showAppSnackBar(
+        context,
+        _viewModel.error ?? 'You already have an active request.',
+      );
+      return;
+    }
 
     await showModalBottomSheet<void>(
       context: context,

@@ -2,12 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:ferrer_rental_shop/features/audit/domain/audit_logger.dart';
 import 'package:ferrer_rental_shop/features/auth/domain/repositories/auth_repository.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/entities/appointment_entity.dart';
 import 'package:ferrer_rental_shop/features/booking/domain/repositories/appointment_repository.dart';
+import 'package:ferrer_rental_shop/features/inventory/domain/repositories/inventory_repository.dart';
 
 class MyAppointmentsViewModel extends ChangeNotifier {
-  MyAppointmentsViewModel(this._repository, this._authRepository) {
+  MyAppointmentsViewModel(
+    this._repository,
+    this._authRepository, {
+    this._inventory,
+    this._audit,
+  }) {
     _authSub = _authRepository.authStateChanges.listen((user) {
       _userId = user?.uid;
       _sub?.cancel();
@@ -20,6 +27,11 @@ class MyAppointmentsViewModel extends ChangeNotifier {
 
   final AppointmentRepository _repository;
   final AuthRepository _authRepository;
+
+  /// Item lookup that frees scheduled garments on cancel. Absent in legacy
+  /// callers, which keep the old cancel-only behavior.
+  final InventoryRepository? _inventory;
+  final AuditLogger? _audit;
 
   StreamSubscription? _authSub;
   StreamSubscription<List<Appointment>>? _sub;
@@ -57,6 +69,9 @@ class MyAppointmentsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _repository.cancelAppointment(appointment.id);
+      await _freeItemIfScheduled(appointment);
+      await _audit?.log('appointment.cancelled',
+          targetType: 'appointment', targetId: appointment.id);
       return true;
     } catch (_) {
       return false;
@@ -64,6 +79,20 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       _cancellingId = false;
       notifyListeners();
     }
+  }
+
+  /// Releases the linked garment when it was held for this appointment,
+  /// so a cancelled visit never strands an item as scheduled.
+  Future<void> _freeItemIfScheduled(Appointment appointment) async {
+    final inventory = _inventory;
+    final itemId = appointment.itemId;
+    if (inventory == null || itemId == null || itemId.isEmpty) return;
+    final items = await inventory.itemsStream().first;
+    final match = items.where((i) => i.id == itemId).toList();
+    if (match.isEmpty || match.first.status != 'scheduled_for_appointment') {
+      return;
+    }
+    await inventory.updateStatus(itemId, 'available');
   }
 
   @override

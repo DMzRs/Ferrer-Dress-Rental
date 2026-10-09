@@ -54,6 +54,7 @@ class UserShell extends StatelessWidget {
           create: (_) => MyAppointmentsViewModel(
             context.read<AppointmentRepository>(),
             context.read<AuthRepository>(),
+            inventory: context.read<InventoryRepository>(),
           ),
         ),
         ChangeNotifierProvider<ThreadViewModel>(

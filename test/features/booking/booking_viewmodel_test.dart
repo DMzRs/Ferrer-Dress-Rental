@@ -66,7 +66,8 @@ class FakeAppointmentRepository implements AppointmentRepository {
 
   @override
   Stream<List<Appointment>> userAppointmentsStream(String userId) =>
-      const Stream.empty();
+      Stream.value(const []);
+
 
   @override
   Stream<List<Appointment>> allAppointmentsStream() => const Stream.empty();

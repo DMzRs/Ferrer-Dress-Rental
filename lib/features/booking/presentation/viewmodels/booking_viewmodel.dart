@@ -25,6 +25,11 @@ class BookingViewModel extends ChangeNotifier {
   bool _loadingSlots = true;
   bool _confirming = false;
 
+  /// True when the last refusal was a duplicate live request. The UI shows
+  /// guidance in a snackbar only — never the failure sheet.
+  bool _duplicateRequest = false;
+  bool get duplicateRequest => _duplicateRequest;
+
   /// All bookable time-slot labels.
   static const List<String> allSlots = TimeSlots.labels;
 
@@ -52,9 +57,12 @@ class BookingViewModel extends ChangeNotifier {
     return DateTime(now.year, now.month, now.day + 1);
   }
 
-  /// Keeps the user appointment stream alive for updates.
+  /// Keeps the user appointment stream alive for updates. Errors are
+  /// swallowed: slot data resolves through bookedSlotsFor instead.
   void watchUserAppointments(String userId) {
-    _sub ??= _repository.userAppointmentsStream(userId).listen((_) {});
+    _sub ??= _repository
+        .userAppointmentsStream(userId)
+        .listen((_) {}, onError: (_) {});
   }
 
   /// Loads booked slots for the selected date.
@@ -113,9 +121,11 @@ class BookingViewModel extends ChangeNotifier {
   }) async {
     if (_selectedSlot == null) {
       _error = 'Please choose a date and time slot first.';
+      _duplicateRequest = false;
       notifyListeners();
       return false;
     }
+    _duplicateRequest = false;
     // Items under maintenance cannot be tried on, even if the booking
     // screen was opened before the status changed.
     final inventory = _inventory;
@@ -147,6 +157,40 @@ class BookingViewModel extends ChangeNotifier {
     // overnight, or a same-day slot that already passed).
     if (!scheduledAt.isAfter(DateTime.now())) {
       _error = 'Cannot book an appointment in the past. Please pick a future date and time.';
+      _confirming = false;
+      notifyListeners();
+      return false;
+    }
+    // Re-check against live data: the slot grid may be stale (taken since
+    // the day was picked, or double-tapped). Same for a duplicate live
+    // request for this cloth and time.
+    try {
+      final freshSlots = await _repository.bookedSlotsFor(_selectedDate);
+      if (freshSlots.contains(_selectedSlot)) {
+        _error = 'That slot was just taken. Please pick another time.';
+        _confirming = false;
+        notifyListeners();
+        return false;
+      }
+      if (itemId != null && itemId.isNotEmpty) {
+        final mine = await _repository.userAppointmentsStream(userId).first;
+        final duplicate = mine.any((a) =>
+            a.itemId == itemId &&
+            (a.status == Appointment.statusPending ||
+                a.status == Appointment.statusConfirmed ||
+                a.status == 'scheduled'));
+        if (duplicate) {
+          _error =
+              'You already have an active request for this garment. '
+              'Cancel it or wait for it to finish before booking again.';
+          _duplicateRequest = true;
+          _confirming = false;
+          notifyListeners();
+          return false;
+        }
+      }
+    } catch (_) {
+      _error = 'Could not verify this slot right now. Please try again.';
       _confirming = false;
       notifyListeners();
       return false;

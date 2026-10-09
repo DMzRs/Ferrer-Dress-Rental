@@ -193,6 +193,7 @@ class AppointmentsViewModel extends ChangeNotifier {
         Appointment.statusDeclined,
         declineReason: reason,
       );
+      await _freeItemIfScheduled(appointment.id);
       await _audit?.log('appointment.declined',
           targetType: 'appointment',
           targetId: appointment.id,
