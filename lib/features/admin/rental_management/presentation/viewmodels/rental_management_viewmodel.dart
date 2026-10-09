@@ -38,6 +38,12 @@ class RentalManagementViewModel extends ChangeNotifier {
   /// True when the server may hold more than the loaded page.
   bool get hasMore => _rentals.length >= _pageSize;
 
+  /// Whether a tab currently showing [visibleCount] cards should offer
+  /// loading more. Tabs render filtered subsets, so a short tab must not
+  /// show the button just because the unfiltered feed hit the page limit.
+  bool canLoadMoreFor(int visibleCount) =>
+      hasMore && visibleCount >= _pageSize;
+
   void _subscribe() {
     _subscription?.cancel();
     _subscription = _repository

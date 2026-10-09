@@ -103,7 +103,11 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
       RentalTab.rejected =>
         vm.allRentals.where((r) => r.isDeclined || r.isCancelled).toList(),
       RentalTab.active =>
-        vm.allRentals.where((r) => r.status == 'active').toList(),
+        // Overdue rentals carry status 'active' but live on the Overdue
+        // tab — keep this identical to the Active badge count.
+        vm.allRentals
+            .where((r) => r.status == 'active' && !r.isOverdue)
+            .toList(),
     };
 
     if (items.isEmpty) {
@@ -123,12 +127,13 @@ class _RentalManagementScreenState extends State<RentalManagementScreen>
       );
     }
 
-    return RefreshIndicator(
-      color: AppColors.adminPrimary,
-      onRefresh: () async {},
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-        itemCount: items.length + (vm.hasMore ? 1 : 0),
+      return RefreshIndicator(
+        color: AppColors.adminPrimary,
+        onRefresh: () async {},
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          itemCount:
+              items.length + (vm.canLoadMoreFor(items.length) ? 1 : 0),
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
           if (index >= items.length) {

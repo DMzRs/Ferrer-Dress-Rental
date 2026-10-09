@@ -98,4 +98,52 @@ void main() {
     vm.setTab(RentalTab.overdue);
     expect(vm.rentals.map((r) => r.id), ['o1', 'o2']);
   });
+
+  test('short filtered tabs hide Load more even at the page limit', () async {
+    final rentals = _TabsRentalRepository();
+    final inventory = _TabsInventoryRepository();
+    final vm = RentalManagementViewModel(
+      rentals,
+      ProcessReturnUseCase(rentals, inventory),
+      ConfirmRentalUseCase(rentals),
+      DeclineRentalUseCase(rentals, inventory),
+    );
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+
+    // 4 fetched at the default page size of 20: the server signal says
+    // "maybe more", but a 2-card tab must not offer it.
+    expect(vm.hasMore, isFalse);
+    expect(vm.canLoadMoreFor(2), isFalse);
+  });
+
+  test('full tabs keep Load more while the server may hold more', () async {
+    final rentals = _FullPageRentalRepository();
+    final inventory = _TabsInventoryRepository();
+    final vm = RentalManagementViewModel(
+      rentals,
+      ProcessReturnUseCase(rentals, inventory),
+      ConfirmRentalUseCase(rentals),
+      DeclineRentalUseCase(rentals, inventory),
+    );
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(vm.hasMore, isTrue);
+    expect(vm.canLoadMoreFor(20), isTrue);
+    vm.loadMore();
+    await Future<void>.delayed(Duration.zero);
+    expect(vm.canLoadMoreFor(20), isFalse);
+  });
+}
+
+class _FullPageRentalRepository extends _TabsRentalRepository {
+  @override
+  Stream<List<Rental>> pagedRentalsStream({int limit = 20}) {
+    final now = DateTime.now();
+    return Stream.value(List.generate(
+      limit,
+      (i) => _rental('f$i', now.add(Duration(days: i + 1))),
+    ));
+  }
 }
