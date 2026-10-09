@@ -181,13 +181,6 @@ class ItemCard extends StatelessWidget {
                           color: AppColors.gold,
                         ),
                       ),
-                      Text(
-                        ' / day',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.inkSoft.withValues(alpha: .8),
-                        ),
-                      ),
                       const Spacer(),
                       if (!item.isAvailable)
                         Icon(

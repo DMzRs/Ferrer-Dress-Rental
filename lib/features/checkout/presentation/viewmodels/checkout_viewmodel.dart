@@ -31,7 +31,8 @@ class CheckoutViewModel extends ChangeNotifier {
 
   int get rentalDays => fixedRentalDays;
 
-  double get rentalFee => item.basePrice * rentalDays;
+  /// Flat fee for the whole 5-day duration — not a daily rate.
+  double get rentalFee => item.basePrice;
   double get securityDeposit => item.securityDeposit;
   double get total => rentalFee + securityDeposit;
 

@@ -210,7 +210,7 @@ class _InventoryTile extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 3),
           child: Text(
-            '${item.categoryLabel} · ${Formatters.peso(item.basePrice)}/day · Deposit ${Formatters.peso(item.securityDeposit)}',
+             '${item.categoryLabel} · ${Formatters.peso(item.basePrice)} · Deposit ${Formatters.peso(item.securityDeposit)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),

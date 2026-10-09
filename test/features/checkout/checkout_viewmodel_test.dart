@@ -99,17 +99,17 @@ void main() {
     test('rentalDays fixed to 5', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
       expect(vm.rentalDays, 5);
-      expect(vm.rentalFee, 2500);
+      expect(vm.rentalFee, 500);
       expect(vm.securityDeposit, 1000);
-      expect(vm.total, 3500);
+      expect(vm.total, 1500);
     });
 
-    test('rentalFee fixed for 5 days', () {
+    test('rentalFee is flat for the whole 5 days, not per day', () {
       final vm = _vm(_FakeRentals(), _FakeInventory());
       vm.updateStartDate(DateTime.now().add(const Duration(days: 10)));
       expect(vm.rentalDays, 5);
-      expect(vm.rentalFee, 2500);
-      expect(vm.total, 3500);
+      expect(vm.rentalFee, 500);
+      expect(vm.total, 1500);
     });
   });
 

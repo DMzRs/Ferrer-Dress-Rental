@@ -366,7 +366,7 @@ class _OrderSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '${item.categoryLabel.toUpperCase()} · ₱${item.basePrice.toStringAsFixed(0)}/day',
+                  '${item.categoryLabel.toUpperCase()} · ₱${item.basePrice.toStringAsFixed(0)}',
                   style: TextStyle(
                     fontSize: 11.5,
                     letterSpacing: .4,
@@ -489,7 +489,7 @@ class _PriceBreakdownCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _row('Rental Fee (${vm.rentalDays} days)',
+          _row('Rental Fee (5 days)',
               '₱${vm.rentalFee.toStringAsFixed(0)}'),
           const SizedBox(height: 12),
           _row('Security Deposit', '₱${vm.securityDeposit.toStringAsFixed(0)}',

@@ -111,13 +111,6 @@ class _Body extends StatelessWidget {
                                   color: AppColors.gold,
                                 ),
                               ),
-                              TextSpan(
-                                text: '  / day',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  color: AppColors.inkSoft.withValues(alpha: .9),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -530,13 +523,21 @@ class _BottomBar extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => context.pushNamed(
-                  AppRoutes.booking,
-                  arguments: BookingScreenArgs(
-                    itemId: vm.item.id,
-                    itemName: vm.item.name,
-                  ),
-                ),
+                onPressed: vm.item.status == 'maintenance'
+                    ? () {
+                        showAppSnackBar(
+                          context,
+                          'This item is under maintenance and cannot be booked for a fitting right now.',
+                          backgroundColor: AppColors.danger,
+                        );
+                      }
+                    : () => context.pushNamed(
+                          AppRoutes.booking,
+                          arguments: BookingScreenArgs(
+                            itemId: vm.item.id,
+                            itemName: vm.item.name,
+                          ),
+                        ),
                 icon: const Icon(Icons.event_available_rounded, size: 18),
                 label: const Text('Book a Fitting'),
               ),
